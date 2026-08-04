@@ -67,6 +67,7 @@ ignore = ["S101"]  # asserts permitidos en tests; bandit corre aparte en CI
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "DTZ", "T20"]
 "modules/*/tests/**" = ["S", "DTZ", "T20"]
+"tools/**" = ["T20"]  # herramientas de línea de comandos: imprimir es su trabajo
 
 [tool.mypy]
 python_version = "3.12"

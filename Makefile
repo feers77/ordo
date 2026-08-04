@@ -17,8 +17,12 @@ health: ## Estado de healthchecks del stack
 migrate:
 	@echo "pendiente: migraciones Alembic (F2)" && exit 1
 
-seed:
-	@echo "pendiente: datos demo (F2)" && exit 1
+seed: ## Crea y puebla un tenant: make seed TENANT=demo
+	@test -n "$(TENANT)" || (echo "Uso: make seed TENANT=demo" && exit 1)
+	uv run python tools/seed_tenant.py $(TENANT)
+
+app: ## Construye y levanta los servicios ORDO (api, mcp)
+	$(COMPOSE) -f infra/compose/docker-compose.prod.yml --profile app up -d --build api mcp
 
 lint:
 	uv run ruff check .

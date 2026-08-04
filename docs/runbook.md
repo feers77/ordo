@@ -13,7 +13,23 @@ make up-obs                                           # observabilidad (opcional
 make health                                           # todos healthy
 ```
 
-Servicios de aplicación (F1+): imágenes en `ghcr.io/feers77/ordo/ordo-<svc>`. El gateway escucha en 8000; Caddy local (puerto 3000) recibe del edge y hace proxy.
+### Servicios de aplicación (api y mcp)
+
+```bash
+make app                       # construye y levanta ordo-api (:8000) y ordo-mcp (:8001)
+make seed TENANT=demo          # crea y puebla un tenant (una sola vez por tenant)
+curl http://127.0.0.1:3000/healthz                                    # Caddy
+curl -H 'X-Ordo-Tenant: demo' http://127.0.0.1:3000/api/v1/res.partner
+```
+
+Caddy (puerto 3000, recibe del edge) enruta `/mcp*` a ordo-mcp y el resto a
+ordo-api. Los contenedores corren con el rol `ordo_app` (sin DDL): el seed
+crea las tablas y otorga exactamente los privilegios de datos. Si la clave de
+`ordo_app` no coincide con `ORDO_APP_PASSWORD` del `.env` (initdb anterior al
+cambio), resetear: `ALTER ROLE ordo_app LOGIN PASSWORD '...'` como `ordo`.
+
+El servicio IAM se despliega cuando existan sus secretos (Keycloak,
+Telegram); hasta entonces api y mcp asumen red interna y edge delante.
 
 ## Rollback
 

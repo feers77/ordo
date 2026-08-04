@@ -8,10 +8,14 @@
 }
 
 :{{ ordo_http_port }} {
-	# Gateway ORDO (T0.4). Hasta entonces, respuesta estática.
 	handle /healthz {
 		respond "ok" 200
 	}
+	# Servidor MCP (ordo-mcp, compose perfil app)
+	handle /mcp* {
+		reverse_proxy 127.0.0.1:8001
+	}
+	# API genérica + meta (ordo-api, compose perfil app)
 	handle {
 		reverse_proxy 127.0.0.1:8000
 	}

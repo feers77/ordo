@@ -117,3 +117,8 @@ STATEMENTS = [
 async def create_kernel_tables(session: AsyncSession) -> None:
     for statement in STATEMENTS:
         await session.execute(text(statement))
+    # Idempotencia incluida aquí: los servicios corren como ordo_app, que no
+    # tiene DDL; crearla lazy en el primer request fallaría en producción.
+    from ordo_core.idempotency import create_table as _create_idempotency
+
+    await _create_idempotency(session)
