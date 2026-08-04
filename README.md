@@ -31,10 +31,19 @@ En desarrollo, todavía sin release. Lo que ya funciona y está probado:
   calculados con grafo de dependencias, ORM de escritura con bloqueo optimista, API
   genérica con transacciones multi-operación, secuencias legales sin huecos, cola de
   trabajos, outbox transaccional, chatter, adjuntos y schema semántico.
+- **Módulos** — sistema de módulos con manifiesto y migraciones propias, más los
+  módulos `base` (compañías, monedas, contactos, unidades) y `account` (contabilidad
+  con partida doble, motor de impuestos).
+- **Localizaciones** — framework declarativo de packs fiscales con packs de Chile y
+  Paraguay **en borrador**: contienen lo verificable citando la norma, pero el plan de
+  cuentas y los impuestos específicos requieren revisión de un contador antes de usarse
+  para declarar impuestos.
 
-Cobertura: 141 tests unitarios, 152 de integración contra PostgreSQL real y 4 extremo a
-extremo. El compilador de dominios —el componente de mayor riesgo— tiene además tests de
-inyección y property-based con Hypothesis.
+Cobertura: más de 380 tests entre unitarios, de integración contra PostgreSQL real y de
+extremo a extremo. Los dos componentes donde un error sale caro tienen property-based
+testing con Hypothesis: el compilador de dominios (tests de inyección incluidos) y la
+contabilidad (partida doble, inalterabilidad de asientos contabilizados, redondeo de
+impuestos).
 
 Lo que falta antes de la primera versión usable está en
 [`docs/design/F2-00-resumen.md`](docs/design/F2-00-resumen.md); el plan completo, en
@@ -79,6 +88,7 @@ ISO-8601. Las colecciones se paginan por cursor, no por offset.
 | [`AGENTS.md`](AGENTS.md) | Reglas de trabajo vinculantes, para personas y agentes |
 | [`ADR/`](ADR/) | Decisiones de arquitectura, con su contexto y consecuencias |
 | [`docs/design/`](docs/design/) | Diseño detallado de cada entrega |
+| [`docs/tutorial.md`](docs/tutorial.md) | De cero a un asiento contabilizado, paso a paso |
 | [`docs/api/errors.md`](docs/api/errors.md) | Catálogo de códigos de error (contrato público) |
 | [`docs/runbook.md`](docs/runbook.md) | Despliegue, rollback, restore, incidentes |
 

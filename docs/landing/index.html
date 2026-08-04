@@ -208,6 +208,42 @@ h2:hover .anchor,h3:hover .anchor{opacity:1}
 </header>
 
 <!-- =============================================================== -->
+
+<section id="contabilidad">
+  <h2>Contabilidad y localizaciones</h2>
+  <p>El módulo <code>account</code> implementa contabilidad por partida doble. Los
+  invariantes están escritos como property-based testing porque un error contable no
+  falla ruidosamente: aparece en el cierre, cuando ya es caro de arreglar.</p>
+  <ul>
+    <li>Un asiento cuadra o no se contabiliza. No existe el estado &laquo;asiento
+    descuadrado guardado&raquo;.</li>
+    <li>Una partida nunca tiene debe y haber a la vez, y ningún importe es negativo.</li>
+    <li>Un asiento contabilizado <strong>no se modifica ni se borra</strong>: se emite
+    su reversión, y el original permanece. Un test verifica que el efecto neto de las
+    dos piezas es exactamente cero.</li>
+    <li>El número legal se toma <strong>al contabilizar</strong>, no al crear el
+    borrador, así que un borrador descartado no deja un hueco en la numeración.</li>
+    <li>Contabilizar en un período cerrado devuelve <code>ACCOUNT_PERIOD_LOCKED</code>.</li>
+  </ul>
+
+  <h3>Motor de impuestos</h3>
+  <p>Precio con impuesto incluido o excluido, retenciones que no suman al total,
+  impuestos compuestos que declaran explícitamente sobre qué base gravan, y redondeo
+  por línea o por documento como decisión declarada: ambos criterios existen en la
+  práctica y difieren en céntimos, así que se elige en vez de imponer uno en silencio.</p>
+  <p>Todos los importes son <code>Decimal</code> o string decimal. Pasar un
+  <code>float</code> es un error explícito.</p>
+
+  <h3>Localizaciones: Chile y Paraguay</h3>
+  <p class="warn"><strong>Ambos packs están en estado <code>draft</code>.</strong>
+  Contienen lo que se puede afirmar citando la norma —tasa general de IVA, códigos de
+  documento electrónico, algoritmo del dígito verificador del identificador
+  tributario—, pero <strong>el plan de cuentas, los impuestos específicos y las
+  retenciones requieren revisión de un contador de cada país</strong> antes de usarse
+  para declarar impuestos. Cada manifiesto lista qué falta.</p>
+  <p>El framework rechaza cargar un pack que no cite sus fuentes normativas: un dato
+  fiscal sin norma detrás no se puede verificar ni defender ante una fiscalización.</p>
+</section>
 <h2 id="que-es">Qué es ORDO <a href="#que-es" class="anchor">#</a></h2>
 
 <p>
