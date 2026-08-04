@@ -39,6 +39,9 @@ En desarrollo, todavía sin release. Lo que ya funciona y está probado:
   de estados, folios autorizados, certificados), y `product` + `stock` (inventario con
   costo promedio, capas de valorización y asiento automático; entregar una venta o
   recibir una compra mueve stock y libros en una sola operación).
+- **Introspección y ensayo** — `explain` por registro (procedencia de cada valor,
+  acciones disponibles y bloqueadas con su motivo), catálogo global de acciones y
+  reportes, y sandboxes: clones efímeros del tenant para probar lo destructivo.
 - **Webhooks** — el outbox transaccional se entrega por HTTP firmado (HMAC-SHA256,
   id de entrega estable para deduplicar, reintentos, suspensión tras fallos): un
   agente reacciona a "factura aceptada" sin hacer polling.

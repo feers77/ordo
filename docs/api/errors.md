@@ -231,3 +231,15 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `WEBHOOK_NOT_FOUND` | 404 | no | La suscripción no existe |
 | `WEBHOOK_URL_INVALID` | 400 | no | La URL debe ser http:// o https:// |
 | `WEBHOOK_INVALID_PATTERN` | 400 | no | El patrón de eventos no puede estar vacío |
+
+## Explicación y sandbox (F3-03)
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `RECORD_NOT_FOUND` | 404 | no | El registro a explicar no existe |
+| `SANDBOX_UNAVAILABLE` | 503 | no | Falta ORDO_ADMIN_DATABASE_URL: clonar es DDL |
+| `SANDBOX_NESTED` | 409 | no | Un sandbox no clona otro sandbox |
+| `SANDBOX_SOURCE_NOT_FOUND` | 404 | no | El tenant de origen no existe |
+| `SANDBOX_REFUSED` | 403 | no | Solo se borran schemas con el marcador de sandbox |
+| `SANDBOX_FOREIGN` | 403 | no | El sandbox pertenece a otro tenant |
+| `SANDBOX_NAME_INVALID` | 400 | no | El nombre del sandbox no cumple el formato |

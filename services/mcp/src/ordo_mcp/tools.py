@@ -14,6 +14,7 @@ from typing import Any
 
 from ordo_core import Environment
 from ordo_core.actions import actions_for, dispatch
+from ordo_core.explain import explain_record
 from ordo_core.idempotency import remember, replay
 from ordo_core.recordset import RecordSet
 from ordo_core.reports import reports_available, run_report
@@ -124,6 +125,10 @@ async def tool_run_action(env: Environment, args: dict[str, Any]) -> dict[str, A
         run,
     )
     return result
+
+
+async def tool_explain(env: Environment, args: dict[str, Any]) -> dict[str, Any]:
+    return await explain_record(env, str(args["model"]), int(args["id"]))
 
 
 async def tool_list_reports(env: Environment, args: dict[str, Any]) -> dict[str, Any]:
@@ -249,6 +254,14 @@ TOOLS: list[dict[str, Any]] = [
         ),
     },
     {
+        "name": "ordo_explain",
+        "description": (
+            "Explica un registro: de dónde sale cada valor, qué acciones puede "
+            "ejecutar ahora y cuáles están bloqueadas y por qué."
+        ),
+        "inputSchema": _obj({"model": MODEL_PROP, "id": {"type": "integer"}}, ["model", "id"]),
+    },
+    {
         "name": "ordo_list_reports",
         "description": "Lista los reportes disponibles con sus parámetros.",
         "inputSchema": _obj({}, []),
@@ -266,7 +279,7 @@ def tool_authz_target(name: str, arguments: dict[str, Any]) -> tuple[str, str]:
     model = str(arguments.get("model", "")) or "ir.model"
     if name in ("ordo_schema", "ordo_list_actions"):
         return ("ir.model" if name == "ordo_schema" else model, "read")
-    if name in ("ordo_search", "ordo_read"):
+    if name in ("ordo_search", "ordo_read", "ordo_explain"):
         return (model, "read")
     if name == "ordo_create":
         return (model, "create")
@@ -287,6 +300,7 @@ HANDLERS: dict[str, ToolHandler] = {
     "ordo_write": tool_write,
     "ordo_list_actions": tool_list_actions,
     "ordo_run_action": tool_run_action,
+    "ordo_explain": tool_explain,
     "ordo_list_reports": tool_list_reports,
     "ordo_run_report": tool_run_report,
 }

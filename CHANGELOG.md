@@ -6,6 +6,18 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F3.3** Introspección profunda y sandbox (diseño F3-03): `GET /{model}/{id}/explain`
+  responde de dónde sale cada valor (escrito, calculado con sus `@depends`, related o
+  por defecto), qué acciones puede ejecutar ese registro **ahora** y cuáles están
+  bloqueadas con el código y el hint que lo explican — todo simulado en savepoint, sin
+  escribir ni quemar numeración. `GET /meta/v1/actions` es el catálogo global de
+  acciones y reportes, y la tool MCP `ordo_explain` lo expone al agente. **Sandbox**:
+  `POST /api/v1/sandbox` clona el tenant (estructura y datos) en un schema efímero con
+  TTL para ensayar lo destructivo; clonar es DDL, así que usa una conexión admin
+  declarada aparte (`ORDO_ADMIN_DATABASE_URL`) en vez de darle DDL al rol de la
+  aplicación, solo borra schemas con el marcador `_sb_`, y el worker de `ordo-events`
+  recoge los vencidos.
+
 - **F3.2** Webhooks (diseño F3-02): módulo `webhook` con suscripciones por patrón de
   evento (`sale.order.*`) y bitácora de entregas como watermark — cada evento del
   outbox se entrega una vez por suscripción aunque el worker se caiga a mitad de lote.

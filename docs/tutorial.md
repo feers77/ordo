@@ -359,7 +359,32 @@ worker `ordo-events` lo entrega por HTTP con `X-Ordo-Signature`
 reintentos: verifica la firma y deduplica por ese id. Diez fallos seguidos
 suspenden la suscripción (`action_resume` la revive).
 
-## 17. Operarlo todo por MCP
+## 17. Preguntar antes de actuar: explain y sandbox
+
+```bash
+# ¿De dónde sale cada valor y qué puedo hacer con este registro?
+curl "$ORDO/api/v1/sale.order/42/explain" -H "X-Ordo-Tenant: acme"
+```
+
+Devuelve cada campo con su procedencia (escrito, calculado con las rutas que
+lo disparan, related o por defecto), y las acciones separadas en
+`available` y `blocked` — las bloqueadas traen el código estable y el hint
+que dicen exactamente qué falta. `GET /meta/v1/actions` es el catálogo
+completo de acciones y reportes del sistema.
+
+Para ensayar algo destructivo sin miedo:
+
+```bash
+curl -X POST "$ORDO/api/v1/sandbox" -H "X-Ordo-Tenant: acme"
+# -> {"tenant": "acme_sb_9f3c1a02", "expires_at": "...", "tables": 43}
+```
+
+Es un clon efímero del tenant —estructura y datos— con su propio schema:
+apunta `X-Ordo-Tenant` ahí, rompe lo que quieras y bórralo. Clonar es DDL,
+así que el endpoint usa una conexión administrativa declarada aparte; el
+rol de la aplicación sigue sin DDL.
+
+## 18. Operarlo todo por MCP
 
 El servicio `ordo-mcp` expone el contrato completo a cualquier cliente MCP
 (transporte streamable HTTP, `POST /mcp`, tenant en `X-Ordo-Tenant`):
