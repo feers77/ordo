@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import os
 from datetime import datetime
+from decimal import Decimal
 from functools import lru_cache
 from typing import Annotated, Any
 from uuid import UUID
@@ -15,6 +16,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ordo_iam.agent_auth import new_credentials, verify_secret
+from ordo_iam.audit import append_audit
 from ordo_iam.bridge import IdentityBridge
 from ordo_iam.captokens import merge_caps
 from ordo_iam.db import get_session
@@ -30,6 +32,13 @@ from ordo_iam.errors import (
 from ordo_iam.keys import public_jwks
 from ordo_iam.models import AutonomyLevel, Principal, PrincipalStatus, User
 from ordo_iam.oidc import OIDCVerifier
+from ordo_iam.pdp import (
+    AccessRequest,
+    Amount,
+    PolicyEngine,
+    RedisUsageCounter,
+    UsageCounter,
+)
 from ordo_iam.repository import PrincipalRepository
 from ordo_iam.tokens import AGENT_TOKEN_TTL_S, issue_agent_token
 
@@ -235,3 +244,107 @@ async def token_exchange(
 @router.get("/jwks")
 async def jwks() -> dict[str, Any]:
     return public_jwks()
+
+
+# ---------------------------------------------------------------- authorize
+
+
+@lru_cache(maxsize=1)
+def get_iam_verifier() -> OIDCVerifier:
+    """Verifier de los tokens emitidos por ordo-iam (agentes)."""
+    from joserfc.jwk import KeySet
+
+    from ordo_iam.keys import issuer, signing_key
+
+    return OIDCVerifier(issuer=issuer(), audience="ordo-api", static_jwks=KeySet([signing_key()]))
+
+
+@lru_cache(maxsize=1)
+def get_usage_counter() -> UsageCounter:
+    return RedisUsageCounter()
+
+
+class AmountBody(BaseModel):
+    currency: str
+    value: str  # decimal como string, nunca float (CLAUDE.md §2.3)
+
+
+class AuthorizeRequest(BaseModel):
+    model: str
+    operation: str
+    amount: AmountBody | None = None
+
+
+class AuthorizeResponse(BaseModel):
+    allowed: bool
+    reason: str
+    requires_approval: bool
+    record_domain: dict[str, Any]
+
+
+@router.post("/authorize", response_model=AuthorizeResponse)
+async def authorize(
+    body: AuthorizeRequest,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    verifier: Annotated[OIDCVerifier, Depends(get_verifier)],
+    iam_verifier: Annotated[OIDCVerifier, Depends(get_iam_verifier)],
+    counter: Annotated[UsageCounter, Depends(get_usage_counter)],
+) -> AuthorizeResponse:
+    if credentials is None:
+        raise TokenInvalidError("Falta el header Authorization.")
+    token_str = credentials.credentials
+
+    cap: dict[str, Any] | None = None
+    agent_id: str | None = None
+    act_chain: list[Any] = []
+    token_jti: str | None = None
+    try:
+        claims = await asyncio.to_thread(iam_verifier.verify, token_str)
+        # token de agente emitido por ordo-iam
+        agent_id = str(claims["sub"]).removeprefix("agent:")
+        cap = claims.get("cap")
+        act_chain = [claims.get("act", {})]
+        token_jti = claims.get("jti")
+        user_id = UUID(str(claims["act"]["sub"]).removeprefix("user:"))
+        tenant = str(claims["tenant"])
+    except TokenInvalidError:
+        claims = await asyncio.to_thread(verifier.verify, token_str)
+        user = await IdentityBridge(session).resolve(claims)
+        user_id = user.principal_id
+        tenant = user.tenant
+
+    amount = None
+    if body.amount is not None:
+        amount = Amount(body.amount.currency, Decimal(body.amount.value))
+    request = AccessRequest(
+        tenant=tenant,
+        model=body.model,
+        operation=body.operation,
+        amount=amount,
+        agent_id=agent_id,
+        user_id=user_id,
+    )
+    decision = await PolicyEngine(session, counter).evaluate(request, cap=cap)
+    await append_audit(
+        session,
+        tenant=tenant,
+        event_type="authorize",
+        payload={
+            "model": body.model,
+            "operation": body.operation,
+            "amount": body.amount.model_dump() if body.amount else None,
+            "allowed": decision.allowed,
+            "reason": decision.reason,
+            "requires_approval": decision.requires_approval,
+        },
+        principal_id=UUID(agent_id) if agent_id else user_id,
+        act_chain=act_chain,
+        token_jti=token_jti,
+    )
+    return AuthorizeResponse(
+        allowed=decision.allowed,
+        reason=decision.reason,
+        requires_approval=decision.requires_approval,
+        record_domain=decision.record_domain,
+    )

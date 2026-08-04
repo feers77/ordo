@@ -31,3 +31,15 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `IAM_NO_CAPABILITIES` | 403 | no | Agente sin grants vigentes |
 | `IAM_UNSUPPORTED_GRANT` | 400 | no | grant_type no soportado en /iam/v1/token |
 | `IAM_NOT_AGENT_OWNER` | 403 | no | Solo el dueño puede otorgar capacidades |
+
+## PDP (razones de decisión en /iam/v1/authorize)
+
+| Razón | Significado |
+|---|---|
+| `OK` | Permitido |
+| `CAP_DENIED` | Coincide patrón deny del capability token |
+| `CAP_NOT_GRANTED` | Modelo/operación no otorgados en el cap |
+| `CAP_AMOUNT_EXCEEDED` | Supera max_amount_per_op |
+| `CAP_DAILY_LIMIT` | Supera max_amount_per_day acumulado |
+| `CAP_LIMIT_BACKEND_DOWN` | Contador de límites caído (fail-closed) |
+| `RBAC_DENIED` | Usuario efectivo sin ACL para la operación |

@@ -6,6 +6,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F1.5** PDP tres capas (cap primero, RBAC del usuario efectivo, record rules global
+  AND / rol OR) con denegacion por defecto, limites monetarios en Decimal y acumulados
+  diarios en micros enteros (Redis, fail-closed), POST /iam/v1/authorize, y auditoria
+  append-only con cadena de hash por tenant (deteccion de tamper y borrado). 24 tests.
 - **F1.3/F1.4** Token exchange RFC 8693: POST /iam/v1/token (agente autenticado por secret
   intercambia token del owner por JWT propio con act, tenant, cap merged, jti, exp 900s),
   registro de agentes POST /iam/v1/agents (secret una sola vez), grants por owner,

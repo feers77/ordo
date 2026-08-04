@@ -16,7 +16,7 @@ F1 implementa `ordo-iam` (principals, bridge OIDC, token exchange, capability to
 
 ## Decisión
 
-`sqlalchemy[asyncio]>=2.0`, `asyncpg`, `alembic`, `joserfc`, `httpx` como dependencias de `ordo-iam`. Ninguna otra librería de crypto/auth sin nuevo ADR.
+`sqlalchemy[asyncio]>=2.0`, `asyncpg`, `alembic`, `joserfc`, `httpx`, `python-multipart` (forms RFC 8693) y `redis` (contadores de límites diarios) como dependencias de `ordo-iam`. Ninguna otra librería de crypto/auth sin nuevo ADR.
 
 ## Consecuencias
 

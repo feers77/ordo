@@ -131,6 +131,77 @@ class Agent(TimestampMixin, Base):
     principal: Mapped[Principal] = relationship(lazy="joined")
 
 
+class Role(TimestampMixin, Base):
+    __tablename__ = "iam_role"
+    __table_args__ = (Index("uq_iam_role_tenant_name", "tenant", "name", unique=True),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant: Mapped[str] = mapped_column(String(64), index=True)
+    name: Mapped[str] = mapped_column(String(128))
+
+
+class RoleMember(Base):
+    __tablename__ = "iam_role_member"
+
+    role_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("iam_role.id", ondelete="CASCADE"), primary_key=True
+    )
+    principal_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("iam_principal.id", ondelete="CASCADE"), primary_key=True, index=True
+    )
+
+
+class Acl(TimestampMixin, Base):
+    __tablename__ = "iam_acl"
+    __table_args__ = (Index("uq_iam_acl_role_model", "role_id", "model", unique=True),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    role_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("iam_role.id", ondelete="CASCADE"), index=True
+    )
+    model: Mapped[str] = mapped_column(String(128))
+    perm_read: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    perm_write: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    perm_create: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+    perm_unlink: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("false"))
+
+
+class RecordRule(TimestampMixin, Base):
+    __tablename__ = "iam_record_rule"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant: Mapped[str] = mapped_column(String(64), index=True)
+    model: Mapped[str] = mapped_column(String(128), index=True)
+    name: Mapped[str] = mapped_column(String(256))
+    domain: Mapped[dict[str, Any] | list[Any]] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql")
+    )
+    ops: Mapped[list[str]] = mapped_column(
+        ARRAY(String(16)), default=list, server_default=text("'{}'")
+    )
+    role_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("iam_role.id", ondelete="CASCADE"))
+
+
+class AuditLog(Base):
+    __tablename__ = "iam_audit_log"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    ts: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    tenant: Mapped[str] = mapped_column(String(64), index=True)
+    principal_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    act_chain: Mapped[list[Any]] = mapped_column(
+        JSON().with_variant(JSONB(), "postgresql"), default=list
+    )
+    event_type: Mapped[str] = mapped_column(String(64))
+    payload: Mapped[dict[str, Any]] = mapped_column(default=dict)
+    trace_id: Mapped[str | None] = mapped_column(String(64))
+    token_jti: Mapped[str | None] = mapped_column(String(64))
+    prev_hash: Mapped[str] = mapped_column(String(64))
+    hash: Mapped[str] = mapped_column(String(64))
+
+
 class CapabilityGrant(TimestampMixin, Base):
     __tablename__ = "iam_capability_grant"
 
