@@ -85,11 +85,25 @@ def test_valid_domains_always_compile(domain: list[Any]) -> None:
 @settings(max_examples=200, deadline=None)
 @given(value=text_values.filter(lambda v: len(v) > 2))
 def test_values_never_appear_as_literals(value: str) -> None:
+    """El valor viaja como parámetro, nunca embebido como literal SQL.
+
+    La comprobación es "no aparece entrecomillado", no "no aparece como
+    subcadena": un valor corto como 'nam' coincide con el nombre de la
+    columna sin que haya fuga alguna.
+    """
     compiler = DomainCompiler(REGISTRY, schema="t_acme")
     stmt = compiler.select(model="sale.order", domain=[("name", "=", value)])
     compiled = stmt.compile()
-    assert value not in str(compiled)
+    sql = str(compiled)
+
+    assert f"'{value}'" not in sql
     assert value in compiled.params.values()
+
+    # control: con literal_binds el valor sí se embebe, así que la aserción
+    # de arriba distingue de verdad entre parámetro y literal
+    if "'" not in value and "\\" not in value:
+        literal_sql = str(stmt.compile(compile_kwargs={"literal_binds": True}))
+        assert f"'{value}'" in literal_sql
 
 
 @settings(max_examples=100, deadline=None)
