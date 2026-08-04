@@ -36,7 +36,9 @@ def _registry() -> Registry:
 
 
 REGISTRY = _registry()
-FIELDS = ["name", "state", "sequence", "partner_id.name"]
+# Derivado del registry, no hardcodeado: si el modelo gana un campo, el test
+# no empieza a fallar por casualidad (write_uid lo destapó).
+VALID_FIELDS = set(REGISTRY["sale.order"].fields)
 
 text_values = st.text(min_size=0, max_size=40)
 int_values = st.integers(min_value=-10_000, max_value=10_000)
@@ -91,7 +93,7 @@ def test_values_never_appear_as_literals(value: str) -> None:
 
 
 @settings(max_examples=100, deadline=None)
-@given(field=st.text(min_size=1, max_size=20).filter(lambda f: f not in FIELDS))
+@given(field=st.text(min_size=1, max_size=20).filter(lambda f: f not in VALID_FIELDS))
 def test_unknown_fields_always_rejected(field: str) -> None:
     compiler = DomainCompiler(REGISTRY, schema="t_acme")
     try:
