@@ -6,6 +6,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F2.4** ORM de escritura y API generica: RecordSet batch-first (create/read/write/
+  unlink/search) con validaciones (required, readonly, selection, tipos, Monetary rechaza
+  float), bloqueo optimista que devuelve el estado actual del registro en el 409,
+  paginacion por cursor (nunca offset), dry-run universal que hace rollback siempre,
+  idempotencia con respuesta cacheada 24h y deteccion de reuso, y transacciones
+  multi-operacion atomicas o con reporte parcial por indice. Endpoints /api/v1/{model},
+  batch y tx. 47 tests nuevos.
+- **Seguridad**: el binding de tenant se re-aplica en cada transaccion nueva de la sesion;
+  antes un commit a mitad de request dejaba las consultas siguientes sin filtro.
 - **F2.3** Campos calculados: decorador @depends, grafo de dependencias con orden
   topologico y deteccion de ciclos al construir el registry (falla el boot, no en runtime),
   recomputacion siempre en lote (N+1 imposible por diseno), campos related resueltos como

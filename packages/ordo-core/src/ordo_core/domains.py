@@ -17,7 +17,11 @@ from typing import Any, cast
 from sqlalchemy import (
     Boolean,
     Column,
+    Date,
+    DateTime,
+    Float,
     Integer,
+    LargeBinary,
     MetaData,
     Numeric,
     Select,
@@ -29,6 +33,7 @@ from sqlalchemy import (
     or_,
     select,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import ColumnElement, FromClause
 
 from ordo_core.errors import KernelError
@@ -59,12 +64,16 @@ COMPARISON_OPERATORS = frozenset(
     }
 )
 
-_SQL_TYPES = {
+_SQL_TYPES: dict[str, Any] = {
     "integer": Integer,
     "many2one": Integer,
     "boolean": Boolean,
     "monetary": Numeric,
-    "float": Numeric,
+    "float": Float,
+    "date": Date,
+    "datetime": DateTime(timezone=True),
+    "json": JSONB,
+    "binary": LargeBinary,
 }
 
 
