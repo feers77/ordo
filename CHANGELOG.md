@@ -6,6 +6,18 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **HITL dentro del request**: una operación que exige aprobación se ejecuta
+  reintentando el mismo request con `X-Ordo-Approval: <id>` (API) o `approval_id`
+  (tool MCP `ordo_run_action`); el servicio consume la aprobación sellada contra el
+  formato canónico `{model, operation, payload: {record_id, body}}` y ejecuta en un
+  solo paso. Cuerpo distinto = `IAM_APPROVAL_MISMATCH`; pendiente = 409; repetida =
+  `IAM_APPROVAL_CONSUMED` (exactamente una vez, probado). Además quedó verificada la
+  **emisión de tokens end-to-end contra el stack vivo**: usuario en Keycloak con
+  tenant, vínculo en primer login, registro de agente (secreto una vez), grant con
+  cap, token exchange RFC 8693, venta completa por MCP y ciclo HITL con la dueña
+  aprobando — todo por el edge. El IAM en compose separa `OIDC_ISSUER` (visible al
+  cliente) de `OIDC_JWKS_URL` (red interna). 3 tests de integración nuevos.
+
 - **Enforcement de tokens** (ADR-016): con `ORDO_IAM_URL` configurada, `ordo-api` y
   `ordo-mcp` exigen Bearer en toda ruta de datos y consultan al PDP central
   (`/iam/v1/authorize`, que ahora devuelve el tenant resuelto): el tenant sale del

@@ -10,24 +10,26 @@ class TestApiRoutes:
         assert route_to_authz("GET", "/docs") is None
 
     def test_crud_maps_to_model_and_method(self) -> None:
-        assert route_to_authz("GET", "/api/v1/sale.order") == ("sale.order", "read")
-        assert route_to_authz("POST", "/api/v1/sale.order") == ("sale.order", "create")
-        assert route_to_authz("PATCH", "/api/v1/sale.order/5") == ("sale.order", "write")
-        assert route_to_authz("DELETE", "/api/v1/sale.order/5") == ("sale.order", "unlink")
+        assert route_to_authz("GET", "/api/v1/sale.order") == ("sale.order", "read", None)
+        assert route_to_authz("POST", "/api/v1/sale.order") == ("sale.order", "create", None)
+        assert route_to_authz("PATCH", "/api/v1/sale.order/5") == ("sale.order", "write", 5)
+        assert route_to_authz("DELETE", "/api/v1/sale.order/5") == ("sale.order", "unlink", 5)
 
     def test_actions_carry_their_name(self) -> None:
         assert route_to_authz("POST", "/api/v1/sale.order/5/actions/action_invoice") == (
             "sale.order",
             "action_invoice",
+            5,
         )
-        assert route_to_authz("GET", "/api/v1/sale.order/actions") == ("sale.order", "read")
+        assert route_to_authz("GET", "/api/v1/sale.order/actions") == ("sale.order", "read", None)
 
     def test_reports_and_meta_use_pseudo_models(self) -> None:
         assert route_to_authz("GET", "/api/v1/reports/account.trial_balance") == (
             "reports",
             "read",
+            None,
         )
-        assert route_to_authz("GET", "/meta/v1/schema") == ("ir.model", "read")
+        assert route_to_authz("GET", "/meta/v1/schema") == ("ir.model", "read", None)
 
 
 class TestMcpTools:

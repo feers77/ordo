@@ -237,6 +237,13 @@ TOOLS: list[dict[str, Any]] = [
                 "params": {"type": "object"},
                 "dry_run": DRY_RUN_PROP,
                 "idempotency_key": KEY_PROP,
+                "approval_id": {
+                    "type": "string",
+                    "description": (
+                        "Id de la aprobación humana ya resuelta, para operaciones "
+                        "que la exigen; se consume una sola vez"
+                    ),
+                },
             },
             ["model", "id", "action"],
         ),

@@ -44,7 +44,10 @@ services:
       REDIS_URL: redis://redis:6379/0
       IAM_ISSUER: ${IAM_ISSUER:-http://iam:8000}
       IAM_SIGNING_KEY_FILE: /run/secrets/iam_signing_key
-      OIDC_ISSUER: ${OIDC_ISSUER:-http://keycloak:8080/realms/ordo}
+      # El issuer es el que ven los clientes al loguearse (host); el JWKS se
+      # busca por la red interna de compose.
+      OIDC_ISSUER: ${OIDC_ISSUER:-http://127.0.0.1:8080/realms/ordo}
+      OIDC_JWKS_URL: ${OIDC_JWKS_URL:-http://keycloak:8080/realms/ordo/protocol/openid-connect/certs}
       OIDC_AUDIENCE: ${OIDC_AUDIENCE:-ordo-api}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:

@@ -201,4 +201,5 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `IAM_APPROVAL_REQUIRED` | 403 | no | La operación exige aprobación humana previa |
 | `AUTH_TENANT_MISMATCH` | 403 | no | La cabecera X-Ordo-Tenant contradice al token |
 | `AUTH_PDP_UNAVAILABLE` | 503 | sí | IAM no responde; fail-closed |
+| `IAM_APPROVAL_INVALID` | 4xx | no | La aprobación no se pudo consumir (detalle en message) |
 | `TENANT_REQUIRED` | 400 | no | Sin token ni cabecera de tenant en modo abierto |
