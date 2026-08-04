@@ -1,0 +1,44 @@
+# Contabilidad opera sus modelos; ventas y compras solo leen lo que
+# necesitan para facturar. Nadie tiene unlink sobre asientos: un asiento
+# contabilizado se revierte, y los borradores se anulan, no se borran.
+roles:
+  contabilidad:
+    account.account: [read, write, create]
+    account.journal: [read, write, create]
+    account.period: [read, write, create]
+    account.move: [read, write, create]
+    account.move.line: [read, write, create]
+    account.tax: [read, write, create]
+    account.settings: [read, write, create]
+    account.payment: [read, write, create]
+    account.reconcile: [read, write, create, unlink]
+    account.bank.statement: [read, write, create]
+    account.bank.statement.line: [read, write, create]
+  tesoreria:
+    account.move: [read]
+    account.move.line: [read]
+    account.journal: [read]
+    account.payment: [read, write, create]
+    account.reconcile: [read, write, create, unlink]
+    account.bank.statement: [read, write, create]
+    account.bank.statement.line: [read, write, create]
+  ventas:
+    account.move: [read]
+    account.tax: [read]
+    account.journal: [read]
+  compras:
+    account.move: [read]
+    account.tax: [read]
+    account.journal: [read]
+  auditor:
+    account.account: [read]
+    account.journal: [read]
+    account.period: [read]
+    account.move: [read]
+    account.move.line: [read]
+    account.tax: [read]
+    account.settings: [read]
+    account.payment: [read]
+    account.reconcile: [read]
+    account.bank.statement: [read]
+    account.bank.statement.line: [read]

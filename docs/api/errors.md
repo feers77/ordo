@@ -188,3 +188,6 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `REPORT_UNKNOWN` | 404 | no | No existe el reporte; el hint lista los disponibles |
 | `REPORT_PARAM_REQUIRED` | 400 | no | Falta un parámetro obligatorio del reporte |
 | `TOOL_UNKNOWN` | — | no | (MCP) No existe la tool; el hint lista las disponibles |
+| `SECURITY_INVALID_YAML` | 500 | no | security.yaml de un módulo ilegible |
+| `SECURITY_INVALID_SHAPE` | 500 | no | security.yaml sin el mapa roles esperado |
+| `SECURITY_INVALID_PERM` | 500 | no | Permiso desconocido en un security.yaml |

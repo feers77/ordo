@@ -1,0 +1,12 @@
+# Ventas opera sus órdenes. Facturar (action_invoice) mapea a write en el
+# PDP y además declara requires_approval: el rol permite, el cap exige HITL.
+roles:
+  ventas:
+    sale.order: [read, write, create]
+    sale.order.line: [read, write, create]
+  contabilidad:
+    sale.order: [read]
+    sale.order.line: [read]
+  auditor:
+    sale.order: [read]
+    sale.order.line: [read]

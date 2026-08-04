@@ -6,6 +6,17 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F1.8** Roles y ACL por defecto de los módulos comerciales (diseño F1-08): cada
+  módulo declara en `security.yaml` qué rol toca qué modelo y cómo; los fragmentos se
+  combinan por rol (`ventas`, `compras`, `contabilidad`, `tesoreria`, `facturacion`,
+  `auditor`). `tools/seed_iam_roles.py` los carga idempotente en IAM. Dos invariantes
+  con test: todo modelo del registry aparece en algún `security.yaml` (agregar un
+  modelo sin decidir su dueño rompe el build) y nadie tiene `unlink` sobre asientos ni
+  documentos electrónicos. El PDP evalúa las acciones no-CRUD como `write` del modelo,
+  verificado con los roles reales: ventas factura su orden pero no contabiliza
+  asientos; el auditor lee todo y no escribe nada. 5 tests unitarios y 6 de
+  integración nuevos.
+
 - **Despliegue de servicios**: perfil `app` en compose (`make app`) levanta `ordo-api`
   y `ordo-mcp` construidos desde el repo con los módulos de negocio dentro de la
   imagen, corriendo como `ordo_app` (sin DDL) contra Postgres; Caddy enruta `/mcp*` al
