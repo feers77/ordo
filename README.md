@@ -32,18 +32,26 @@ En desarrollo, todavía sin release. Lo que ya funciona y está probado:
   genérica con transacciones multi-operación, secuencias legales sin huecos, cola de
   trabajos, outbox transaccional, chatter, adjuntos y schema semántico.
 - **Módulos** — sistema de módulos con manifiesto y migraciones propias, más los
-  módulos `base` (compañías, monedas, contactos, unidades) y `account` (contabilidad
-  con partida doble, motor de impuestos).
+  módulos `base` (compañías, monedas, contactos, unidades), `account` (contabilidad
+  con partida doble, motor de impuestos), `sale` y `purchase` (órdenes que al
+  facturarse generan y contabilizan su asiento solas) y `einvoicing` (documentos
+  electrónicos como máquina de estados, folios autorizados, certificados).
+- **Facturación electrónica** — framework común con adaptadores **SII (Chile)**
+  (CAF, timbre TED firmado con la clave del CAF, DTE, sobre EnvioDTE, acuses) y
+  **SIFEN (Paraguay)** (CDC de 44 dígitos, XML del DE, QR firmado con el CSC).
+  La firma XMLDSig de documento completo espera la aprobación de dependencias
+  (ADR-014); el envío productivo requiere además certificados reales en el vault.
 - **Localizaciones** — framework declarativo de packs fiscales con packs de Chile y
   Paraguay **en borrador**: contienen lo verificable citando la norma, pero el plan de
   cuentas y los impuestos específicos requieren revisión de un contador antes de usarse
   para declarar impuestos.
 
-Cobertura: más de 380 tests entre unitarios, de integración contra PostgreSQL real y de
-extremo a extremo. Los dos componentes donde un error sale caro tienen property-based
-testing con Hypothesis: el compilador de dominios (tests de inyección incluidos) y la
+Cobertura: más de 500 tests entre unitarios, de integración contra PostgreSQL real y de
+extremo a extremo. Los componentes donde un error sale caro tienen property-based
+testing con Hypothesis: el compilador de dominios (tests de inyección incluidos), la
 contabilidad (partida doble, inalterabilidad de asientos contabilizados, redondeo de
-impuestos).
+impuestos), el constructor de asientos de factura y la máquina de estados de la
+facturación electrónica.
 
 Lo que falta antes de la primera versión usable está en
 [`docs/design/F2-00-resumen.md`](docs/design/F2-00-resumen.md); el plan completo, en
