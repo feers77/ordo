@@ -52,6 +52,76 @@ async def einvoice(env: Environment, record_id: int, params: dict[str, Any]) -> 
     return {"document_id": document_id, "number": number, "state": "generated"}
 
 
+# Tipo de nota de crédito electrónica por país: DTE 61 en Chile, DE 5 en Paraguay.
+CREDIT_NOTE_TYPES = {"cl": "61", "py": "5"}
+
+
+@action(
+    "sale.order",
+    "action_einvoice_credit_note",
+    summary="Emite la nota de crédito electrónica referenciando el documento original",
+    requires_approval=True,
+    params={
+        "original_document_id": "Id del edi.document que se corrige (obligatorio)",
+        "reason": "Motivo de la nota de crédito (obligatorio)",
+    },
+)
+async def einvoice_credit_note(
+    env: Environment, record_id: int, params: dict[str, Any]
+) -> dict[str, Any]:
+    from ordo_core.recordset import RecordSet
+
+    original_id = params.get("original_document_id")
+    reason = str(params.get("reason", "")).strip()
+    if not original_id or not reason:
+        raise EdiError(
+            "EDI_CREDIT_PARAMS_REQUIRED",
+            "La nota de crédito necesita el documento original y su motivo",
+            hint="Pasa params.original_document_id y params.reason.",
+        )
+    originals = await RecordSet(env, "edi.document").read(
+        [int(original_id)],
+        fields=["id", "country_code", "document_type_code", "number", "state"],
+    )
+    if not originals:
+        raise EdiError("EDI_SOURCE_NOT_FOUND", f"No existe el documento electrónico {original_id}")
+    original = originals[0]
+    if original["state"] not in ("sent", "accepted"):
+        raise EdiError(
+            "EDI_CREDIT_ORIGINAL_NOT_ISSUED",
+            "Solo se corrige un documento enviado o aceptado; uno en borrador se anula",
+            hint="Usa action_cancel sobre el documento si aún no salió.",
+        )
+    credit_type = CREDIT_NOTE_TYPES.get(original["country_code"])
+    if credit_type is None:
+        raise EdiError(
+            "EDI_NO_ADAPTER",
+            f"No hay tipo de nota de crédito para '{original['country_code']}'",
+        )
+    invoice, country, company_id = await invoice_data_from_sale(
+        env,
+        record_id,
+        document_type_code=credit_type,
+        reference_document=f"{original['document_type_code']}/{original['number']}",
+        reference_reason=reason,
+    )
+    service = _service(env)
+    document_id = await service.create_document(
+        country_code=country,
+        document_type_code=credit_type,
+        company_id=company_id,
+        partner_id=None,
+    )
+    number = await service.action_generate(document_id, invoice)
+    return {
+        "document_id": document_id,
+        "number": number,
+        "document_type_code": credit_type,
+        "references": f"{original['document_type_code']}/{original['number']}",
+        "state": "generated",
+    }
+
+
 @action(
     "edi.document",
     "action_contingency",

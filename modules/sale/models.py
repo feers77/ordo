@@ -19,6 +19,7 @@ SALE_STATES = [
     ("draft", "Borrador"),
     ("confirmed", "Confirmada"),
     ("invoiced", "Facturada"),
+    ("credited", "Con nota de crédito"),
     ("cancelled", "Cancelada"),
 ]
 
@@ -82,6 +83,11 @@ class SaleOrder(Model):
         "account.move",
         agent_hint="Asiento de la factura generada, si ya se facturó",
         examples=["17"],
+    )
+    credit_note_move_id = Many2one(
+        "account.move",
+        agent_hint="Asiento de la nota de crédito que revirtió la factura, si existe",
+        examples=["19"],
     )
     company_id = Many2one(
         "res.company", required=True, agent_hint="Compañía vendedora", examples=["1"]

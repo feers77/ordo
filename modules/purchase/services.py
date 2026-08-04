@@ -160,13 +160,32 @@ class PurchaseService:
         )
         return move_id
 
+    async def action_credit_note(
+        self, order_id: int, *, reason: str, credit_date: str | None = None
+    ) -> int:
+        """Registra la nota de crédito del proveedor revirtiendo su factura."""
+        order = await self._get(order_id)
+        self._expect(order, "billed", "acreditar")
+        if not reason.strip():
+            raise PurchaseError(
+                "PURCHASE_CREDIT_REASON_REQUIRED",
+                "Una nota de crédito lleva su motivo",
+                hint="Pasa reason con la causa (devolución, corrección del proveedor).",
+            )
+        [full] = await self.orders.read([order_id], fields=["bill_move_id"])
+        reversal_id = await self.accounting.action_reverse(full["bill_move_id"], credit_date)
+        await self.orders.write(
+            [order_id], {"state": "credited", "credit_note_move_id": reversal_id}
+        )
+        return reversal_id
+
     async def action_cancel(self, order_id: int) -> None:
         order = await self._get(order_id)
         if order["state"] == "billed":
             raise PurchaseError(
                 "PURCHASE_INVALID_TRANSITION",
                 "Una orden con factura registrada no se cancela: revierte su asiento",
-                hint="Usa action_reverse sobre bill_move_id.",
+                hint="Usa action_credit_note para revertir la factura.",
             )
         if order["state"] == "cancelled":
             return

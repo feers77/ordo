@@ -132,6 +132,8 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `EDI_MISSING_TAX_ID` | 422 | no | Falta el identificador tributario del emisor o receptor |
 | `EDI_MISSING_COUNTRY` | 422 | no | La compañía no declara país; no hay adaptador que elegir |
 | `EDI_DOCUMENT_TYPE_REQUIRED` | 400 | no | Falta el tipo de documento a emitir |
+| `EDI_CREDIT_PARAMS_REQUIRED` | 400 | no | La NC necesita el documento original y su motivo |
+| `EDI_CREDIT_ORIGINAL_NOT_ISSUED` | 409 | no | Solo se corrige un documento enviado o aceptado |
 
 ## Ventas y compras
 
@@ -150,6 +152,8 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `PURCHASE_NO_ACCOUNT` | 409 | no | Línea sin cuenta y diario sin cuenta por defecto |
 | `PURCHASE_ZERO_TOTAL` | 400 | no | El documento redondea a cero; nada que asentar |
 | `PURCHASE_VENDOR_REF_REQUIRED` | 400 | no | Falta el número de la factura del proveedor |
+| `SALE_CREDIT_REASON_REQUIRED` | 400 | no | Una nota de crédito lleva su motivo |
+| `PURCHASE_CREDIT_REASON_REQUIRED` | 400 | no | Una nota de crédito lleva su motivo |
 | `ACCOUNT_SETTINGS_MISSING` | 409 | no | La compañía no tiene configuración contable |
 | `ACCOUNT_TAX_NO_ACCOUNT` | 409 | no | El impuesto no tiene cuenta contable asignada |
 

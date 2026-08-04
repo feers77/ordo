@@ -31,6 +31,25 @@ async def invoice(env: Environment, record_id: int, params: dict[str, Any]) -> d
 
 @action(
     "sale.order",
+    "action_credit_note",
+    summary="Emite la nota de crédito contable: revierte la factura completa",
+    requires_approval=True,
+    params={
+        "reason": "Motivo de la nota de crédito (obligatorio)",
+        "credit_date": "Fecha del asiento de reversión (opcional, ISO)",
+    },
+)
+async def credit_note(env: Environment, record_id: int, params: dict[str, Any]) -> dict[str, Any]:
+    reversal_id = await SaleService(env).action_credit_note(
+        record_id,
+        reason=str(params.get("reason", "")),
+        credit_date=params.get("credit_date"),
+    )
+    return {"credit_note_move_id": reversal_id, "state": "credited"}
+
+
+@action(
+    "sale.order",
     "action_cancel",
     summary="Cancela una orden no facturada",
 )
