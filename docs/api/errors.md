@@ -21,3 +21,7 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `IAM_EMAIL_TAKEN` | 409 | no | Email ya registrado en el tenant |
 | `IAM_CLIENT_ID_TAKEN` | 409 | no | client_id ya registrado (único global) |
 | `IAM_GRANT_NOT_FOUND` | 404 | no | Capability grant inexistente |
+| `IAM_TOKEN_INVALID` | 401 | no | Token malformado, firma/iss/aud/alg inválidos o claim faltante |
+| `IAM_TOKEN_EXPIRED` | 401 | sí | Token vencido; renovar y reintentar |
+| `IAM_UNKNOWN_IDENTITY` | 401 | no | Identidad no registrada en el tenant (sin auto-creación) |
+| `IAM_PRINCIPAL_SUSPENDED` | 403 | no | Principal suspendido |
