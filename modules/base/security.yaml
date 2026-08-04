@@ -1,7 +1,9 @@
 # Roles por defecto sobre los modelos maestros. Denegación por defecto: lo
 # que no está aquí no lo alcanza nadie sin un rol propio del tenant.
-# "ir.model" (introspección del schema) y "reports" son pseudo-modelos del
-# sistema: no están en el registry pero el PDP los evalúa igual (ADR-016).
+# "ir.model" (introspección del schema), "reports" y "sandbox" son
+# pseudo-modelos del sistema: no están en el registry pero el PDP los evalúa
+# igual (ADR-016). El sandbox se otorga a integraciones porque clona datos
+# reales: un tenant puede sumarlo a otros roles si lo decide.
 roles:
   ventas:
     ir.model: [read]
@@ -35,6 +37,8 @@ roles:
   auditor:
     ir.model: [read]
     reports: [read]
+  integraciones:
+    sandbox: [read, create, unlink]
     res.partner: [read]
     res.currency: [read]
     res.currency.rate: [read]
