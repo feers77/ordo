@@ -1,0 +1,14 @@
+# Hallazgos verificados como falsos positivos, silenciados uno por uno con su
+# huella. No se excluye el archivo completo a propósito: si mañana alguien pega
+# un secreto real en la documentación, gitleaks lo detectará igual.
+#
+# Todos son valores de ejemplo del landing:
+#   - Idempotency-Key: identificadores hexadecimales inventados
+#   - access_token: un JWT truncado cuyo prefijo es el encabezado estándar
+docs/landing/index.html:generic-api-key:494
+docs/landing/index.html:generic-api-key:551
+docs/landing/index.html:generic-api-key:588
+docs/landing/index.html:generic-api-key:614
+docs/landing/index.html:generic-api-key:643
+docs/landing/index.html:generic-api-key:845
+docs/landing/index.html:generic-api-key:925

@@ -1,0 +1,1547 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORDO ERP — API-first, operado por agentes</title>
+<meta name="description" content="ORDO ERP: ERP/CRM API-first sin frontend, diseñado para que el consumidor primario sea un agente de IA. Documentación de arquitectura, API, seguridad y errores.">
+<style>
+:root{
+  --bg:#ffffff; --bg-alt:#f7f8fa; --bg-code:#f2f4f7; --bg-inset:#fbfbfd;
+  --fg:#15181d; --fg-muted:#5b6472; --fg-faint:#858e9c;
+  --border:#e1e5ea; --border-strong:#c9d0d9;
+  --accent:#1f5fd0; --accent-soft:#eaf1fd;
+  --ok:#1a7f4b; --ok-soft:#e6f5ed;
+  --warn:#8a5a06; --warn-soft:#fdf3e0;
+  --danger:#b3261e; --danger-soft:#fceceb;
+  --shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.04);
+  --radius:10px;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1116; --bg-alt:#151a21; --bg-code:#161b22; --bg-inset:#11151b;
+    --fg:#e6eaf0; --fg-muted:#9aa5b4; --fg-faint:#6f7a89;
+    --border:#242b35; --border-strong:#333c49;
+    --accent:#6ea8fe; --accent-soft:#16233a;
+    --ok:#5fd39b; --ok-soft:#12271e;
+    --warn:#e3b341; --warn-soft:#2a2213;
+    --danger:#ff8b82; --danger-soft:#2c1715;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:16px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code,kbd,pre{font-family:var(--mono)}
+code{font-size:.875em;background:var(--bg-code);padding:.12em .38em;border-radius:5px;border:1px solid var(--border)}
+pre{margin:0;overflow-x:auto}
+pre code{background:none;border:none;padding:0;font-size:.82rem;line-height:1.6}
+
+/* ---------- layout ---------- */
+.shell{display:grid;grid-template-columns:250px minmax(0,1fr);gap:0;max-width:1360px;margin:0 auto}
+nav.toc{
+  position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:1.75rem 1rem 3rem 1.5rem;border-right:1px solid var(--border);
+  font-size:.85rem;
+}
+nav.toc .brand{font-weight:700;font-size:1.05rem;letter-spacing:-.02em;color:var(--fg);display:block;margin-bottom:.15rem}
+nav.toc .brand:hover{text-decoration:none}
+nav.toc .brand-sub{color:var(--fg-faint);font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1.4rem}
+nav.toc ol{list-style:none;margin:0;padding:0}
+nav.toc li{margin:.06rem 0}
+nav.toc a{display:block;padding:.28rem .55rem;border-radius:6px;color:var(--fg-muted);border-left:2px solid transparent}
+nav.toc a:hover{background:var(--bg-alt);color:var(--fg);text-decoration:none}
+nav.toc a.sub{padding-left:1.4rem;font-size:.81rem}
+nav.toc .group{margin-top:1rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--fg-faint);padding:.3rem .55rem}
+main{padding:2.5rem 2.5rem 6rem;min-width:0}
+@media (max-width:900px){
+  .shell{grid-template-columns:1fr}
+  nav.toc{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border);padding:1.25rem 1.25rem 1.5rem}
+  nav.toc ol{columns:2;column-gap:1rem}
+  main{padding:1.75rem 1.25rem 4rem}
+}
+
+/* ---------- typography ---------- */
+h1{font-size:2.5rem;line-height:1.12;letter-spacing:-.03em;margin:0 0 .6rem;font-weight:750}
+h2{font-size:1.55rem;letter-spacing:-.02em;margin:3.5rem 0 .9rem;padding-top:.6rem;font-weight:700;border-top:1px solid var(--border)}
+h2:first-of-type{border-top:none}
+h3{font-size:1.1rem;margin:2.2rem 0 .6rem;font-weight:650;letter-spacing:-.01em}
+h4{font-size:.95rem;margin:1.5rem 0 .5rem;font-weight:650;color:var(--fg-muted)}
+p{margin:.75rem 0}
+ul,ol.body{margin:.75rem 0;padding-left:1.3rem}
+li{margin:.3rem 0}
+.lead{font-size:1.14rem;color:var(--fg-muted);max-width:62ch;margin:0 0 1.6rem}
+
+/* ---------- hero ---------- */
+header.hero{padding-bottom:.5rem}
+.eyebrow{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--fg-faint);font-weight:650;margin-bottom:.7rem}
+.badges{display:flex;flex-wrap:wrap;gap:.45rem;margin:1.2rem 0 2rem}
+.badge{font-size:.75rem;font-weight:600;padding:.22rem .6rem;border-radius:999px;border:1px solid var(--border-strong);color:var(--fg-muted);background:var(--bg-alt)}
+.badge.ok{color:var(--ok);background:var(--ok-soft);border-color:transparent}
+.badge.warn{color:var(--warn);background:var(--warn-soft);border-color:transparent}
+.badge.accent{color:var(--accent);background:var(--accent-soft);border-color:transparent}
+
+/* ---------- blocks ---------- */
+.card{background:var(--bg-alt);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.15rem;margin:1.2rem 0}
+.card > :first-child{margin-top:0}
+.card > :last-child{margin-bottom:0}
+.card.rule{border-left:3px solid var(--accent)}
+.card.caution{border-left:3px solid var(--warn);background:var(--warn-soft)}
+.card-title{font-weight:680;font-size:.9rem;letter-spacing:.01em;margin-bottom:.25rem}
+
+.grid{display:grid;gap:.9rem;margin:1.2rem 0}
+.grid.two{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.grid.three{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.tile{border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem;background:var(--bg-inset)}
+.tile h4{margin:0 0 .3rem;color:var(--fg);font-size:.92rem}
+.tile p{margin:0;font-size:.87rem;color:var(--fg-muted)}
+
+/* ---------- tables ---------- */
+.table-wrap{overflow-x:auto;margin:1.1rem 0;border:1px solid var(--border);border-radius:var(--radius)}
+table{border-collapse:collapse;width:100%;font-size:.865rem;min-width:520px}
+th,td{text-align:left;padding:.55rem .8rem;border-bottom:1px solid var(--border);vertical-align:top}
+thead th{background:var(--bg-alt);font-weight:650;font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-muted);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td code{white-space:nowrap}
+
+/* ---------- endpoint blocks ---------- */
+.ep{border:1px solid var(--border);border-radius:var(--radius);margin:1.2rem 0;overflow:hidden;box-shadow:var(--shadow)}
+.ep-head{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.6rem .9rem;background:var(--bg-alt);border-bottom:1px solid var(--border)}
+.ep-head .path{font-family:var(--mono);font-size:.86rem;font-weight:600;word-break:break-all}
+.ep-head .note{margin-left:auto;font-size:.75rem;color:var(--fg-faint)}
+.ep-body{padding:.9rem}
+.ep-body > p:first-child{margin-top:0}
+.m{font-family:var(--mono);font-size:.7rem;font-weight:700;letter-spacing:.06em;padding:.16rem .45rem;border-radius:5px;color:#fff;flex:none}
+.m.get{background:#1a7f4b}.m.post{background:#1f5fd0}.m.patch{background:#8a5a06}.m.delete{background:#b3261e}
+@media (prefers-color-scheme:dark){
+  .m.get{background:#1e6b45}.m.post{background:#2b5aa8}.m.patch{background:#7a5211}.m.delete{background:#8f2b25}
+}
+
+.snippet{background:var(--bg-code);border:1px solid var(--border);border-radius:8px;padding:.7rem .85rem;margin:.7rem 0;overflow-x:auto}
+.snippet .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--fg-faint);font-weight:650;margin-bottom:.4rem}
+.snippet.req{border-left:3px solid var(--accent)}
+.snippet.res{border-left:3px solid var(--ok)}
+.snippet.err{border-left:3px solid var(--danger)}
+
+/* ---------- status pills ---------- */
+.pill{display:inline-block;font-size:.7rem;font-weight:650;padding:.1rem .45rem;border-radius:5px;white-space:nowrap;letter-spacing:.01em}
+.pill.impl{color:var(--ok);background:var(--ok-soft)}
+.pill.plan{color:var(--warn);background:var(--warn-soft)}
+.pill.stub{color:var(--fg-muted);background:var(--bg-code)}
+
+/* ---------- diagrams ---------- */
+figure{margin:1.4rem 0}
+figure svg{display:block;width:100%;height:auto;max-width:100%}
+figcaption{font-size:.79rem;color:var(--fg-faint);margin-top:.5rem;text-align:center}
+.dg-box{fill:var(--bg-inset);stroke:var(--border-strong);stroke-width:1.25}
+.dg-box-accent{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.25}
+.dg-box-muted{fill:var(--bg-alt);stroke:var(--border);stroke-width:1.25;stroke-dasharray:5 3}
+.dg-t{fill:var(--fg);font-family:var(--sans);font-size:13px;font-weight:640}
+.dg-s{fill:var(--fg-muted);font-family:var(--sans);font-size:10.5px}
+.dg-m{fill:var(--fg-faint);font-family:var(--mono);font-size:10px}
+.dg-line{stroke:var(--border-strong);stroke-width:1.4;fill:none}
+.dg-line-a{stroke:var(--accent);stroke-width:1.6;fill:none}
+.dg-arrow{fill:var(--border-strong)}
+.dg-arrow-a{fill:var(--accent)}
+
+footer{border-top:1px solid var(--border);margin-top:4rem;padding-top:1.5rem;font-size:.85rem;color:var(--fg-muted)}
+footer p{margin:.4rem 0}
+hr.soft{border:none;border-top:1px solid var(--border);margin:2rem 0}
+.small{font-size:.82rem;color:var(--fg-muted)}
+.anchor{color:var(--fg-faint);font-weight:400;text-decoration:none;opacity:0;margin-left:.35rem;font-size:.8em}
+h2:hover .anchor,h3:hover .anchor{opacity:1}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav class="toc">
+  <a href="#top" class="brand">ORDO ERP</a>
+  <div class="brand-sub">Documentación</div>
+  <ol>
+    <li><a href="#que-es">Qué es ORDO</a></li>
+    <li><a href="#por-que">Por qué existe</a></li>
+    <li><a href="#estado">Estado del proyecto</a></li>
+    <li><a href="#arquitectura">Arquitectura</a></li>
+    <div class="group">API</div>
+    <li><a href="#api">Superficie y contexto</a></li>
+    <li><a href="#api-records" class="sub">/api/v1/{model}</a></li>
+    <li><a href="#api-batch" class="sub">/api/v1/{model}/batch</a></li>
+    <li><a href="#api-tx" class="sub">/api/v1/tx</a></li>
+    <li><a href="#api-meta" class="sub">/meta/v1/*</a></li>
+    <li><a href="#api-iam" class="sub">/iam/v1/*</a></li>
+    <div class="group">Contrato</div>
+    <li><a href="#convenciones">Convenciones</a></li>
+    <li><a href="#seguridad">Modelo de seguridad</a></li>
+    <li><a href="#errores">Catálogo de errores</a></li>
+    <li><a href="#openapi">Contratos OpenAPI</a></li>
+    <li><a href="#planificado">Planificado, no implementado</a></li>
+    <li><a href="#licencia">Licencia</a></li>
+  </ol>
+</nav>
+
+<main id="top">
+
+<header class="hero">
+  <div class="eyebrow">ERP/CRM API-first · sin frontend</div>
+  <h1>ORDO ERP</h1>
+  <p class="lead">
+    Un ERP/CRM completo cuyo consumidor primario es un <strong>agente de IA</strong>,
+    no un humano frente a una pantalla. No hay interfaz gráfica: hay contrato,
+    introspección en runtime, idempotencia, simulación y capacidades delegadas con límites.
+  </p>
+  <div class="badges">
+    <span class="badge accent">Python 3.12 · FastAPI · PostgreSQL 17</span>
+    <span class="badge ok">F1 IAM implementada</span>
+    <span class="badge ok">F2 Kernel funcional</span>
+    <span class="badge warn">F3 Capa agéntica pendiente</span>
+    <span class="badge">AGPLv3</span>
+  </div>
+</header>
+
+<!-- =============================================================== -->
+<h2 id="que-es">Qué es ORDO <a href="#que-es" class="anchor">#</a></h2>
+
+<p>
+  ORDO es un ERP/CRM <strong>solo backend</strong>. Cobertura funcional de un ERP completo
+  —ventas, compras, inventario, contabilidad, manufactura, proyectos, RRHH— más un
+  framework declarativo de localizaciones fiscales cuya primera ola es Chile.
+</p>
+<p>
+  La diferencia no es que le falte la pantalla. La diferencia es que <em>todo el contrato
+  está diseñado para que quien lo opere sea un programa que razona, se equivoca de formas
+  creativas y reintenta</em>. Eso cambia requisitos de fondo: descubrimiento por introspección
+  en vez de manual de usuario, errores con código estable en vez de mensajes para humanos,
+  idempotencia obligatoria en vez de "no aprietes dos veces".
+</p>
+
+<div class="card rule">
+  <div class="card-title">Regla de oro del proyecto</div>
+  <p>Si un agente puede dejar la contabilidad en un estado inconsistente,
+  el bug es del sistema, no del agente.</p>
+</div>
+
+<p>
+  Corolario operativo: <strong>no se escribe frontend, nunca</strong>. Si una tarea parece requerir
+  interfaz, el entregable es un endpoint más el schema que permite a un cliente construir
+  esa interfaz por su cuenta.
+</p>
+
+<!-- =============================================================== -->
+<h2 id="por-que">Por qué existe <a href="#por-que" class="anchor">#</a></h2>
+
+<p>
+  Un ERP tradicional expuesto por API sigue siendo un CRUD sobre un ORM: asume que
+  al otro lado hay una persona que lee el formulario, entiende el mensaje de error y
+  sabe que no debe apretar "Guardar" dos veces. Ninguna de esas tres cosas es cierta
+  cuando el operador es un agente.
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Requisito</th><th>ERP tradicional</th><th>ERP agéntico (ORDO)</th></tr></thead>
+  <tbody>
+    <tr><td>Descubrimiento</td><td>Documentación + capacitación</td><td>Introspección en runtime: el agente pregunta al sistema qué puede hacer</td></tr>
+    <tr><td>Errores</td><td>Mensaje para humano</td><td>Código estable + causa estructurada + acción sugerida (<code>hint</code>)</td></tr>
+    <tr><td>Reintentos</td><td>El usuario reintenta</td><td>Idempotencia obligatoria en toda escritura</td></tr>
+    <tr><td>Validación</td><td>Formulario con <em>onchange</em></td><td><code>dry_run</code> sobre cualquier operación que escriba</td></tr>
+    <tr><td>Permisos</td><td>Rol del usuario</td><td>Capacidad delegada con límites: modelos, monto máximo, ventana temporal</td></tr>
+    <tr><td>Auditoría</td><td>Quién</td><td>Quién + qué agente + bajo qué delegación + con qué <code>trace_id</code></td></tr>
+    <tr><td>Operaciones masivas</td><td>Import CSV</td><td>Batch transaccional nativo con reporte parcial por índice</td></tr>
+    <tr><td>Errores del actor</td><td>Poco frecuentes</td><td>Frecuentes y creativos → el sistema debe ser hostil a los estados inválidos</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- =============================================================== -->
+<h2 id="estado">Estado del proyecto <a href="#estado" class="anchor">#</a></h2>
+
+<p>
+  ORDO se construye por fases. Esta documentación distingue de forma explícita lo que
+  <strong>ya existe y está probado</strong> de lo que <strong>está diseñado pero no implementado</strong>.
+  Nada de lo que aparece marcado como implementado es aspiracional: sale del código o de
+  los contratos OpenAPI versionados en el repositorio.
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Fase</th><th>Contenido</th><th>Estado</th></tr></thead>
+  <tbody>
+    <tr><td>F0 — Bootstrap</td><td>Repo, CI, Compose (Postgres/Redis/NATS/MinIO/Keycloak), healthchecks, ADR 001–012</td><td><span class="pill impl">entregada</span></td></tr>
+    <tr><td>F1 — IAM</td><td>Login OIDC, agentes registrables, token exchange con <code>act</code>, capability tokens, PDP RBAC+ABAC, aprobaciones HITL, auditoría encadenada</td><td><span class="pill impl">implementada</span></td></tr>
+    <tr><td>F2 — Kernel</td><td>Registry, campos calculados, dominios→SQL, record rules, herencia, secuencias, chatter, jobs, cron, outbox, adjuntos, API genérica, schema semántico</td><td><span class="pill impl">funcional</span></td></tr>
+    <tr><td>F3 — Capa agéntica</td><td>Servidor MCP, <code>explain</code>, búsqueda semántica, NL→dominio, suscripciones, sandbox</td><td><span class="pill plan">planificada</span></td></tr>
+    <tr><td>F4+ — Módulos de negocio</td><td>Contabilidad, ventas, compras, inventario, localización CL, manufactura…</td><td><span class="pill plan">planificada</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="card caution">
+  <div class="card-title">Fuera del alcance ya entregado en F2</div>
+  <p class="small" style="margin:0">
+    i18n (traducciones de campos y catálogo de mensajes), automated actions declarativas
+    (diseñadas, sin implementar), motor de reportes, import/export con validación previa,
+    tests de carga con los SLO objetivo, y migraciones para modelos de negocio.
+    Hoy el kernel crea sus propias tablas; los módulos de F4+ traerán las suyas.
+  </p>
+</div>
+
+<!-- =============================================================== -->
+<h2 id="arquitectura">Arquitectura de servicios <a href="#arquitectura" class="anchor">#</a></h2>
+
+<p>
+  Siete servicios, todos <em>stateless</em> salvo la infraestructura con estado
+  (PostgreSQL, Redis, NATS, MinIO). La identidad vive en un PostgreSQL separado del
+  de los tenants: comprometer datos de negocio no entrega el directorio de principals.
+</p>
+
+<figure>
+<svg viewBox="0 0 900 560" role="img" aria-labelledby="arch-title arch-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="arch-title">Arquitectura de servicios de ORDO</title>
+  <desc id="arch-desc">Los clientes entran por ordo-gateway, que enruta a ordo-iam y ordo-api.
+  ordo-iam usa un PostgreSQL de identidad; ordo-api usa el PostgreSQL de tenants, del cual
+  sale un outbox transaccional hacia ordo-jobs, ordo-events, ordo-render y ordo-mcp.</desc>
+  <defs>
+    <marker id="ah" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" class="dg-arrow"/>
+    </marker>
+    <marker id="aha" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" class="dg-arrow-a"/>
+    </marker>
+  </defs>
+
+  <!-- clientes -->
+  <rect x="12" y="24" width="176" height="98" rx="9" class="dg-box"/>
+  <text x="30" y="49" class="dg-t">Consumidores</text>
+  <text x="30" y="70" class="dg-s">Agentes de IA</text>
+  <text x="30" y="87" class="dg-s">Aplicaciones · ETL</text>
+  <text x="30" y="104" class="dg-s">Clientes MCP</text>
+
+  <path d="M192,73 L226,73" class="dg-line-a" marker-end="url(#aha)"/>
+
+  <!-- gateway -->
+  <rect x="232" y="24" width="654" height="70" rx="9" class="dg-box-muted"/>
+  <text x="252" y="50" class="dg-t">ordo-gateway</text>
+  <text x="252" y="71" class="dg-s">TLS · routing por tenant · rate limit · idempotencia · quotas · trazas OTel</text>
+  <text x="760" y="50" class="dg-m">esqueleto F0</text>
+  <text x="760" y="66" class="dg-m">/healthz /readyz</text>
+
+  <path d="M400,98 L400,140" class="dg-line" marker-end="url(#ah)"/>
+  <path d="M700,98 L700,140" class="dg-line" marker-end="url(#ah)"/>
+
+  <!-- iam / api -->
+  <rect x="232" y="144" width="330" height="104" rx="9" class="dg-box-accent"/>
+  <text x="252" y="170" class="dg-t">ordo-iam</text>
+  <text x="252" y="191" class="dg-s">Bridge OIDC · principals · agentes</text>
+  <text x="252" y="208" class="dg-s">token exchange RFC 8693 · capability tokens</text>
+  <text x="252" y="225" class="dg-s">PDP (RBAC+ABAC+cap) · HITL · auditoría</text>
+  <text x="252" y="242" class="dg-m">/iam/v1/*</text>
+
+  <rect x="586" y="144" width="300" height="104" rx="9" class="dg-box-accent"/>
+  <text x="606" y="170" class="dg-t">ordo-api</text>
+  <text x="606" y="191" class="dg-s">kernel ORM (ordo-core) embebido</text>
+  <text x="606" y="208" class="dg-s">registry · dominios→SQL · record rules</text>
+  <text x="606" y="225" class="dg-s">API genérica · schema semántico</text>
+  <text x="606" y="242" class="dg-m">/api/v1/*  /meta/v1/*</text>
+
+  <path d="M582,196 L570,196" class="dg-line" marker-end="url(#ah)"/>
+  <text x="566" y="188" class="dg-m" text-anchor="end"> </text>
+
+  <!-- bases -->
+  <path d="M340,252 L340,290" class="dg-line" marker-end="url(#ah)"/>
+  <path d="M700,252 L700,290" class="dg-line" marker-end="url(#ah)"/>
+
+  <rect x="232" y="294" width="216" height="62" rx="9" class="dg-box"/>
+  <text x="252" y="319" class="dg-t">PostgreSQL</text>
+  <text x="252" y="338" class="dg-s">identidad (ordo_iam)</text>
+
+  <rect x="586" y="294" width="300" height="62" rx="9" class="dg-box"/>
+  <text x="606" y="319" class="dg-t">PostgreSQL</text>
+  <text x="606" y="338" class="dg-s">tenants · schema-per-tenant + RLS</text>
+
+  <!-- outbox -->
+  <path d="M700,360 L700,398" class="dg-line-a" marker-end="url(#aha)"/>
+  <text x="712" y="384" class="dg-m">outbox transaccional</text>
+
+  <path d="M110,402 L890,402" class="dg-line" opacity="0"/>
+  <path d="M700,402 L110,402 L110,438" class="dg-line" marker-end="url(#ah)"/>
+  <path d="M700,402 L310,402 L310,438" class="dg-line" marker-end="url(#ah)"/>
+  <path d="M700,402 L510,402 L510,438" class="dg-line" marker-end="url(#ah)"/>
+  <path d="M700,402 L710,402 L710,438" class="dg-line" marker-end="url(#ah)"/>
+
+  <rect x="20" y="442" width="180" height="82" rx="9" class="dg-box-muted"/>
+  <text x="38" y="467" class="dg-t">ordo-jobs</text>
+  <text x="38" y="486" class="dg-s">cron · cola de trabajos</text>
+  <text x="38" y="506" class="dg-m">esqueleto F0</text>
+
+  <rect x="220" y="442" width="180" height="82" rx="9" class="dg-box-muted"/>
+  <text x="238" y="467" class="dg-t">ordo-events</text>
+  <text x="238" y="486" class="dg-s">relay NATS · webhooks</text>
+  <text x="238" y="506" class="dg-m">esqueleto F0</text>
+
+  <rect x="420" y="442" width="180" height="82" rx="9" class="dg-box-muted"/>
+  <text x="438" y="467" class="dg-t">ordo-render</text>
+  <text x="438" y="486" class="dg-s">PDF · XML legal</text>
+  <text x="438" y="506" class="dg-m">esqueleto F0</text>
+
+  <rect x="620" y="442" width="180" height="82" rx="9" class="dg-box-muted"/>
+  <text x="638" y="467" class="dg-t">ordo-mcp</text>
+  <text x="638" y="486" class="dg-s">servidor MCP</text>
+  <text x="638" y="506" class="dg-m">esqueleto F0</text>
+</svg>
+<figcaption>Trazo continuo: implementado. Trazo punteado: servicio creado con healthchecks, sin lógica de negocio todavía.</figcaption>
+</figure>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Servicio</th><th>Responsabilidad</th><th>Superficie hoy</th><th>Estado</th></tr></thead>
+  <tbody>
+    <tr><td><code>ordo-iam</code></td><td>Identidad, delegación, capability tokens, PDP, aprobaciones, auditoría</td><td><code>/iam/v1/*</code> (11 endpoints)</td><td><span class="pill impl">implementado</span></td></tr>
+    <tr><td><code>ordo-api</code></td><td>Kernel ORM expuesto como API genérica + introspección</td><td><code>/api/v1/*</code>, <code>/meta/v1/*</code></td><td><span class="pill impl">implementado</span></td></tr>
+    <tr><td><code>ordo-gateway</code></td><td>TLS, routing por tenant, rate limit, quotas</td><td><code>/healthz</code>, <code>/readyz</code></td><td><span class="pill stub">esqueleto</span></td></tr>
+    <tr><td><code>ordo-jobs</code></td><td>Workers de la cola y del cron</td><td><code>/healthz</code>, <code>/readyz</code></td><td><span class="pill stub">esqueleto</span></td></tr>
+    <tr><td><code>ordo-events</code></td><td>Relay del outbox a NATS y webhooks</td><td><code>/healthz</code>, <code>/readyz</code></td><td><span class="pill stub">esqueleto</span></td></tr>
+    <tr><td><code>ordo-render</code></td><td>Generación de PDF y XML legales</td><td><code>/healthz</code>, <code>/readyz</code></td><td><span class="pill stub">esqueleto</span></td></tr>
+    <tr><td><code>ordo-mcp</code></td><td>Exponer modelos y acciones como herramientas MCP</td><td><code>/healthz</code>, <code>/readyz</code></td><td><span class="pill stub">esqueleto</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="small">
+  El kernel (<code>packages/ordo-core</code>) es una <em>librería</em>, no un servicio: no depende
+  de HTTP. La cola de trabajos y el outbox viven en tablas de PostgreSQL precisamente para
+  que encolar un trabajo o emitir un evento ocurra dentro de la misma transacción del
+  cambio de negocio. Si el commit falla, el trabajo nunca existió.
+</p>
+
+<!-- =============================================================== -->
+<h2 id="api">La API <a href="#api" class="anchor">#</a></h2>
+
+<p>
+  Toda la superficie implementada hoy la sirven dos procesos: <code>ordo-api</code> y
+  <code>ordo-iam</code>. Los ejemplos de esta sección salen de los tests de integración y
+  end-to-end del repositorio (<code>tests/integration/api/test_records_api.py</code>,
+  <code>tests/e2e/test_f1_flow.py</code>, <code>tests/e2e/test_f2_kernel_flow.py</code>).
+</p>
+
+<h3>Contexto de la petición</h3>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Header</th><th>Obligatorio</th><th>Qué hace</th></tr></thead>
+  <tbody>
+    <tr><td><code>X-Ordo-Tenant</code></td><td>sí, en <code>/api/v1</code> y <code>/meta/v1</code></td><td>Selecciona el tenant. Construye el <code>Environment</code>, que fija el <code>search_path</code> al schema del tenant y la variable de sesión que alimenta las políticas RLS.</td></tr>
+    <tr><td><code>Idempotency-Key</code></td><td>sí, en toda escritura</td><td>Sin él la escritura se rechaza con <code>IDEMPOTENCY_KEY_REQUIRED</code> (400). No se exige en <code>?dry_run=true</code>, porque no escribe.</td></tr>
+    <tr><td><code>Authorization</code></td><td>sí, en <code>/iam/v1</code></td><td><code>Bearer</code> con token de usuario (emitido por el OP) o token de agente (emitido por <code>ordo-iam</code>), según el endpoint.</td></tr>
+    <tr><td><code>X-Request-ID</code></td><td>no</td><td>Si lo envías se propaga; si no, el runtime genera uno. Se devuelve siempre en la respuesta y aparece como <code>trace_id</code> dentro del payload de error.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="small">
+  Todos los servicios exponen además <code>GET /healthz</code> (liveness) y
+  <code>GET /readyz</code> (readiness con chequeos TCP de sus dependencias; devuelve
+  <code>503</code> y <code>status: "degraded"</code> si alguna falla).
+</p>
+
+<!-- ---------------- records ---------------- -->
+<h3 id="api-records">Registros — <code>/api/v1/{model}</code> <a href="#api-records" class="anchor">#</a></h3>
+
+<p>
+  Una sola familia de endpoints sirve a todos los modelos del registry. <code>{model}</code>
+  es el nombre técnico del modelo (<code>res.partner</code>, <code>sale.order</code>).
+  Un modelo que no está registrado devuelve <code>MODEL_NOT_FOUND</code> (404), nunca un
+  error genérico.
+</p>
+
+<div class="ep">
+  <div class="ep-head"><span class="m get">GET</span><span class="path">/api/v1/{model}</span><span class="note">search_read</span></div>
+  <div class="ep-body">
+    <p>Busca y lee en una sola llamada. Parámetros: <code>domain</code> (JSON), <code>fields</code>
+    (lista separada por comas), <code>limit</code> (por defecto 80, máximo 500), <code>cursor</code>,
+    <code>order</code>.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>GET /api/v1/res.partner?domain=[["name","=","Alfa"]]&amp;fields=name&amp;limit=80
+X-Ordo-Tenant: apitest</code></pre></div>
+    <div class="snippet res"><div class="label">200 OK</div><pre><code>{
+  "rows": [ { "id": 1, "name": "Alfa" } ],
+  "next_cursor": null
+}</code></pre></div>
+    <p class="small">
+      <code>next_cursor</code> es <code>null</code> cuando no hay más páginas; si lo hay, es un
+      cursor opaco (base64 del último <code>id</code>) que se pasa en la llamada siguiente.
+      El campo <code>id</code> se incluye siempre, aunque no lo pidas en <code>fields</code>.
+      <strong>Nota de fidelidad:</strong> el parámetro <code>order</code> está en el contrato, pero
+      el orden efectivo hoy es <code>id asc</code>, que es lo que hace estable la paginación por cursor.
+    </p>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m post">POST</span><span class="path">/api/v1/{model}</span><span class="note">create · 201</span></div>
+  <div class="ep-body">
+    <p><code>values</code> acepta un objeto o una lista de objetos: crear un registro es
+    crear un lote de uno. El ORM es <em>batch-first</em> por diseño.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>POST /api/v1/res.partner
+X-Ordo-Tenant: apitest
+Idempotency-Key: 3f9a1c7e2b5d4f8a9c0b1e2d3a4f5b6c
+Content-Type: application/json
+
+{ "values": { "name": "ACME" } }</code></pre></div>
+    <div class="snippet res"><div class="label">201 Created</div><pre><code>{ "ids": [ 1 ] }</code></pre></div>
+    <div class="snippet err"><div class="label">422 — falta un campo requerido</div><pre><code>{
+  "error": {
+    "code": "FIELD_REQUIRED",
+    "message": "El campo 'name' es obligatorio",
+    "retryable": false,
+    "requires_approval": false,
+    "docs_url": "https://docs.ordo.dev.feres.cl/errors/FIELD_REQUIRED",
+    "trace_id": "9d1f0c3b7a2e4856b1c9d0e2f3a4b5c6"
+  }
+}</code></pre></div>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m post">POST</span><span class="path">/api/v1/{model}?dry_run=true</span><span class="note">simulación</span></div>
+  <div class="ep-body">
+    <p>Ejecuta dentro de un savepoint, arma la respuesta que devolvería la operación real
+    junto con <code>validations[]</code>, y <strong>hace rollback siempre</strong>. Nunca escribe,
+    ni siquiera parcialmente. No exige <code>Idempotency-Key</code>.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>POST /api/v1/res.partner?dry_run=true
+X-Ordo-Tenant: apitest
+
+{ "values": { "ref": "falta nombre" } }</code></pre></div>
+    <div class="snippet res"><div class="label">201 Created — nada se escribió</div><pre><code>{
+  "would_create": 0,
+  "validations": [
+    { "index": 0, "code": "FIELD_REQUIRED", "message": "El campo 'name' es obligatorio" }
+  ]
+}</code></pre></div>
+    <p class="small">Con valores válidos la respuesta es <code>{ "would_create": 1, "validations": [] }</code>
+    y una búsqueda posterior no encuentra el registro: el rollback es incondicional.</p>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m get">GET</span><span class="path">/api/v1/{model}/{id}</span><span class="note">read</span></div>
+  <div class="ep-body">
+    <p>Lee un registro. Acepta <code>fields</code>. Si no existe, <code>RECORD_NOT_FOUND</code> (404).</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>GET /api/v1/res.partner/1?fields=name,ref
+X-Ordo-Tenant: apitest</code></pre></div>
+    <div class="snippet res"><div class="label">200 OK</div><pre><code>{ "id": 1, "name": "ACME", "ref": "C-1" }</code></pre></div>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m patch">PATCH</span><span class="path">/api/v1/{model}/{id}</span><span class="note">write · bloqueo optimista</span></div>
+  <div class="ep-body">
+    <p>Escribe campos. <code>expected_version</code> es opcional; cuando se envía y no coincide
+    con la fila, la escritura se rechaza y la respuesta incluye el estado actual del registro
+    para que el agente reconcilie sin una lectura extra.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>PATCH /api/v1/res.partner/1
+X-Ordo-Tenant: apitest
+Idempotency-Key: 7c2e5a91b0d34f6789ab12cd34ef5601
+
+{ "values": { "ref": "C-1" }, "expected_version": 1 }</code></pre></div>
+    <div class="snippet res"><div class="label">200 OK</div><pre><code>{ "written": 1 }</code></pre></div>
+    <div class="snippet err"><div class="label">409 — otro actor ya escribió</div><pre><code>{
+  "error": {
+    "code": "CONCURRENT_MODIFICATION",
+    "message": "El registro cambió desde la versión esperada",
+    "retryable": false,
+    "requires_approval": false,
+    "docs_url": "https://docs.ordo.dev.feres.cl/errors/CONCURRENT_MODIFICATION",
+    "current_state": [ { "id": 1, "state": "sale", "version": 2 } ]
+  }
+}</code></pre></div>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m delete">DELETE</span><span class="path">/api/v1/{model}/{id}</span><span class="note">unlink</span></div>
+  <div class="ep-body">
+    <div class="snippet req"><div class="label">Request</div><pre><code>DELETE /api/v1/res.partner/1
+X-Ordo-Tenant: apitest
+Idempotency-Key: b41d8e0a6f92473c85ae1029d3b7c6f5</code></pre></div>
+    <div class="snippet res"><div class="label">200 OK</div><pre><code>{ "deleted": 1 }</code></pre></div>
+  </div>
+</div>
+
+<!-- ---------------- batch ---------------- -->
+<h3 id="api-batch">Lotes — <code>/api/v1/{model}/batch</code> <a href="#api-batch" class="anchor">#</a></h3>
+
+<div class="ep">
+  <div class="ep-head"><span class="m post">POST</span><span class="path">/api/v1/{model}/batch</span><span class="note">create · write · unlink masivos</span></div>
+  <div class="ep-body">
+    <p>Una operación (<code>op</code> ∈ <code>create</code>, <code>write</code>, <code>unlink</code>)
+    aplicada a muchos registros, siempre atómica. Soporta <code>?dry_run=true</code>.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>POST /api/v1/res.partner/batch
+X-Ordo-Tenant: apitest
+Idempotency-Key: 0a5c9e17d24b6839f10ac82b73d4e5f6
+
+{ "op": "create", "values": [ { "name": "Alfa" }, { "name": "Beta" } ] }</code></pre></div>
+    <div class="snippet res"><div class="label">200 OK</div><pre><code>{
+  "results": [
+    { "index": 0, "ok": true, "result": { "ids": [ 1, 2 ] } }
+  ]
+}</code></pre></div>
+  </div>
+</div>
+
+<!-- ---------------- tx ---------------- -->
+<h3 id="api-tx">Transacciones multi-operación — <code>/api/v1/tx</code> <a href="#api-tx" class="anchor">#</a></h3>
+
+<p>
+  El endpoint que evita las cascadas de round-trips. Un agente arma un plan completo y lo
+  envía de una vez, eligiendo si quiere todo-o-nada o reporte parcial.
+</p>
+
+<div class="ep">
+  <div class="ep-head"><span class="m post">POST</span><span class="path">/api/v1/tx</span><span class="note">atomic: true</span></div>
+  <div class="ep-body">
+    <p>Si cualquier operación falla, se revierte todo y la respuesta es el error de la
+    operación que falló. Nada se persiste.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>POST /api/v1/tx
+X-Ordo-Tenant: apitest
+Idempotency-Key: e8f3b25d7a0c419682bd35c04e6f7a81
+
+{
+  "atomic": true,
+  "operations": [
+    { "op": "create", "model": "res.partner", "values": { "name": "Válida" } },
+    { "op": "create", "model": "res.partner", "values": { "ref": "falla" } }
+  ]
+}</code></pre></div>
+    <div class="snippet err"><div class="label">422 — y "Válida" tampoco existe</div><pre><code>{
+  "error": {
+    "code": "FIELD_REQUIRED",
+    "message": "El campo 'name' es obligatorio",
+    "retryable": false,
+    "requires_approval": false,
+    "docs_url": "https://docs.ordo.dev.feres.cl/errors/FIELD_REQUIRED"
+  }
+}</code></pre></div>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m post">POST</span><span class="path">/api/v1/tx</span><span class="note">atomic: false</span></div>
+  <div class="ep-body">
+    <p>Savepoint por operación: lo que funciona se persiste, lo que falla se reporta
+    <strong>por índice</strong>, con su código y su <code>hint</code>. El agente sabe exactamente
+    qué reintentar.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>POST /api/v1/tx
+X-Ordo-Tenant: apitest
+Idempotency-Key: 5b7d1f39c8e2406a91cd47e0b2f83a5c
+
+{
+  "atomic": false,
+  "operations": [
+    { "op": "create", "model": "res.partner", "values": { "name": "Ok1" } },
+    { "op": "create", "model": "res.partner", "values": { "ref": "falla" } },
+    { "op": "create", "model": "res.partner", "values": { "name": "Ok2" } }
+  ]
+}</code></pre></div>
+    <div class="snippet res"><div class="label">200 OK</div><pre><code>{
+  "atomic": false,
+  "results": [
+    { "index": 0, "ok": true,  "result": { "ids": [ 1 ] } },
+    { "index": 1, "ok": false, "error": { "code": "FIELD_REQUIRED",
+                                          "message": "El campo 'name' es obligatorio",
+                                          "hint": null } },
+    { "index": 2, "ok": true,  "result": { "ids": [ 2 ] } }
+  ]
+}</code></pre></div>
+  </div>
+</div>
+
+<!-- ---------------- meta ---------------- -->
+<h3 id="api-meta">Introspección — <code>/meta/v1/*</code> <a href="#api-meta" class="anchor">#</a></h3>
+
+<p>
+  Aquí es donde un agente deja de necesitar documentación. El schema semántico
+  <strong>se genera desde el registry, nunca se escribe a mano</strong>: si un campo de negocio
+  no declara <code>agent_hint</code>, el registry se niega a construirse y el servicio no
+  arranca. En consecuencia, el schema que lee un agente siempre está completo.
+</p>
+
+<div class="ep">
+  <div class="ep-head"><span class="m get">GET</span><span class="path">/meta/v1/schema</span><span class="note">?models=… &amp;format=llm|full</span></div>
+  <div class="ep-body">
+    <p><code>format=llm</code> (por defecto) omite los campos de auditoría
+    (<code>create_uid</code>, <code>create_date</code>, <code>write_uid</code>,
+    <code>write_date</code>, <code>version</code>); <code>format=full</code> los incluye.
+    <code>id</code> siempre aparece, y <code>company_id</code> tampoco se omite aunque lo
+    gestione el kernel: a qué compañía pertenece un registro es información de negocio que
+    el agente necesita para operar en un tenant multi-compañía. <code>models</code> filtra
+    por nombre; sin él, devuelve todo el registry.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>GET /meta/v1/schema?models=sale.order&amp;format=llm
+X-Ordo-Tenant: apitest</code></pre></div>
+    <div class="snippet res"><div class="label">200 OK</div><pre><code>{
+  "version": "v1",
+  "operators": ["=", "!=", "&gt;", "&gt;=", "&lt;", "&lt;=", "in", "not in",
+                "like", "ilike", "not like", "not ilike"],
+  "domain_syntax": "Lista en notacion prefija: [(\"campo\", \"=\", valor)], con \"|\" y \"!\" para OR y NOT; el AND es implicito. Las rutas punteadas navegan relaciones (partner_id.country_id.code).",
+  "conventions": {
+    "money": "Los importes son strings decimales, nunca float.",
+    "timestamps": "UTC ISO-8601.",
+    "writes": "Toda escritura acepta ?dry_run=true y exige Idempotency-Key.",
+    "pagination": "Por cursor: usa next_cursor, no offset."
+  },
+  "models": [
+    {
+      "model": "sale.order",
+      "description": "Orden de venta",
+      "fields": {
+        "amount_total":  { "type": "monetary", "hint": "Total del documento",
+                           "examples": ["11900.00"] },
+        "id":            { "type": "integer",
+                           "hint": "Identificador único del registro dentro de su modelo",
+                           "examples": ["1", "42"], "readonly": true },
+        "name":          { "type": "char", "hint": "Número del documento",
+                           "examples": ["SO00001"], "required": true },
+        "partner_name":  { "type": "char", "hint": "Nombre del cliente",
+                           "examples": ["ACME"], "required": true },
+        "state":         { "type": "selection", "hint": "Estado del ciclo de vida",
+                           "examples": ["draft"],
+                           "values": ["draft", "sale", "cancel"] }
+      }
+    }
+  ]
+}</code></pre></div>
+    <p class="small">
+      Cada campo puede traer además <code>readonly</code>, <code>filterable: false</code>
+      (calculado no almacenado: no se puede filtrar por él en un dominio),
+      <code>relates_to</code> (modelo destino de una relación) y <code>delegated_from</code>
+      (campo heredado por delegación).
+    </p>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m get">GET</span><span class="path">/meta/v1/models</span><span class="note">índice del registry</span></div>
+  <div class="ep-body">
+    <div class="snippet res"><div class="label">200 OK</div><pre><code>{
+  "models": [
+    { "model": "sale.order", "description": "Orden de venta" }
+  ]
+}</code></pre></div>
+  </div>
+</div>
+
+<h4>Lenguaje de dominios</h4>
+<p>
+  Los filtros usan una sintaxis prefija con tuplas, ampliamente conocida por los modelos de
+  lenguaje, de modo que un agente puede escribirlos sin entrenamiento específico:
+</p>
+<div class="snippet"><pre><code>[("state", "=", "sale"),
+ "|", ("partner_id.country_id.code", "=", "CL"),
+      ("amount_total", "&gt;", 1000000)]</code></pre></div>
+<p>
+  El <code>&amp;</code> es implícito entre términos; <code>|</code> y <code>!</code> son
+  explícitos. Las rutas punteadas sobre <code>Many2one</code> generan JOINs
+  (máximo 4 saltos). El compilador no interpola nunca: todo valor viaja como parámetro
+  vinculado, y todo identificador se valida contra el registry antes de tocar el SQL.
+  Un campo inexistente es <code>DOMAIN_UNKNOWN_FIELD</code>, no texto que llegue a la base.
+</p>
+
+<!-- ---------------- iam ---------------- -->
+<h3 id="api-iam">Identidad y autorización — <code>/iam/v1/*</code> <a href="#api-iam" class="anchor">#</a></h3>
+
+<p>
+  <code>ordo-iam</code> no es un OpenID Provider: la autenticación humana la hace un OP
+  externo (Keycloak en las fases actuales) detrás de una interfaz OIDC genérica.
+  <code>ordo-iam</code> aporta lo que un OP estándar no da: <strong>el agente como principal
+  de primera clase</strong>, con dueño, capacidades delegadas, límites y presupuesto.
+</p>
+
+<div class="ep">
+  <div class="ep-head"><span class="m get">GET</span><span class="path">/iam/v1/me</span><span class="note">bearer de usuario</span></div>
+  <div class="ep-body">
+    <p>Verifica el token del OP y resuelve la identidad contra el directorio del tenant.
+    <strong>Nunca auto-crea usuarios</strong>: el primer login solo vincula un usuario ya
+    aprovisionado, del mismo tenant y con email verificado. Una identidad desconocida es
+    <code>IAM_UNKNOWN_IDENTITY</code> (401) aunque el OP la haya autenticado correctamente.</p>
+    <div class="snippet res"><div class="label">200 OK</div><pre><code>{
+  "principal_id": "6f0f1e9c-7a41-4b8d-9c02-3e5a7b1d4c88",
+  "tenant": "acme",
+  "type": "user",
+  "display_name": "E2E",
+  "email": "persona@acme.cl"
+}</code></pre></div>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m post">POST</span><span class="path">/iam/v1/agents</span><span class="note">201 · bearer de usuario</span></div>
+  <div class="ep-body">
+    <p>Registra un agente. Quien llama queda como <code>owner</code>. El secreto se entrega
+    <strong>una sola vez</strong>: es aleatorio de 32 bytes, no una contraseña, y en la base
+    solo queda su hash salteado.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>POST /iam/v1/agents
+Authorization: Bearer &lt;token de usuario&gt;
+
+{ "display_name": "agente de ventas", "model": "agente-v1" }</code></pre></div>
+    <div class="snippet res"><div class="label">201 Created</div><pre><code>{
+  "agent_id": "2d7c4b19-8e35-4a60-b1f7-9c0d2e3a5f64",
+  "agent_secret": "wq3k...(32 bytes, se muestra una sola vez)",
+  "autonomy_level": "observer"
+}</code></pre></div>
+    <p class="small"><code>autonomy_level</code> ∈ <code>observer</code> (por defecto),
+    <code>propose</code>, <code>execute</code>, <code>execute_approve</code>.
+    También acepta <code>model_version</code> y <code>budget</code>.</p>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m post">POST</span><span class="path">/iam/v1/agents/{agent_id}/grants</span><span class="note">201 · solo el dueño</span></div>
+  <div class="ep-body">
+    <p>Otorga un capability grant. Solo el dueño del agente puede hacerlo
+    (<code>IAM_NOT_AGENT_OWNER</code>, 403). Los grants son aditivos y se fusionan en un
+    único claim <code>cap</code> al emitir el token. Acepta <code>valid_from</code> y
+    <code>valid_until</code>; un grant revocado o vencido nunca aparece en las capacidades
+    efectivas.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>POST /iam/v1/agents/2d7c4b19-.../grants
+Authorization: Bearer &lt;token de usuario&gt;
+
+{
+  "cap": {
+    "models": {
+      "sale.order":   ["read", "create"],
+      "account.move": ["read", "write"]
+    },
+    "limits": { "max_amount_per_op": { "CLP": 5000000 } },
+    "requires_approval": ["account.move.action_post"],
+    "deny": ["res.users.*"]
+  }
+}</code></pre></div>
+    <div class="snippet res"><div class="label">201 Created</div><pre><code>{ "grant_id": "b3e0d7f2-1a9c-4e58-8d16-0c7b2f4a9e35" }</code></pre></div>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m post">POST</span><span class="path">/iam/v1/token</span><span class="note">RFC 8693 · form-urlencoded</span></div>
+  <div class="ep-body">
+    <p>Token exchange: el agente presenta sus credenciales <em>y</em> el token del usuario
+    delegante, y recibe un access token propio con la cadena de delegación en el claim
+    <code>act</code>. Sin grants vigentes no hay token: <code>IAM_NO_CAPABILITIES</code> (403).</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>POST /iam/v1/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=urn:ietf:params:oauth:grant-type:token-exchange
+&amp;subject_token=&lt;access token del usuario&gt;
+&amp;subject_token_type=urn:ietf:params:oauth:token-type:access_token
+&amp;client_id=&lt;agent_id&gt;
+&amp;client_secret=&lt;agent_secret&gt;</code></pre></div>
+    <div class="snippet res"><div class="label">200 OK</div><pre><code>{
+  "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "issued_token_type": "urn:ietf:params:oauth:token-type:access_token",
+  "token_type": "Bearer",
+  "expires_in": 900
+}</code></pre></div>
+    <p class="small">
+      Verificaciones en orden: <code>grant_type</code> soportado → credenciales del agente →
+      agente activo → token del usuario válido → <strong>el subject debe ser el dueño del
+      agente</strong> (<code>IAM_DELEGATION_NOT_ALLOWED</code>) → hay grants vigentes.
+      Un token emitido por <code>ordo-iam</code> no sirve como <code>subject_token</code>:
+      el re-exchange está cerrado.
+    </p>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m get">GET</span><span class="path">/iam/v1/jwks</span><span class="note">público</span></div>
+  <div class="ep-body">
+    <p>Claves públicas con las que <code>ordo-iam</code> firma los tokens de agente (RS256).
+    Permite verificar un token de agente sin consultar la base.</p>
+  </div>
+</div>
+
+<div class="ep">
+  <div class="ep-head"><span class="m post">POST</span><span class="path">/iam/v1/authorize</span><span class="note">PDP · consulta previa</span></div>
+  <div class="ep-body">
+    <p>"¿Puedo hacer esto?" antes de intentarlo. Acepta token de agente (evalúa
+    <code>cap</code> + RBAC del usuario delegante) o token de usuario (solo RBAC y record
+    rules). Cada decisión se escribe en el log de auditoría encadenado.</p>
+    <div class="snippet req"><div class="label">Request</div><pre><code>POST /iam/v1/authorize
+Authorization: Bearer &lt;token de agente&gt;
+
+{
+  "model": "sale.order",
+  "operation": "create",
+  "amount": { "currency": "CLP", "value": "9000000" }
+}</code></pre></div>
+    <div class="snippet res"><div class="label">200 OK — denegado por monto</div><pre><code>{
+  "allowed": false,
+  "reason": "CAP_AMOUNT_EXCEEDED",
+  "requires_approval": false,
+  "record_domain": { "global_and": [], "role_or": [] }
+}</code></pre></div>
+    <div class="snippet res"><div class="label">200 OK — permitido, pero exige aprobación humana</div><pre><code>{
+  "allowed": true,
+  "reason": "OK",
+  "requires_approval": true,
+  "record_domain": { "global_and": [], "role_or": [] }
+}</code></pre></div>
+    <p class="small">
+      El monto viaja como <strong>string decimal</strong> (<code>"value": "9000000"</code>), nunca
+      como número JSON: en el servidor se convierte a <code>Decimal</code> antes de compararlo
+      con el límite. <code>record_domain</code> devuelve las record rules aplicables para que
+      el kernel las compile a SQL; el PDP nunca toca datos de negocio.
+    </p>
+  </div>
+</div>
+
+<h4>Aprobaciones human-in-the-loop</h4>
+<p>
+  Cuando el PDP responde <code>requires_approval: true</code>, la operación se congela
+  <strong>serializada y sellada por hash</strong>: se ejecuta exactamente lo aprobado, ni un byte
+  distinto.
+</p>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Endpoint</th><th>Actor</th><th>Qué hace</th></tr></thead>
+  <tbody>
+    <tr><td><code>POST /iam/v1/approvals</code></td><td>agente</td><td>Crea la solicitud. Exige <code>Idempotency-Key</code>: la misma clave devuelve la misma solicitud (201 la primera vez, 200 después). Vence a las 24 h por defecto.</td></tr>
+    <tr><td><code>GET /iam/v1/approvals/{id}</code></td><td>agente</td><td>Consulta el estado. Solo el agente que la creó, en su tenant.</td></tr>
+    <tr><td><code>POST /iam/v1/approvals/{id}/approve</code></td><td>dueño</td><td>Aprueba. Solo el dueño del agente (<code>IAM_NOT_APPROVER</code>).</td></tr>
+    <tr><td><code>POST /iam/v1/approvals/{id}/reject</code></td><td>dueño</td><td>Rechaza, con <code>reason</code> opcional.</td></tr>
+    <tr><td><code>POST /iam/v1/approvals/{id}/consume</code></td><td>agente</td><td>Ejecuta lo aprobado, <strong>una sola vez</strong>. Verifica que la operación coincida con el hash sellado.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="snippet req"><div class="label">1. El agente solicita aprobación</div><pre><code>POST /iam/v1/approvals
+Authorization: Bearer &lt;token de agente&gt;
+Idempotency-Key: c9a0271e4f6b3d8592ac1e07b4d6f3a2
+
+{
+  "operation": {
+    "model": "account.move",
+    "operation": "action_post",
+    "payload": { "move_id": 7 }
+  }
+}</code></pre></div>
+<div class="snippet res"><div class="label">201 Created</div><pre><code>{
+  "approval_id": "f70a3c81-5d24-4b96-a0e8-1c3d7f9b2e46",
+  "status": "pending",
+  "expires_at": "2026-08-05T14:22:09Z",
+  "operation_hash": "9f2c8b1e0a7d4356...(sha256 canónico)"
+}</code></pre></div>
+<div class="snippet err"><div class="label">2. Consumir antes de aprobar: 409, pero reintentable</div><pre><code>{
+  "error": {
+    "code": "IAM_APPROVAL_PENDING",
+    "message": "La solicitud aún no ha sido resuelta.",
+    "retryable": true,
+    "requires_approval": false,
+    "docs_url": "https://docs.ordo.dev.feres.cl/errors/IAM_APPROVAL_PENDING"
+  }
+}</code></pre></div>
+<div class="snippet err"><div class="label">3. Consumir una operación alterada: rechazada aunque esté aprobada</div><pre><code>{
+  "error": {
+    "code": "IAM_APPROVAL_MISMATCH",
+    "message": "La operación no coincide con la aprobada.",
+    "retryable": false,
+    "requires_approval": false,
+    "docs_url": "https://docs.ordo.dev.feres.cl/errors/IAM_APPROVAL_MISMATCH"
+  }
+}</code></pre></div>
+<div class="snippet res"><div class="label">4. Consumo válido — y solo una vez</div><pre><code>{
+  "approval_id": "f70a3c81-5d24-4b96-a0e8-1c3d7f9b2e46",
+  "status": "consumed",
+  "expires_at": "2026-08-05T14:22:09Z",
+  "operation_hash": "9f2c8b1e0a7d4356..."
+}</code></pre></div>
+<p class="small">Un segundo <code>consume</code> devuelve <code>IAM_APPROVAL_CONSUMED</code> (409).
+Cada transición queda registrada en el log de auditoría encadenado.</p>
+
+<!-- =============================================================== -->
+<h2 id="convenciones">Convenciones no negociables <a href="#convenciones" class="anchor">#</a></h2>
+
+<p>
+  Estas reglas forman parte del contrato desde <code>v1</code>. No son estilo: son las
+  garantías sobre las que un agente puede construir un plan de varios pasos sin verificar
+  cada supuesto.
+</p>
+
+<div class="grid two">
+  <div class="tile">
+    <h4>Dinero como string decimal</h4>
+    <p>Nunca <code>float</code>, en ninguna capa: <code>Decimal</code> en Python,
+    <code>NUMERIC</code> en PostgreSQL, string decimal en JSON. El tipo <code>Monetary</code>
+    rechaza un <code>float</code> tanto en la definición del campo como en la escritura.
+    Los acumulados diarios de los límites se llevan en enteros de micros.</p>
+  </div>
+  <div class="tile">
+    <h4>Timestamps UTC ISO-8601</h4>
+    <p>Todo instante es <em>tz-aware</em> y viaja en UTC. La zona de presentación la define
+    el tenant; el contrato no negocia con horas locales.</p>
+  </div>
+  <div class="tile">
+    <h4>Paginación por cursor</h4>
+    <p>Nunca <code>offset</code>. <code>search</code> devuelve <code>{rows, next_cursor}</code>;
+    el cursor es opaco (base64 del último <code>id</code>). Las colecciones grandes no se
+    degradan y una inserción concurrente no descoloca la página siguiente.
+    Ningún endpoint devuelve una lista sin paginar.</p>
+  </div>
+  <div class="tile">
+    <h4><code>Idempotency-Key</code> obligatorio</h4>
+    <p>En toda escritura. Misma clave + mismo request ⇒ se devuelve la respuesta guardada
+    sin re-ejecutar. Misma clave + request distinto ⇒ <code>IDEMPOTENCY_KEY_REUSED</code>
+    (409), nunca una sobrescritura silenciosa. Las respuestas se guardan 24 h en
+    <code>ir_idempotency</code>, indexadas por hash canónico del request.</p>
+  </div>
+  <div class="tile">
+    <h4><code>dry_run</code> universal</h4>
+    <p><code>?dry_run=true</code> en cualquier escritura devuelve exactamente lo que
+    devolvería la operación real más <code>validations[]</code> con lo que fallaría, y hace
+    rollback del savepoint <strong>siempre</strong>. No escribe ni parcialmente, ni siquiera
+    cuando todo era válido.</p>
+  </div>
+  <div class="tile">
+    <h4>Errores con código estable</h4>
+    <p>Los <code>code</code> son contrato público: se agregan, nunca se renombran ni se
+    eliminan. Cada error trae <code>retryable</code>, <code>requires_approval</code>,
+    <code>docs_url</code> y —cuando aplica— <code>hint</code>, <code>model</code>,
+    <code>record_id</code>, <code>field</code>, <code>trace_id</code>.</p>
+  </div>
+  <div class="tile">
+    <h4>Versión en la ruta</h4>
+    <p><code>/api/v1</code>, <code>/meta/v1</code>, <code>/iam/v1</code>. Cambios aditivos
+    dentro de la versión; cualquier ruptura exige bump. La deprecación se anuncia con dos
+    versiones de anticipación y headers <code>Deprecation</code> y <code>Sunset</code>.
+    CI compara el OpenAPI contra una línea base y bloquea el merge ante una ruptura no
+    declarada.</p>
+  </div>
+  <div class="tile">
+    <h4>Lotes por defecto</h4>
+    <p>El ORM es <em>batch-first</em>: la API de un registro es un lote de uno.
+    Los campos calculados reciben la lista completa de registros afectados, nunca uno por
+    uno: el N+1 es imposible por diseño, no por disciplina.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Definición de "terminado" para un endpoint</div>
+  <p class="small" style="margin:0">
+    Tests unitarios y de integración pasando · cobertura ≥ 85 % de la lógica nueva ·
+    documentado en OpenAPI con ejemplos reales · campos con <code>agent_hint</code> y
+    <code>examples</code> · errores con código estable registrado en el catálogo ·
+    <code>dry_run</code> soportado si escribe · idempotencia soportada si escribe ·
+    evento al outbox si cambia estado de negocio · entradas de ACL y record rules cuando
+    aplique · sin regresión de SLO · registro en el changelog.
+  </p>
+</div>
+
+<h3>Convenciones declaradas en el plan, aún no implementadas</h3>
+<p class="small">
+  Estas forman parte del diseño de la v1 pero <strong>no están en el código todavía</strong>:
+  <code>ETag</code> + <code>If-Match</code> en escrituras (hoy la concurrencia se controla con
+  <code>expected_version</code>), parámetro <code>expand=</code> para traer relacionados en una
+  llamada, headers <code>RateLimit-*</code> y rate limit por principal (viven en el gateway,
+  que sigue siendo un esqueleto), y el envoltorio <code>{ "amount": "...", "currency": "..." }</code>
+  para importes de negocio (hoy los importes monetarios se serializan como string decimal
+  simple, y el par moneda/valor solo aparece explícito en <code>/iam/v1/authorize</code>).
+</p>
+
+<!-- =============================================================== -->
+<h2 id="seguridad">Modelo de seguridad <a href="#seguridad" class="anchor">#</a></h2>
+
+<p>
+  Denegación por defecto en todas las capas. Sin grants no hay token de agente; sin ACL no
+  hay operación; el claim <code>cap</code> <strong>nunca amplía</strong> lo que el usuario
+  delegante puede hacer.
+</p>
+
+<h3>Delegación: token exchange con cadena <code>act</code></h3>
+
+<figure>
+<svg viewBox="0 0 900 400" role="img" aria-labelledby="sec-title sec-desc" xmlns="http://www.w3.org/2000/svg">
+  <title id="sec-title">Flujo de delegación y evaluación del PDP</title>
+  <desc id="sec-desc">El usuario se autentica en el OP externo; el agente intercambia ese token
+  por uno propio con claim cap y act; el PDP evalúa capabilities, RBAC y record rules
+  en ese orden antes de tocar el ORM.</desc>
+  <defs>
+    <marker id="ah2" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" class="dg-arrow"/>
+    </marker>
+    <marker id="ah2a" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 z" class="dg-arrow-a"/>
+    </marker>
+  </defs>
+
+  <rect x="12" y="20" width="180" height="70" rx="9" class="dg-box"/>
+  <text x="30" y="46" class="dg-t">Usuario</text>
+  <text x="30" y="66" class="dg-s">login OIDC en el OP</text>
+  <text x="30" y="82" class="dg-m">access token del OP</text>
+
+  <path d="M196,55 L246,55" class="dg-line" marker-end="url(#ah2)"/>
+
+  <rect x="252" y="20" width="200" height="70" rx="9" class="dg-box"/>
+  <text x="270" y="46" class="dg-t">Agente</text>
+  <text x="270" y="66" class="dg-s">client_id + client_secret</text>
+  <text x="270" y="82" class="dg-m">+ subject_token del usuario</text>
+
+  <path d="M456,55 L506,55" class="dg-line-a" marker-end="url(#ah2a)"/>
+
+  <rect x="512" y="12" width="376" height="86" rx="9" class="dg-box-accent"/>
+  <text x="532" y="38" class="dg-t">POST /iam/v1/token</text>
+  <text x="532" y="58" class="dg-s">verifica agente · verifica subject · subject = owner</text>
+  <text x="532" y="75" class="dg-s">fusiona grants vigentes → claim cap</text>
+  <text x="532" y="92" class="dg-m">RS256 · exp 900 s · jti</text>
+
+  <path d="M700,102 L700,134" class="dg-line-a" marker-end="url(#ah2a)"/>
+
+  <rect x="452" y="138" width="436" height="86" rx="9" class="dg-box"/>
+  <text x="472" y="163" class="dg-m">{ "sub": "agent:2d7c4b19-…",</text>
+  <text x="472" y="180" class="dg-m">&#160;&#160;"act": { "sub": "user:6f0f1e9c-…" },</text>
+  <text x="472" y="197" class="dg-m">&#160;&#160;"tenant": "acme", "cap": { … }, "exp": … }</text>
+  <text x="472" y="216" class="dg-s">token de agente: la cadena de delegación viaja en el token</text>
+
+  <path d="M670,228 L670,262" class="dg-line" marker-end="url(#ah2)"/>
+
+  <!-- PDP -->
+  <rect x="12" y="266" width="876" height="118" rx="9" class="dg-box"/>
+  <text x="32" y="292" class="dg-t">PDP — tres capas compuestas, denegación por defecto</text>
+
+  <rect x="32" y="304" width="270" height="64" rx="7" class="dg-box-accent"/>
+  <text x="48" y="326" class="dg-t">1 · Capabilities</text>
+  <text x="48" y="344" class="dg-s">deny glob → CAP_DENIED</text>
+  <text x="48" y="360" class="dg-s">op/modelo · monto/op · monto/día</text>
+
+  <rect x="316" y="304" width="270" height="64" rx="7" class="dg-box"/>
+  <text x="332" y="326" class="dg-t">2 · RBAC</text>
+  <text x="332" y="344" class="dg-s">ACL del usuario efectivo (el delegante)</text>
+  <text x="332" y="360" class="dg-s">sin ACL → RBAC_DENIED</text>
+
+  <rect x="600" y="304" width="270" height="64" rx="7" class="dg-box"/>
+  <text x="616" y="326" class="dg-t">3 · Record rules</text>
+  <text x="616" y="344" class="dg-s">dominios a nivel de fila</text>
+  <text x="616" y="360" class="dg-s">globales en AND · de rol en OR</text>
+
+  <path d="M306,336 L312,336" class="dg-line" marker-end="url(#ah2)"/>
+  <path d="M590,336 L596,336" class="dg-line" marker-end="url(#ah2)"/>
+</svg>
+<figcaption>permisos_efectivos = permisos_usuario ∩ cap_agente ∩ record_rules</figcaption>
+</figure>
+
+<h3>Capability tokens</h3>
+<p>
+  Un access token de agente lleva restricciones <strong>verificables sin consultar la base</strong>.
+  El PDP evalúa <code>cap</code> antes de tocar el ORM.
+</p>
+
+<div class="snippet"><div class="label">Claim cap de un token de agente</div><pre><code>{
+  "iss": "https://iam.ordo.example",
+  "sub": "agent:2d7c4b19-8e35-4a60-b1f7-9c0d2e3a5f64",
+  "act": { "sub": "user:6f0f1e9c-7a41-4b8d-9c02-3e5a7b1d4c88" },
+  "tenant": "acme",
+  "cap": {
+    "models": {
+      "sale.order":   ["read", "create"],
+      "account.move": ["read", "write"]
+    },
+    "limits": {
+      "max_amount_per_op":  { "CLP": 5000000 },
+      "max_amount_per_day": { "CLP": 20000000 },
+      "record_domain": [["company_id", "in", [1, 3]]]
+    },
+    "requires_approval": ["account.move.action_post"],
+    "deny": ["res.users.*"]
+  },
+  "exp": 1767225600,
+  "jti": "..."
+}</code></pre></div>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Pieza</th><th>Semántica</th></tr></thead>
+  <tbody>
+    <tr><td><code>models</code></td><td>Operaciones permitidas por modelo. Un modelo ausente es <code>CAP_NOT_GRANTED</code>. Al fusionar varios grants: unión.</td></tr>
+    <tr><td><code>deny</code></td><td>Patrones glob sobre <code>modelo.operación</code> o <code>modelo.método</code>. Se evalúa <strong>primero</strong> y siempre gana. Al fusionar: unión.</td></tr>
+    <tr><td><code>requires_approval</code></td><td>Patrones glob que fuerzan human-in-the-loop. Al fusionar: unión.</td></tr>
+    <tr><td><code>limits</code></td><td>Montos por operación y acumulado diario, por moneda. Al fusionar varios grants gana <strong>el más restrictivo</strong>.</td></tr>
+    <tr><td><code>record_domain</code></td><td>Dominio adicional aplicado a nivel de fila. Al fusionar: concatenación, es decir AND.</td></tr>
+    <tr><td><code>act</code></td><td>Cadena de delegación (RFC 8693). El usuario efectivo para el RBAC sale de aquí, no del <code>sub</code>.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="small">
+  Los acumulados diarios son el único punto con estado: viven en Redis como enteros en
+  micros con TTL de 25 h. <strong>Si el contador está caído, el PDP deniega</strong> las
+  operaciones con límite diario (<code>CAP_LIMIT_BACKEND_DOWN</code>): fail-closed, no
+  fail-open.
+</p>
+
+<h3>Verificación de tokens</h3>
+<ul>
+  <li>Solo <code>RS256</code> y <code>ES256</code>. <code>alg=none</code> y algoritmos
+  simétricos (confusión de clave con la pública) están cubiertos por tests de seguridad.</li>
+  <li>Claims obligatorios: <code>iss</code>, <code>aud</code>, <code>exp</code>,
+  <code>iat</code>, <code>sub</code>, más <code>tenant</code>. Sin <code>tenant</code>,
+  <code>IAM_TOKEN_INVALID</code>.</li>
+  <li>JWKS con caché de 300 s y refetch ante <code>kid</code> desconocido.</li>
+  <li>Los tokens de agente duran 900 s y llevan <code>jti</code>: la revocación se apoya en
+  expiraciones cortas más el identificador del token.</li>
+</ul>
+
+<h3>Multi-tenancy: schema-per-tenant + RLS</h3>
+<p>
+  Aislamiento de datos entre tenants: el riesgo de seguridad número uno del producto.
+  Se defiende con dos barreras independientes, de modo que una fuga exija fallar las dos.
+</p>
+<ol class="body">
+  <li><strong>Schema por tenant</strong> en PostgreSQL. El <code>Environment</code> fija
+  <code>SET LOCAL search_path</code> al schema del tenant en cada transacción. El código de
+  dominio nunca escribe el nombre del schema ni filtra por tenant: eso vive en una sola
+  capa, y cualquier consulta que se salte el <code>Environment</code> se rechaza en revisión.</li>
+  <li><strong>Row Level Security</strong> como segunda barrera, con <code>SET LOCAL ordo.tenant</code>
+  alimentando las políticas. Además de ocultar filas ajenas, la política impide escribirlas.</li>
+</ol>
+<div class="card caution">
+  <div class="card-title">Detalle que hace la diferencia</div>
+  <p class="small" style="margin:0">
+    RLS <strong>no se aplica a roles <code>SUPERUSER</code> ni con <code>BYPASSRLS</code></strong>:
+    conectarse con el rol dueño de las tablas deja la segunda barrera inerte. Por eso existe
+    el rol <code>ordo_app</code> (<code>NOSUPERUSER NOBYPASSRLS</code>) y
+    <code>Environment.bind()</code> ejecuta <code>SET LOCAL ROLE ordo_app</code> en cada
+    transacción, incluso si el DSN trae credenciales privilegiadas. El binding se re-aplica
+    tras cada commit: antes, un commit a mitad de request dejaba las consultas siguientes
+    sin filtro.
+  </p>
+</div>
+<p class="small">
+  <em>Multi-company</em> dentro del tenant es una dimensión distinta: <code>company_id</code>
+  y <code>allowed_company_ids</code> en el contexto, resueltos por record rules.
+</p>
+
+<h3>Auditoría encadenada</h3>
+<p>
+  Cada evento de autenticación, cada decisión del PDP y cada transición de aprobación se
+  escribe en <code>iam_audit_log</code>, append-only, con encadenamiento por hash por tenant:
+  <code>hash = sha256(prev_hash + json_canónico(evento))</code>. Se registran
+  <code>principal_id</code>, la cadena <code>act</code>, el <code>jti</code> del token, el
+  <code>trace_id</code> y la decisión de política. Los tests verifican que tanto la
+  manipulación de un registro como su borrado rompen la cadena de forma detectable.
+</p>
+
+<!-- =============================================================== -->
+<h2 id="errores">Catálogo de errores <a href="#errores" class="anchor">#</a></h2>
+
+<p>
+  Los <code>code</code> son contrato público: se agregan, nunca se renombran ni se eliminan.
+  El <code>hint</code> se escribe pensando en que quien lo lee es un agente que debe decidir
+  su próxima acción, no un humano que va a abrir un ticket.
+</p>
+
+<div class="snippet"><div class="label">Forma del payload de error</div><pre><code>{
+  "error": {
+    "code": "ACCOUNT_PERIOD_LOCKED",
+    "message": "El período contable está cerrado y no admite asientos.",
+    "model": "account.move",
+    "record_id": 4821,
+    "field": "date",
+    "hint": "Usa una fecha posterior a 2026-06-30 o solicita reapertura del período.",
+    "retryable": false,
+    "requires_approval": false,
+    "docs_url": "https://docs.ordo.dev.feres.cl/errors/ACCOUNT_PERIOD_LOCKED",
+    "trace_id": "01J9..."
+  }
+}</code></pre></div>
+<p class="small">
+  <code>code</code>, <code>message</code>, <code>retryable</code>, <code>requires_approval</code>
+  y <code>docs_url</code> están siempre. <code>model</code>, <code>record_id</code>,
+  <code>field</code>, <code>hint</code> y <code>trace_id</code> aparecen cuando hay
+  información que aportar. El ejemplo usa un código de un módulo contable de fase futura;
+  las tablas siguientes listan los códigos que existen hoy.
+</p>
+
+<h3>Runtime — todos los servicios</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Código</th><th>HTTP</th><th>Retryable</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><code>INTERNAL_ERROR</code></td><td>500</td><td>sí</td><td>Error no manejado; reintentar con el mismo <code>Idempotency-Key</code></td></tr>
+    <tr><td><code>REQUEST_TIMEOUT</code></td><td>504</td><td>sí</td><td>La operación excedió el tiempo máximo</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>IAM</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Código</th><th>HTTP</th><th>Retryable</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><code>IAM_PRINCIPAL_NOT_FOUND</code></td><td>404</td><td>no</td><td>Principal inexistente</td></tr>
+    <tr><td><code>IAM_OWNER_NOT_FOUND</code></td><td>404</td><td>no</td><td><code>owner_user_id</code> no existe al crear el agente</td></tr>
+    <tr><td><code>IAM_OWNER_INACTIVE</code></td><td>409</td><td>no</td><td>El dueño del agente no está activo</td></tr>
+    <tr><td><code>IAM_TENANT_MISMATCH</code></td><td>409</td><td>no</td><td>Agente y dueño de tenants distintos</td></tr>
+    <tr><td><code>IAM_EMAIL_TAKEN</code></td><td>409</td><td>no</td><td>Email ya registrado en el tenant</td></tr>
+    <tr><td><code>IAM_CLIENT_ID_TAKEN</code></td><td>409</td><td>no</td><td><code>client_id</code> ya registrado (único global)</td></tr>
+    <tr><td><code>IAM_GRANT_NOT_FOUND</code></td><td>404</td><td>no</td><td>Capability grant inexistente</td></tr>
+    <tr><td><code>IAM_TOKEN_INVALID</code></td><td>401</td><td>no</td><td>Token malformado, firma/<code>iss</code>/<code>aud</code>/<code>alg</code> inválidos o claim faltante</td></tr>
+    <tr><td><code>IAM_TOKEN_EXPIRED</code></td><td>401</td><td>sí</td><td>Token vencido; renovar y reintentar</td></tr>
+    <tr><td><code>IAM_UNKNOWN_IDENTITY</code></td><td>401</td><td>no</td><td>Identidad no registrada en el tenant (sin auto-creación)</td></tr>
+    <tr><td><code>IAM_PRINCIPAL_SUSPENDED</code></td><td>403</td><td>no</td><td>Principal suspendido</td></tr>
+    <tr><td><code>IAM_AGENT_AUTH_FAILED</code></td><td>401</td><td>no</td><td><code>client_id</code>/<code>client_secret</code> de agente inválidos</td></tr>
+    <tr><td><code>IAM_AGENT_SUSPENDED</code></td><td>403</td><td>no</td><td>Agente suspendido</td></tr>
+    <tr><td><code>IAM_DELEGATION_NOT_ALLOWED</code></td><td>403</td><td>no</td><td>El subject no es el dueño del agente</td></tr>
+    <tr><td><code>IAM_NO_CAPABILITIES</code></td><td>403</td><td>no</td><td>Agente sin grants vigentes</td></tr>
+    <tr><td><code>IAM_UNSUPPORTED_GRANT</code></td><td>400</td><td>no</td><td><code>grant_type</code> no soportado en <code>/iam/v1/token</code></td></tr>
+    <tr><td><code>IAM_NOT_AGENT_OWNER</code></td><td>403</td><td>no</td><td>Solo el dueño puede otorgar capacidades</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Aprobaciones HITL</h3>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Código</th><th>HTTP</th><th>Retryable</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><code>IAM_APPROVAL_NOT_FOUND</code></td><td>404</td><td>no</td><td>Solicitud inexistente o de otro agente</td></tr>
+    <tr><td><code>IAM_APPROVAL_PENDING</code></td><td>409</td><td>sí</td><td>Aún sin resolver; reintentar con la misma <code>Idempotency-Key</code></td></tr>
+    <tr><td><code>IAM_APPROVAL_REJECTED</code></td><td>403</td><td>no</td><td>El aprobador rechazó la operación</td></tr>
+    <tr><td><code>IAM_APPROVAL_EXPIRED</code></td><td>410</td><td>no</td><td>Venció la ventana de aprobación</td></tr>
+    <tr><td><code>IAM_APPROVAL_CONSUMED</code></td><td>409</td><td>no</td><td>Ya se ejecutó (una aprobación ejecuta una sola vez)</td></tr>
+    <tr><td><code>IAM_APPROVAL_MISMATCH</code></td><td>409</td><td>no</td><td>La operación no coincide byte a byte con lo aprobado</td></tr>
+    <tr><td><code>IAM_NOT_APPROVER</code></td><td>403</td><td>no</td><td>Solo el dueño del agente puede resolver</td></tr>
+    <tr><td><code>IAM_IDEMPOTENCY_KEY_REQUIRED</code></td><td>400</td><td>no</td><td>Falta el header <code>Idempotency-Key</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>PDP — razones de decisión en <code>/iam/v1/authorize</code></h3>
+<p class="small">No son errores HTTP: viajan en el campo <code>reason</code> de una respuesta 200.</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Razón</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><code>OK</code></td><td>Permitido</td></tr>
+    <tr><td><code>CAP_DENIED</code></td><td>Coincide con un patrón <code>deny</code> del capability token</td></tr>
+    <tr><td><code>CAP_NOT_GRANTED</code></td><td>Modelo u operación no otorgados en el <code>cap</code></td></tr>
+    <tr><td><code>CAP_AMOUNT_EXCEEDED</code></td><td>Supera <code>max_amount_per_op</code></td></tr>
+    <tr><td><code>CAP_DAILY_LIMIT</code></td><td>Supera <code>max_amount_per_day</code> acumulado</td></tr>
+    <tr><td><code>CAP_LIMIT_BACKEND_DOWN</code></td><td>Contador de límites caído (fail-closed)</td></tr>
+    <tr><td><code>RBAC_DENIED</code></td><td>Usuario efectivo sin ACL para la operación</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Kernel y API genérica</h3>
+<p class="small">
+  Códigos verificados en el código de <code>packages/ordo-core</code> y
+  <code>services/api</code>. Todavía no figuran en <code>docs/api/errors.md</code>,
+  que hoy cubre runtime e IAM.
+</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Código</th><th>HTTP</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><code>MODEL_NOT_FOUND</code></td><td>404</td><td>El modelo no está registrado en el registry</td></tr>
+    <tr><td><code>RECORD_NOT_FOUND</code></td><td>404</td><td>No existe el registro con ese id en el modelo</td></tr>
+    <tr><td><code>FIELD_UNKNOWN</code></td><td>422</td><td>Campo que no existe en el modelo</td></tr>
+    <tr><td><code>FIELD_REQUIRED</code></td><td>422</td><td>Falta un campo obligatorio</td></tr>
+    <tr><td><code>FIELD_READONLY</code></td><td>422</td><td>Se intentó escribir un campo de solo lectura</td></tr>
+    <tr><td><code>FIELD_INVALID_VALUE</code></td><td>422</td><td>Valor fuera de la <code>Selection</code>, tipo incorrecto, o <code>float</code> en un <code>Monetary</code></td></tr>
+    <tr><td><code>FIELD_NOT_STORED</code></td><td>422</td><td>Operación que exige columna sobre un campo no almacenado</td></tr>
+    <tr><td><code>FIELD_INVALID_DEFINITION</code></td><td>422</td><td>Definición de campo inválida al construir el registry</td></tr>
+    <tr><td><code>CONCURRENT_MODIFICATION</code></td><td>409</td><td>La versión esperada no coincide; la respuesta incluye <code>current_state</code></td></tr>
+    <tr><td><code>IDEMPOTENCY_KEY_REQUIRED</code></td><td>400</td><td>Escritura sin header <code>Idempotency-Key</code></td></tr>
+    <tr><td><code>IDEMPOTENCY_KEY_REUSED</code></td><td>409</td><td>La misma clave se usó con un contenido distinto</td></tr>
+    <tr><td><code>INVALID_CURSOR</code></td><td>400</td><td>Cursor de paginación ilegible o adulterado</td></tr>
+    <tr><td><code>TENANT_INVALID</code></td><td>400</td><td>Identificador de tenant inválido</td></tr>
+    <tr><td><code>TX_UNKNOWN_OPERATION</code></td><td>422</td><td>Operación no soportada o sin modelo en <code>/tx</code> o <code>/batch</code></td></tr>
+    <tr><td><code>APP_ROLE_INVALID</code></td><td>422</td><td>Rol de aplicación inválido al hacer el binding del <code>Environment</code></td></tr>
+    <tr><td><code>ATTACHMENT_NOT_FOUND</code></td><td>404</td><td>Adjunto inexistente</td></tr>
+    <tr><td><code>SEQUENCE_NOT_FOUND</code></td><td>404</td><td>Secuencia inexistente</td></tr>
+    <tr><td><code>SEQUENCE_INVALID_IMPLEMENTATION</code></td><td>422</td><td>Implementación de secuencia distinta de <code>standard</code> o <code>no_gap</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Compilador de dominios y registry</h4>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Código</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><code>DOMAIN_MALFORMED</code></td><td>El dominio no es JSON válido o su estructura no es la esperada</td></tr>
+    <tr><td><code>DOMAIN_UNKNOWN_FIELD</code></td><td>El dominio referencia un campo que no existe en el registry</td></tr>
+    <tr><td><code>DOMAIN_UNKNOWN_OPERATOR</code></td><td>Operador no soportado</td></tr>
+    <tr><td><code>DOMAIN_INVALID_PATH</code></td><td>Ruta punteada que atraviesa un campo no relacional</td></tr>
+    <tr><td><code>DOMAIN_PATH_TOO_DEEP</code></td><td>Más de 4 saltos en una ruta (límite anti-DoS por explosión de JOINs)</td></tr>
+    <tr><td><code>DOMAIN_TOO_LARGE</code></td><td>Más términos de los permitidos en un dominio</td></tr>
+    <tr><td><code>DOMAIN_FIELD_NOT_STORED</code></td><td>Se intentó filtrar por un campo calculado no almacenado</td></tr>
+    <tr><td><code>DOMAIN_INVALID_ORDER</code></td><td>Cláusula de orden inválida</td></tr>
+    <tr><td><code>REGISTRY_DEPENDENCY_CYCLE</code></td><td>Ciclo en el grafo de módulos (falla el arranque, no el runtime)</td></tr>
+    <tr><td><code>REGISTRY_MISSING_DEPENDENCY</code></td><td>Un módulo declara una dependencia que no existe</td></tr>
+    <tr><td><code>REGISTRY_FROZEN</code></td><td>Intento de modificar el registry después de congelarlo</td></tr>
+    <tr><td><code>COMPUTE_DEPENDENCY_CYCLE</code></td><td>Ciclo en el grafo de campos calculados (detectado al construir el registry)</td></tr>
+    <tr><td><code>COMPUTE_METHOD_MISSING</code></td><td><code>compute</code> sin método, o apuntando a uno inexistente</td></tr>
+    <tr><td><code>COMPUTE_MISSING_DEPENDS</code></td><td>Método de cálculo sin <code>@depends</code></td></tr>
+    <tr><td><code>COMPUTE_UNKNOWN_DEPENDENCY</code></td><td><code>@depends</code> sobre un campo que no existe</td></tr>
+    <tr><td><code>COMPUTE_INVALID_RELATED</code></td><td>Ruta de un campo <code>related</code> que no resuelve</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- =============================================================== -->
+<h2 id="openapi">Contratos OpenAPI <a href="#openapi" class="anchor">#</a></h2>
+
+<p>
+  Los contratos se generan desde la implementación y están versionados en el repositorio
+  (<code>docs/api/openapi/</code>). CI compara cada cambio contra una línea base y bloquea
+  el merge ante una ruptura no declarada. Este servidor los expone bajo
+  <code>/openapi/&lt;servicio&gt;.json</code>.
+</p>
+
+<div class="grid three">
+  <div class="tile">
+    <h4>ordo-api <span class="pill impl">11 rutas</span></h4>
+    <p><a href="api.html?service=api">Referencia navegable</a> · <a href="/openapi/api.json">JSON</a></p>
+  </div>
+  <div class="tile">
+    <h4>ordo-iam <span class="pill impl">13 rutas</span></h4>
+    <p><a href="api.html?service=iam">Referencia navegable</a> · <a href="/openapi/iam.json">JSON</a></p>
+  </div>
+  <div class="tile">
+    <h4>ordo-gateway <span class="pill stub">esqueleto</span></h4>
+    <p><a href="api.html?service=gateway">Referencia navegable</a> · <a href="/openapi/gateway.json">JSON</a></p>
+  </div>
+  <div class="tile">
+    <h4>ordo-jobs <span class="pill stub">esqueleto</span></h4>
+    <p><a href="api.html?service=jobs">Referencia navegable</a> · <a href="/openapi/jobs.json">JSON</a></p>
+  </div>
+  <div class="tile">
+    <h4>ordo-events <span class="pill stub">esqueleto</span></h4>
+    <p><a href="api.html?service=events">Referencia navegable</a> · <a href="/openapi/events.json">JSON</a></p>
+  </div>
+  <div class="tile">
+    <h4>ordo-render <span class="pill stub">esqueleto</span></h4>
+    <p><a href="api.html?service=render">Referencia navegable</a> · <a href="/openapi/render.json">JSON</a></p>
+  </div>
+  <div class="tile">
+    <h4>ordo-mcp <span class="pill stub">esqueleto</span></h4>
+    <p><a href="api.html?service=mcp">Referencia navegable</a> · <a href="/openapi/mcp.json">JSON</a></p>
+  </div>
+</div>
+
+<p class="small">
+  Los cinco servicios marcados como esqueleto exponen únicamente <code>/healthz</code> y
+  <code>/readyz</code>: sus contratos son reales, pero pequeños. No confundir "el contrato
+  existe" con "el servicio hace algo".
+</p>
+
+<!-- =============================================================== -->
+<h2 id="planificado">Planificado, no implementado <a href="#planificado" class="anchor">#</a></h2>
+
+<div class="card caution">
+  <div class="card-title">Esta sección importa tanto como el resto</div>
+  <p style="margin:0">
+    Lo que sigue está <strong>diseñado en el plan maestro pero no existe en el código</strong>.
+    Aparece aquí para que nadie —persona o agente— construya sobre una promesa. Si una ruta
+    de esta tabla se invoca hoy contra el sistema, no responde.
+  </p>
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Ruta o capacidad</th><th>Qué haría</th><th>Estado</th></tr></thead>
+  <tbody>
+    <tr><td><code>POST /api/v1/rpc</code></td><td>RPC genérico para clientes que usan esa convención</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td><code>POST /api/v1/{model}/{id}/{method}</code></td><td>Métodos de negocio (<code>action_confirm</code>, <code>action_post</code>…)</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td><code>POST /api/v1/{model}/aggregate</code></td><td>Agrupaciones y métricas (<em>read_group</em>)</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td><code>GET /api/v1/{model}/{id}/explain</code></td><td>Cómo se calculó cada campo y qué reglas aplicaron</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td><code>POST /api/v1/search</code></td><td>Búsqueda semántica sobre embeddings (pgvector)</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td><code>GET /meta/v1/actions</code></td><td>Catálogo de métodos invocables con precondiciones y efectos</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td><code>POST /meta/v1/translate-query</code></td><td>Lenguaje natural → dominio válido, devuelto <em>sin ejecutar</em></td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td><code>POST /events/v1/subscriptions</code></td><td>Webhooks o stream filtrado por dominio</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td><code>GET /reports/v1/{report}</code></td><td>Generación de reportes como endpoints, no como vistas</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td><code>/mcp</code> — servidor MCP</td><td>Exponer modelos y acciones como herramientas MCP, con el schema semántico como descripción</td><td><span class="pill plan">planificado</span> — el servicio <code>ordo-mcp</code> existe como esqueleto con healthchecks; no implementa el protocolo MCP</td></tr>
+    <tr><td>Shim JSON-RPC / XML-RPC</td><td>Compatibilidad con herramientas de integración existentes</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td>Sandbox de tenant efímero</td><td>Clonar un tenant para que el agente ensaye operaciones destructivas</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td>Rate limit y quotas por principal</td><td>Headers <code>RateLimit-*</code>, límites en el gateway</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td>DPoP, mTLS, SCIM 2.0, federación SAML</td><td>Endurecimiento de IAM más allá de lo entregado en F1</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td>Delegación multinivel</td><td>Cadena <code>act</code> a terceros; hoy solo agente → su dueño</td><td><span class="pill plan">planificado</span></td></tr>
+    <tr><td>Automated actions</td><td>Reglas declarativas trigger → dominio → acción</td><td><span class="pill plan">diseñado, sin implementar</span></td></tr>
+    <tr><td>Módulos de negocio</td><td>Contabilidad, ventas, compras, inventario, manufactura, RRHH, localizaciones</td><td><span class="pill plan">planificado</span> — el registry arranca vacío en F2</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="small">
+  Nota sobre el registry: en la fase actual <code>ordo-api</code> arranca con un registry
+  sin modelos de negocio. Los modelos que aparecen en los ejemplos
+  (<code>res.partner</code>, <code>sale.order</code>) provienen de los registries que
+  construyen los tests. La maquinaria es real y está probada; el catálogo de modelos llega
+  con los módulos de F4 en adelante.
+</p>
+
+<!-- =============================================================== -->
+<h2 id="licencia">Licencia <a href="#licencia" class="anchor">#</a></h2>
+
+<p>
+  <strong>AGPLv3.</strong> Puedes usar ORDO gratis, también comercialmente, y modificarlo.
+  Si lo modificas y lo despliegas —incluso si solo lo ofreces por red, como SaaS— debes
+  publicar el código de tus cambios bajo la misma licencia.
+</p>
+<p>
+  La razón es explícita: que las mejoras vuelvan al proyecto, no que alguien cierre el
+  producto y lo revenda. Para contribuir se exige DCO en cada commit
+  (<code>git commit -s</code>) y firmar el CLA una sola vez, en el primer PR. El CLA
+  <strong>no cede copyright</strong>: otorga una licencia amplia al proyecto.
+</p>
+
+<footer>
+  <p><strong>ORDO ERP</strong> — ERP/CRM API-first, sin frontend, operado por agentes de IA.</p>
+  <p>Documentación generada desde el repositorio: plan maestro, documentos de diseño F1 y F2,
+     ADR 001–012, contratos OpenAPI y tests de integración y end-to-end.</p>
+  <p>Licencia AGPLv3 · Servido localmente por <code>make docs-serve</code> en el puerto 8888.</p>
+</footer>
+
+</main>
+</div>
+
+<script>
+// Resalta en la tabla de contenidos la sección visible.
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a[href^="#"]'));
+  var map = {};
+  var targets = [];
+  links.forEach(function (a) {
+    var el = document.getElementById(a.getAttribute('href').slice(1));
+    if (el) { map[el.id] = a; targets.push(el); }
+  });
+  if (!('IntersectionObserver' in window) || !targets.length) return;
+  var active = null;
+  var seen = {};
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { seen[e.target.id] = e.isIntersecting; });
+    for (var i = 0; i < targets.length; i++) {
+      var id = targets[i].id;
+      if (seen[id]) {
+        if (active !== map[id]) {
+          if (active) { active.style.background = ''; active.style.color = ''; active.style.borderLeftColor = 'transparent'; }
+          active = map[id];
+          active.style.background = 'var(--accent-soft)';
+          active.style.color = 'var(--accent)';
+          active.style.borderLeftColor = 'var(--accent)';
+        }
+        return;
+      }
+    }
+  }, { rootMargin: '0px 0px -70% 0px' });
+  targets.forEach(function (t) { obs.observe(t); });
+})();
+</script>
+</body>
+</html>

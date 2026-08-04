@@ -51,6 +51,15 @@
     comment: "{{ item.comment }}"
   loop: "{{ ufw_edge_ports }}"
 
+- name: Reglas UFW solo desde la red local
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    from_ip: "{{ lan_cidr }}"
+    comment: "{{ item.comment }}"
+  loop: "{{ ufw_lan_ports }}"
+
 - name: Retirar puertos 80/443 (TLS vive en el edge)
   community.general.ufw:
     rule: allow

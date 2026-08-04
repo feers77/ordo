@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Referencia de API — ORDO ERP</title>
+<meta name="description" content="Referencia navegable de los contratos OpenAPI de los servicios de ORDO ERP: rutas, métodos, parámetros, cuerpos, respuestas y schemas.">
+<style>
+:root{
+  --bg:#ffffff; --bg-alt:#f7f8fa; --bg-code:#f2f4f7; --bg-inset:#fbfbfd;
+  --fg:#15181d; --fg-muted:#5b6472; --fg-faint:#858e9c;
+  --border:#e1e5ea; --border-strong:#c9d0d9;
+  --accent:#1f5fd0; --accent-soft:#eaf1fd;
+  --ok:#1a7f4b; --ok-soft:#e6f5ed;
+  --warn:#8a5a06; --warn-soft:#fdf3e0;
+  --danger:#b3261e; --danger-soft:#fceceb;
+  --radius:10px;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1116; --bg-alt:#151a21; --bg-code:#161b22; --bg-inset:#11151b;
+    --fg:#e6eaf0; --fg-muted:#9aa5b4; --fg-faint:#6f7a89;
+    --border:#242b35; --border-strong:#333c49;
+    --accent:#6ea8fe; --accent-soft:#16233a;
+    --ok:#5fd39b; --ok-soft:#12271e;
+    --warn:#e3b341; --warn-soft:#2a2213;
+    --danger:#ff8b82; --danger-soft:#2c1715;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:5.5rem}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--mono);font-size:.86em;background:var(--bg-code);padding:.1em .35em;border-radius:5px;border:1px solid var(--border)}
+pre{margin:0;overflow-x:auto;font-family:var(--mono);font-size:.8rem;line-height:1.55}
+
+/* topbar */
+.top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border);padding:.7rem 1.5rem}
+.top-row{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;max-width:1200px;margin:0 auto}
+.top .home{font-weight:700;letter-spacing:-.02em;font-size:1rem;color:var(--fg);white-space:nowrap}
+.top .home:hover{text-decoration:none;color:var(--accent)}
+.tabs{display:flex;gap:.3rem;flex-wrap:wrap}
+.tab{font-size:.8rem;font-weight:600;padding:.28rem .7rem;border-radius:999px;border:1px solid var(--border);color:var(--fg-muted);background:var(--bg-alt);cursor:pointer;font-family:var(--mono)}
+.tab:hover{border-color:var(--border-strong);color:var(--fg)}
+.tab[aria-current="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+#filter{margin-left:auto;font:inherit;font-size:.85rem;padding:.32rem .7rem;border:1px solid var(--border);border-radius:8px;background:var(--bg-inset);color:var(--fg);min-width:190px}
+#filter:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+
+.wrap{max-width:1200px;margin:0 auto;padding:1.75rem 1.5rem 5rem}
+@media (max-width:700px){ .wrap{padding:1.25rem 1rem 4rem} .top{padding:.6rem 1rem} #filter{margin-left:0;width:100%} }
+
+h1{font-size:1.7rem;letter-spacing:-.025em;margin:0 0 .2rem;font-weight:730}
+h2{font-size:1.1rem;margin:2.4rem 0 .7rem;font-weight:660;letter-spacing:-.01em;border-top:1px solid var(--border);padding-top:1.1rem}
+.meta{color:var(--fg-muted);font-size:.88rem;margin:0 0 1.2rem}
+.meta code{white-space:nowrap}
+.note{background:var(--bg-alt);border:1px solid var(--border);border-left:3px solid var(--warn);border-radius:var(--radius);padding:.7rem .9rem;font-size:.86rem;color:var(--fg-muted);margin:1rem 0}
+
+/* operation */
+.op{border:1px solid var(--border);border-radius:var(--radius);margin:.7rem 0;overflow:hidden;background:var(--bg)}
+.op > summary{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;padding:.6rem .85rem;cursor:pointer;background:var(--bg-alt);list-style:none;user-select:none}
+.op > summary::-webkit-details-marker{display:none}
+.op > summary::after{content:"▸";margin-left:auto;color:var(--fg-faint);font-size:.85rem;transition:transform .12s}
+.op[open] > summary::after{transform:rotate(90deg)}
+.op > summary:hover{background:var(--bg-code)}
+.op-path{font-family:var(--mono);font-size:.86rem;font-weight:620;word-break:break-all}
+.op-sum{font-size:.8rem;color:var(--fg-muted);margin-left:.2rem}
+.op-body{padding:.9rem;border-top:1px solid var(--border)}
+.op-body h4{font-size:.74rem;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-faint);font-weight:700;margin:1.1rem 0 .4rem}
+.op-body h4:first-child{margin-top:0}
+
+.m{font-family:var(--mono);font-size:.68rem;font-weight:700;letter-spacing:.06em;padding:.16rem .45rem;border-radius:5px;color:#fff;flex:none}
+.m.get{background:#1a7f4b}.m.post{background:#1f5fd0}.m.patch{background:#8a5a06}.m.delete{background:#b3261e}.m.put{background:#6a3fb5}
+@media (prefers-color-scheme:dark){.m.get{background:#1e6b45}.m.post{background:#2b5aa8}.m.patch{background:#7a5211}.m.delete{background:#8f2b25}.m.put{background:#54318f}}
+
+table{border-collapse:collapse;width:100%;font-size:.84rem;min-width:480px}
+.tw{overflow-x:auto;border:1px solid var(--border);border-radius:8px}
+th,td{text-align:left;padding:.45rem .7rem;border-bottom:1px solid var(--border);vertical-align:top}
+thead th{background:var(--bg-alt);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--fg-muted);font-weight:650;white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+td.n{font-family:var(--mono);white-space:nowrap;font-weight:600}
+td.t{font-family:var(--mono);color:var(--accent);white-space:nowrap}
+
+.req-tag{font-size:.65rem;font-weight:700;color:var(--danger);letter-spacing:.04em;text-transform:uppercase}
+.opt-tag{font-size:.65rem;color:var(--fg-faint);letter-spacing:.04em;text-transform:uppercase}
+.in-tag{display:inline-block;font-family:var(--mono);font-size:.68rem;font-weight:650;padding:.06rem .35rem;border-radius:4px;background:var(--bg-code);border:1px solid var(--border);color:var(--fg-muted)}
+
+.code{background:var(--bg-code);border:1px solid var(--border);border-radius:8px;padding:.65rem .8rem;margin:.5rem 0;overflow-x:auto}
+.code .lbl{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--fg-faint);font-weight:700;margin-bottom:.35rem}
+
+.status{display:flex;gap:.6rem;align-items:baseline;padding:.35rem 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.status:last-child{border-bottom:none}
+.sc{font-family:var(--mono);font-weight:700;font-size:.8rem;padding:.1rem .4rem;border-radius:5px;flex:none}
+.sc.s2{color:var(--ok);background:var(--ok-soft)}
+.sc.s4{color:var(--warn);background:var(--warn-soft)}
+.sc.s5{color:var(--danger);background:var(--danger-soft)}
+
+/* schemas */
+.schema{border:1px solid var(--border);border-radius:8px;margin:.55rem 0;background:var(--bg-inset)}
+.schema > summary{cursor:pointer;padding:.5rem .75rem;font-family:var(--mono);font-size:.83rem;font-weight:620;list-style:none}
+.schema > summary::-webkit-details-marker{display:none}
+.schema > summary::before{content:"▸ ";color:var(--fg-faint)}
+.schema[open] > summary::before{content:"▾ "}
+.schema .sch-body{padding:0 .75rem .6rem}
+.type{font-family:var(--mono);color:var(--accent);font-size:.82em}
+.hint{color:var(--fg-muted);font-size:.82rem}
+.enum{font-family:var(--mono);font-size:.78rem;color:var(--fg-muted)}
+.empty{color:var(--fg-faint);font-size:.86rem;font-style:italic}
+#status{padding:2rem 0;color:var(--fg-muted)}
+.err{color:var(--danger)}
+.grp{font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-faint);font-weight:700;margin:1.8rem 0 .5rem}
+footer{border-top:1px solid var(--border);margin-top:3rem;padding-top:1.2rem;font-size:.83rem;color:var(--fg-muted)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-row">
+    <a class="home" href="index.html">← ORDO ERP</a>
+    <div class="tabs" id="tabs"></div>
+    <input id="filter" type="search" placeholder="Filtrar rutas…" autocomplete="off" aria-label="Filtrar rutas">
+  </div>
+</div>
+
+<div class="wrap">
+  <h1 id="title">Referencia de API</h1>
+  <p class="meta" id="meta"></p>
+  <div id="status">Cargando contrato…</div>
+  <div id="content"></div>
+
+  <footer>
+    <p>Contratos generados desde la implementación y versionados en <code>docs/api/openapi/</code>.
+       Este visor los lee tal cual: si algo no aparece aquí, no está en el contrato.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var SERVICES = [
+    { id: "api",     label: "ordo-api" },
+    { id: "iam",     label: "ordo-iam" },
+    { id: "gateway", label: "ordo-gateway" },
+    { id: "jobs",    label: "ordo-jobs" },
+    { id: "events",  label: "ordo-events" },
+    { id: "render",  label: "ordo-render" },
+    { id: "mcp",     label: "ordo-mcp" }
+  ];
+  var METHODS = ["get", "post", "put", "patch", "delete", "head", "options"];
+
+  var tabsEl    = document.getElementById("tabs");
+  var titleEl   = document.getElementById("title");
+  var metaEl    = document.getElementById("meta");
+  var statusEl  = document.getElementById("status");
+  var contentEl = document.getElementById("content");
+  var filterEl  = document.getElementById("filter");
+
+  var spec = null;
+
+  // ---------- helpers ----------
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = String(text);
+    return n;
+  }
+  function frag() { return document.createDocumentFragment(); }
+
+  function currentService() {
+    var q = new URLSearchParams(location.search).get("service");
+    for (var i = 0; i < SERVICES.length; i++) if (SERVICES[i].id === q) return q;
+    return "api";
+  }
+
+  // Resuelve $ref locales (#/components/schemas/X). Devuelve {schema, name}.
+  function deref(node, depth) {
+    depth = depth || 0;
+    if (!node || typeof node !== "object" || depth > 12) return { schema: node, name: null };
+    if (typeof node.$ref !== "string") return { schema: node, name: null };
+    var parts = node.$ref.replace(/^#\//, "").split("/");
+    var cur = spec, name = parts[parts.length - 1];
+    for (var i = 0; i < parts.length; i++) {
+      if (cur == null) return { schema: null, name: name };
+      cur = cur[parts[i]];
+    }
+    var inner = deref(cur, depth + 1);
+    return { schema: inner.schema, name: inner.name || name };
+  }
+
+  // Descripción compacta de un tipo, en una línea.
+  function typeLine(schema, depth) {
+    depth = depth || 0;
+    var d = deref(schema);
+    var s = d.schema;
+    if (!s) return d.name || "any";
+    if (d.name && depth > 0) return d.name;
+    if (depth > 6) return "…";
+
+    if (Array.isArray(s.anyOf) || Array.isArray(s.oneOf)) {
+      var list = s.anyOf || s.oneOf;
+      var parts = [];
+      for (var i = 0; i < list.length; i++) parts.push(typeLine(list[i], depth + 1));
+      // "string | null" se lee mejor que "anyOf"
+      return parts.join(" | ");
+    }
+    if (Array.isArray(s.allOf)) {
+      var ap = [];
+      for (var j = 0; j < s.allOf.length; j++) ap.push(typeLine(s.allOf[j], depth + 1));
+      return ap.join(" & ");
+    }
+    if (s.type === "array") return typeLine(s.items || {}, depth + 1) + "[]";
+    if (s.type === "object" || s.properties) {
+      if (s.additionalProperties === true) return "object";
+      return "object";
+    }
+    if (s.enum) return s.enum.map(function (v) { return JSON.stringify(v); }).join(" | ");
+    if (s.const !== undefined) return JSON.stringify(s.const);
+    if (Array.isArray(s.type)) return s.type.join(" | ");
+    return s.type || "any";
+  }
+
+  // Restricciones legibles: default, mín/máx, patrón, formato.
+  function constraints(schema) {
+    var d = deref(schema).schema;
+    if (!d) return "";
+    var out = [];
+    if (d.default !== undefined) out.push("default " + JSON.stringify(d.default));
+    if (d.format) out.push("formato " + d.format);
+    if (d.minimum !== undefined) out.push("mín " + d.minimum);
+    if (d.maximum !== undefined) out.push("máx " + d.maximum);
+    if (d.minLength !== undefined) out.push("largo mín " + d.minLength);
+    if (d.maxLength !== undefined) out.push("largo máx " + d.maxLength);
+    if (d.pattern) out.push("patrón " + d.pattern);
+    if (Array.isArray(d.anyOf)) {
+      for (var i = 0; i < d.anyOf.length; i++) {
+        var sub = deref(d.anyOf[i]).schema;
+        if (sub && sub.default !== undefined && d.default === undefined) {
+          out.push("default " + JSON.stringify(sub.default));
+        }
+      }
+    }
+    return out.join(" · ");
+  }
+
+  // Árbol de propiedades de un schema de objeto.
+  function schemaTree(schema, depth) {
+    depth = depth || 0;
+    var d = deref(schema);
+    var s = d.schema;
+    var box = frag();
+    if (!s || depth > 5) { box.appendChild(el("div", "hint", "…")); return box; }
+
+    var props = s.properties;
+    if (!props && Array.isArray(s.allOf)) {
+      props = {};
+      for (var k = 0; k < s.allOf.length; k++) {
+        var sub = deref(s.allOf[k]).schema;
+        if (sub && sub.properties) for (var p in sub.properties) props[p] = sub.properties[p];
+      }
+    }
+    if (!props && s.type === "array") {
+      var items = deref(s.items || {});
+      box.appendChild(el("div", "hint", "Lista de " + typeLine(s.items || {}, 1)));
+      if (items.schema && items.schema.properties) box.appendChild(schemaTree(s.items, depth + 1));
+      return box;
+    }
+    if (!props) {
+      var line = el("div", "hint");
+      line.appendChild(el("span", "type", typeLine(s, 0)));
+      var c = constraints(s);
+      if (c) line.appendChild(document.createTextNode("  " + c));
+      if (s.description) line.appendChild(document.createTextNode("  — " + s.description));
+      box.appendChild(line);
+      return box;
+    }
+
+    var required = Array.isArray(s.required) ? s.required : [];
+    var tw = el("div", "tw");
+    var t = el("table");
+    var thead = el("thead");
+    var hr = el("tr");
+    ["Campo", "Tipo", "Detalle"].forEach(function (h) { hr.appendChild(el("th", null, h)); });
+    thead.appendChild(hr); t.appendChild(thead);
+    var tb = el("tbody");
+    Object.keys(props).sort().forEach(function (name) {
+      var ps = props[name];
+      var tr = el("tr");
+      var td1 = el("td", "n");
+      td1.appendChild(document.createTextNode(name));
+      if (required.indexOf(name) !== -1) {
+        td1.appendChild(document.createTextNode(" "));
+        td1.appendChild(el("span", "req-tag", "req"));
+      }
+      tr.appendChild(td1);
+      tr.appendChild(el("td", "t", typeLine(ps, 0)));
+      var td3 = el("td");
+      var bits = [];
+      var pd = deref(ps).schema || {};
+      if (pd.description) bits.push(pd.description);
+      var c = constraints(ps);
+      if (c) bits.push(c);
+      td3.textContent = bits.join(" · ");
+      tr.appendChild(td3);
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); tw.appendChild(t); box.appendChild(tw);
+    return box;
+  }
+
+  // ---------- render de una operación ----------
+  function renderOperation(path, method, op) {
+    var det = el("details", "op");
+    det.dataset.search = (method + " " + path + " " + (op.summary || "") + " " + (op.operationId || "")).toLowerCase();
+
+    var sum = el("summary");
+    sum.appendChild(el("span", "m " + method, method.toUpperCase()));
+    sum.appendChild(el("span", "op-path", path));
+    if (op.summary) sum.appendChild(el("span", "op-sum", op.summary));
+    det.appendChild(sum);
+
+    var body = el("div", "op-body");
+
+    if (op.description) body.appendChild(el("p", "hint", op.description));
+    if (op.operationId) {
+      var oid = el("p", "hint");
+      oid.appendChild(document.createTextNode("operationId: "));
+      var codeEl = el("code", null, op.operationId);
+      oid.appendChild(codeEl);
+      body.appendChild(oid);
+    }
+
+    // parámetros
+    var params = (op.parameters || []).slice();
+    if (params.length) {
+      body.appendChild(el("h4", null, "Parámetros"));
+      var tw = el("div", "tw");
+      var t = el("table");
+      var thead = el("thead"), hr = el("tr");
+      ["Nombre", "En", "Tipo", "Detalle"].forEach(function (h) { hr.appendChild(el("th", null, h)); });
+      thead.appendChild(hr); t.appendChild(thead);
+      var tb = el("tbody");
+      var order = { path: 0, query: 1, header: 2, cookie: 3 };
+      params.sort(function (a, b) {
+        var oa = order[a.in] === undefined ? 9 : order[a.in];
+        var ob = order[b.in] === undefined ? 9 : order[b.in];
+        return oa - ob || String(a.name).localeCompare(String(b.name));
+      });
+      params.forEach(function (p) {
+        var tr = el("tr");
+        var td1 = el("td", "n");
+        td1.appendChild(document.createTextNode(p.name));
+        td1.appendChild(document.createTextNode(" "));
+        td1.appendChild(el("span", p.required ? "req-tag" : "opt-tag", p.required ? "req" : "opc"));
+        tr.appendChild(td1);
+        var td2 = el("td");
+        td2.appendChild(el("span", "in-tag", p.in));
+        tr.appendChild(td2);
+        tr.appendChild(el("td", "t", typeLine(p.schema || {}, 0)));
+        var bits = [];
+        if (p.description) bits.push(p.description);
+        var c = constraints(p.schema || {});
+        if (c) bits.push(c);
+        tr.appendChild(el("td", null, bits.join(" · ")));
+        tb.appendChild(tr);
+      });
+      t.appendChild(tb); tw.appendChild(t); body.appendChild(tw);
+    }
+
+    // request body
+    if (op.requestBody) {
+      var rb = deref(op.requestBody).schema || {};
+      body.appendChild(el("h4", null, "Cuerpo de la petición" + (rb.required ? " (requerido)" : "")));
+      var content = rb.content || {};
+      Object.keys(content).forEach(function (mime) {
+        var mt = content[mime] || {};
+        var head = el("p", "hint");
+        head.appendChild(el("code", null, mime));
+        var nm = deref(mt.schema || {}).name;
+        if (nm) { head.appendChild(document.createTextNode(" → ")); head.appendChild(el("code", null, nm)); }
+        body.appendChild(head);
+        if (mt.schema) body.appendChild(schemaTree(mt.schema, 0));
+        var example = mt.example !== undefined ? mt.example
+                    : (mt.examples && Object.keys(mt.examples).length
+                        ? mt.examples[Object.keys(mt.examples)[0]].value : undefined);
+        if (example === undefined) {
+          var ds = deref(mt.schema || {}).schema;
+          if (ds && ds.example !== undefined) example = ds.example;
+        }
+        if (example !== undefined) body.appendChild(codeBlock("Ejemplo", JSON.stringify(example, null, 2)));
+      });
+    }
+
+    // respuestas
+    var responses = op.responses || {};
+    var codes = Object.keys(responses);
+    if (codes.length) {
+      body.appendChild(el("h4", null, "Respuestas"));
+      codes.sort().forEach(function (code) {
+        var r = deref(responses[code]).schema || {};
+        var row = el("div", "status");
+        var cls = "sc s" + String(code).charAt(0);
+        row.appendChild(el("span", cls, code));
+        row.appendChild(el("span", null, r.description || ""));
+        body.appendChild(row);
+        var rc = r.content || {};
+        Object.keys(rc).forEach(function (mime) {
+          var mt = rc[mime] || {};
+          var nm = deref(mt.schema || {}).name;
+          if (nm) {
+            var p = el("p", "hint");
+            p.appendChild(document.createTextNode(mime + " → "));
+            p.appendChild(el("code", null, nm));
+            body.appendChild(p);
+          }
+          if (mt.schema) {
+            var ds = deref(mt.schema).schema || {};
+            if (ds.properties || ds.type === "array") body.appendChild(schemaTree(mt.schema, 0));
+          }
+          var ex = mt.example !== undefined ? mt.example
+                 : (mt.examples && Object.keys(mt.examples).length
+                     ? mt.examples[Object.keys(mt.examples)[0]].value : undefined);
+          if (ex !== undefined) body.appendChild(codeBlock("Ejemplo", JSON.stringify(ex, null, 2)));
+        });
+      });
+    }
+
+    det.appendChild(body);
+    return det;
+  }
+
+  function codeBlock(label, text) {
+    var d = el("div", "code");
+    d.appendChild(el("div", "lbl", label));
+    var pre = el("pre");
+    pre.appendChild(el("code", null, text));
+    d.appendChild(pre);
+    return d;
+  }
+
+  // ---------- render del documento ----------
+  function render(doc) {
+    spec = doc;
+    contentEl.textContent = "";
+    statusEl.textContent = "";
+
+    var info = doc.info || {};
+    titleEl.textContent = info.title || "Referencia de API";
+    var bits = [];
+    if (info.version) bits.push("versión " + info.version);
+    if (doc.openapi) bits.push("OpenAPI " + doc.openapi);
+    metaEl.textContent = bits.join(" · ");
+    if (info.description) {
+      metaEl.appendChild(document.createElement("br"));
+      metaEl.appendChild(document.createTextNode(info.description));
+    }
+
+    var paths = doc.paths || {};
+    var names = Object.keys(paths).sort();
+    var total = 0;
+
+    // Agrupa por prefijo de primer nivel para que la lista sea navegable.
+    var groups = {};
+    names.forEach(function (p) {
+      var seg = p.split("/").filter(Boolean)[0] || "/";
+      var key = "/" + seg;
+      (groups[key] = groups[key] || []).push(p);
+    });
+
+    Object.keys(groups).sort().forEach(function (key) {
+      var h = el("h2", null, key);
+      contentEl.appendChild(h);
+      groups[key].forEach(function (p) {
+        var item = paths[p] || {};
+        METHODS.forEach(function (m) {
+          if (!item[m]) return;
+          total++;
+          contentEl.appendChild(renderOperation(p, m, item[m]));
+        });
+      });
+    });
+
+    if (!total) contentEl.appendChild(el("p", "empty", "El contrato no declara rutas."));
+
+    if (total <= 2) {
+      var note = el("div", "note");
+      note.textContent = "Este servicio expone solo healthchecks: es un esqueleto de la fase 0. "
+        + "El contrato es real, pero el servicio todavía no implementa lógica de negocio.";
+      contentEl.insertBefore(note, contentEl.firstChild);
+    }
+
+    // schemas de componentes
+    var schemas = (doc.components || {}).schemas || {};
+    var sNames = Object.keys(schemas).sort();
+    if (sNames.length) {
+      contentEl.appendChild(el("h2", null, "Schemas"));
+      sNames.forEach(function (n) {
+        var det = el("details", "schema");
+        det.dataset.search = ("schema " + n).toLowerCase();
+        var s = el("summary");
+        s.appendChild(document.createTextNode(n));
+        var d = deref(schemas[n]).schema || {};
+        if (d.type && d.type !== "object") {
+          s.appendChild(document.createTextNode(" "));
+          s.appendChild(el("span", "type", typeLine(schemas[n], 0)));
+        }
+        det.appendChild(s);
+        var b = el("div", "sch-body");
+        if (d.description) b.appendChild(el("p", "hint", d.description));
+        b.appendChild(schemaTree(schemas[n], 0));
+        det.appendChild(b);
+        contentEl.appendChild(det);
+      });
+    }
+
+    var counter = el("p", "hint");
+    counter.textContent = total + " operación(es) · " + sNames.length + " schema(s) · fuente: /openapi/" + currentService() + ".json";
+    contentEl.appendChild(counter);
+
+    applyFilter();
+  }
+
+  // ---------- filtro ----------
+  function applyFilter() {
+    var q = filterEl.value.trim().toLowerCase();
+    var items = contentEl.querySelectorAll("details[data-search]");
+    var visibleByHeading = {};
+    var currentHeading = null;
+
+    Array.prototype.forEach.call(contentEl.children, function (node) {
+      if (node.tagName === "H2") { currentHeading = node; visibleByHeading[node.textContent] = 0; node.style.display = ""; }
+      if (node.tagName === "DETAILS" && node.dataset.search !== undefined) {
+        var match = !q || node.dataset.search.indexOf(q) !== -1;
+        node.style.display = match ? "" : "none";
+        if (match && currentHeading) visibleByHeading[currentHeading.textContent]++;
+      }
+    });
+    if (q) {
+      var heads = contentEl.querySelectorAll("h2");
+      Array.prototype.forEach.call(heads, function (h) {
+        h.style.display = visibleByHeading[h.textContent] ? "" : "none";
+      });
+    }
+    void items;
+  }
+  filterEl.addEventListener("input", applyFilter);
+
+  // ---------- tabs ----------
+  function buildTabs(active) {
+    tabsEl.textContent = "";
+    SERVICES.forEach(function (s) {
+      var a = el("a", "tab", s.label);
+      a.href = "api.html?service=" + s.id;
+      if (s.id === active) a.setAttribute("aria-current", "true");
+      tabsEl.appendChild(a);
+    });
+  }
+
+  // ---------- carga ----------
+  function load() {
+    var svc = currentService();
+    buildTabs(svc);
+    document.title = "ordo-" + svc + " — Referencia de API";
+    statusEl.textContent = "Cargando /openapi/" + svc + ".json…";
+    statusEl.className = "";
+    fetch("/openapi/" + svc + ".json", { cache: "no-cache" })
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(render)
+      .catch(function (e) {
+        statusEl.className = "err";
+        statusEl.textContent = "No se pudo cargar /openapi/" + svc + ".json — " + e.message
+          + ". Este visor necesita el servidor de documentación: ejecuta `make docs-serve` y abre http://127.0.0.1:8888/api.html";
+      });
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-.PHONY: up down health migrate seed check lint types test test-load test-agent schema new-module new-loc
+.PHONY: up down health migrate seed check lint types test test-load test-agent schema new-module new-loc docs-serve
 
 COMPOSE := docker compose --env-file infra/compose/.env -f infra/compose/docker-compose.yml
 
@@ -41,6 +41,9 @@ test-e2e: ## E2E contra el stack real
 
 test-agent: ## Suite agéntica
 	uv run pytest tests/agent -m agent
+
+docs-serve: ## Documentación de la API en http://localhost:8888
+	uv run python docs/landing/serve.py
 
 schema:
 	@echo "pendiente: generación OpenAPI + schema semántico (F2)" && exit 1
