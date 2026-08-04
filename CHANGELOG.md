@@ -6,6 +6,22 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F4.3** Framework de facturación electrónica (ADR-014): documento electrónico como
+  máquina de estados explícita (draft, generated, signed, sent, accepted, rejected,
+  contingency, cancelled) donde cada transición es un método y las inválidas fallan con
+  código estable; rangos de numeración autorizados como concepto común (el CAF chileno y
+  el timbrado paraguayo son lo mismo con otro nombre), con folio quemado que no se
+  recicla y errores propios al agotarse o vencer; certificados solo como metadatos con
+  referencia al vault, nunca la clave en la base. Adaptador SII (Chile): parser del CAF,
+  timbre TED firmado de verdad con RSA-SHA1 y la clave del CAF, DTE 33/34/39/52/56/61
+  con referencia obligatoria en NC/ND, sobre EnvioDTE con carátula y subtotales, y
+  lectura de acuses (TRACKID, EPR/RCT y familia). Adaptador SIFEN (Paraguay): CDC de 44
+  dígitos con módulo 11 verificable, XML del DE con subtotales por tasa (10 %, 5 %,
+  exento; una tasa desconocida es error), URL del QR firmada con el CSC vía SHA-256, y
+  respuestas 0260/0300/1xxx. La firma XMLDSig de documento completo queda detrás de una
+  interfaz hasta aprobar sus dependencias (ADR-014). 47 tests de módulo y 7 de
+  integración nuevos.
+
 - **F1.7** Telegram como primer canal HITL: el aprobador resuelve la solicitud con dos
   botones y queda en el mismo estado que por API. El vinculo chat-principal se establece
   con un codigo de un solo uso, de 10 minutos, emitido por un endpoint autenticado y
