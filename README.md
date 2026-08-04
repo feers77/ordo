@@ -29,4 +29,15 @@ make up          # stack local (docker compose)
 
 ## Licencia
 
-Pendiente de definición formal en ADR-010 (Fase 0).
+**AGPLv3** ([`LICENSE`](LICENSE)). Puedes usar ORDO gratis, también comercialmente,
+y modificarlo. Si lo modificas y lo despliegas —incluso si solo lo ofreces por red,
+como SaaS— debes publicar el código de tus cambios bajo la misma licencia.
+
+La razón está en [`ADR/ADR-010-licencia.md`](ADR/ADR-010-licencia.md): queremos que
+las mejoras vuelvan al proyecto, no que alguien cierre el producto y lo revenda.
+
+Para contribuir, ver [`CONTRIBUTING.md`](CONTRIBUTING.md). No pedimos CLA, solo DCO
+(`git commit -s`).
+
+> ORDO no está afiliado a Odoo S.A. "Odoo" es marca registrada de su titular; ORDO
+> reimplementa comportamiento observable, sin copiar su código.

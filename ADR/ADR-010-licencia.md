@@ -1,32 +1,69 @@
 # ADR-010 — Licencia del producto y política anti-contaminación
 
-- **Estado:** propuesto — **requiere decisión explícita del dueño del proyecto**
+- **Estado:** aprobado por @feers77 el 2026-08-04
 - **Fecha:** 2026-08-04
 - **Decisores:** @feers77
 
 ## Contexto
 
-El repo `github.com/feers77/ordo` es público. Odoo Community es LGPLv3: copiar código, datos, planes contables o traducciones contaminaría nuestra licencia. Necesitamos licencia propia que permita negocio comercial sin cerrar la comunidad.
+El repo `github.com/feers77/ordo` es público. El dueño quiere que el producto sea
+**libre y gratuito, con uso comercial permitido**, pero que **quien lo modifique
+devuelva esos cambios al proyecto** — incluido quien lo ofrezca como servicio, que es
+el caso natural de un ERP operado por agentes.
+
+Además, Odoo Community es LGPLv3: copiar su código, datos o traducciones contaminaría
+nuestra licencia.
 
 ## Opciones consideradas
 
-1. **AGPLv3 + excepción comercial (dual licensing)** — protege contra SaaS parasitario; requiere CLA para vender excepciones.
-2. **BSL 1.1 → Apache 2.0 a los 4 años** — protege ventana comercial; no es open source formal al inicio.
-3. **Apache 2.0 puro** — máxima adopción; cualquiera puede revender el producto como SaaS.
+1. **AGPLv3** — libre, comercial permitido, copyleft fuerte que **alcanza el uso en red**:
+   quien modifica y despliega como servicio debe publicar sus cambios. Es exactamente
+   la intención declarada.
+2. **GPLv3** — mismo copyleft, pero **no cubre SaaS**: alguien podría modificar el ERP,
+   ofrecerlo como servicio y no devolver nada. Deja abierto justo el caso que importa.
+3. **Apache 2.0** — máxima adopción, pero permite tomar el código, cerrarlo y revenderlo
+   sin contribuir. Contradice el requisito.
+4. **BSL con conversión a Apache** — protege una ventana comercial, pero no es open
+   source al inicio y no obliga a contribuir.
 
 ## Decisión
 
-**Propuesta pendiente de aprobación:** AGPLv3 con excepción comercial y CLA (opción 1).
+**AGPLv3** (GNU Affero General Public License v3.0), sin licencia dual ni excepciones
+comerciales. En concreto, cualquiera puede:
 
-Política anti-contaminación (vigente ya, independiente de la licencia):
-- Prohibido copiar código/datos/traducciones de Odoo o derivados (CLAUDE.md §2.1). Solo reimplementación de comportamiento observable.
-- Datos fiscales desde fuentes normativas primarias (SII, AEAT, etc.), citadas en `manifest.yaml` del pack.
+- usar ORDO gratis, incluso con fines comerciales y para operar su empresa;
+- modificarlo y desplegarlo;
+
+y a cambio debe:
+
+- publicar el código fuente de sus modificaciones bajo AGPLv3, **también cuando el
+  software se ofrece por red** (§13 de la licencia), que es el caso de un ERP SaaS;
+- conservar los avisos de copyright y licencia.
+
+Contribuciones bajo **DCO** (Developer Certificate of Origin, `Signed-off-by`) en lugar
+de un CLA: no se pide cesión de derechos, solo que quien contribuye afirme tener el
+derecho de hacerlo. Es coherente con un proyecto que quiere colaboración, no con uno
+que se reserva relicenciar.
+
+## Política anti-contaminación (vigente, independiente de la licencia)
+
+- Prohibido copiar código, datos o traducciones de Odoo o repos derivados
+  (CLAUDE.md §2.1). Solo reimplementación de comportamiento observable.
+- Datos fiscales desde fuentes normativas primarias (SII, AEAT, SUNAT, etc.), citadas
+  en el `manifest.yaml` de cada pack de localización.
+- Dependencias: permitidas MIT/BSD/Apache/PSF. Una dependencia GPL/AGPL de terceros
+  requiere ADR propio.
 - Revisión de similitud de código antes de cada release.
-- Dependencias: permitidas MIT/BSD/Apache/PSF; GPL/AGPL de terceros requiere ADR propio.
 - "Odoo" es marca registrada: decimos "compatible con", nunca implicamos afiliación.
 
 ## Consecuencias
 
-- Positivas: negocio protegido, código abierto real, packs de localización auditables.
-- Negativas: CLA agrega fricción a contribuciones externas.
-- Invalidaría: decisión comercial de ofrecer el core como servicio cerrado.
+- Positivas: el ecosistema crece con las mejoras de todos; nadie puede cerrar el
+  producto ni revenderlo como servicio propietario; el uso comercial queda abierto,
+  así que no hay fricción para adoptarlo.
+- Negativas: algunas empresas evitan AGPL por política interna, lo que puede frenar
+  cierta adopción corporativa. Sin dual licensing no hay ingreso por vender excepciones;
+  el modelo de negocio deberá venir de servicios, hosting o soporte.
+- Qué invalidaría esta decisión: querer vender excepciones propietarias más adelante.
+  Eso exigiría CLA con cesión de derechos **desde el primer commit externo**; migrar
+  después es prácticamente inviable porque requiere el permiso de cada contribuyente.
