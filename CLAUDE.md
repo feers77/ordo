@@ -14,7 +14,7 @@ ERP/CRM completo **solo backend (API)**, con paridad funcional respecto a Odoo C
 
 ## 2. Prohibiciones absolutas
 
-0. **Licencia del proyecto: AGPLv3** (ADR-010). Todo aporte se publica bajo ella; se contribuye con DCO (`git commit -s`), no con CLA.
+0. **Licencia del proyecto: AGPLv3** (ADR-010). Todo aporte se publica bajo ella. Se contribuye con DCO (`git commit -s`) en cada commit y CLA (`CLA.md`) una vez.
 1. **No copiar código, datos ni traducciones de Odoo** (ni de repos derivados). Odoo Community es LGPLv3; copiar contamina la licencia del producto. Se permite estudiar el comportamiento observable y reimplementarlo. Los planes de cuentas y tablas de impuestos se obtienen de **fuentes normativas oficiales**, citadas en `manifest.yaml` de cada pack.
 2. **No escribir un OpenID Provider desde cero** antes de la Fase 3. Hasta entonces, Keycloak.
 3. **No usar `float` para dinero.** `Decimal` en Python, `NUMERIC` en Postgres, string decimal en JSON.

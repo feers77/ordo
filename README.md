@@ -36,8 +36,9 @@ como SaaS— debes publicar el código de tus cambios bajo la misma licencia.
 La razón está en [`ADR/ADR-010-licencia.md`](ADR/ADR-010-licencia.md): queremos que
 las mejoras vuelvan al proyecto, no que alguien cierre el producto y lo revenda.
 
-Para contribuir, ver [`CONTRIBUTING.md`](CONTRIBUTING.md). No pedimos CLA, solo DCO
-(`git commit -s`).
+Para contribuir, ver [`CONTRIBUTING.md`](CONTRIBUTING.md): DCO en cada commit
+(`git commit -s`) y el [CLA](CLA.md) una sola vez, en tu primer PR. El CLA **no cede
+copyright**; otorga una licencia amplia al proyecto.
 
 > ORDO no está afiliado a Odoo S.A. "Odoo" es marca registrada de su titular; ORDO
 > reimplementa comportamiento observable, sin copiar su código.

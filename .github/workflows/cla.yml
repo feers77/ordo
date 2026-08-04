@@ -1,0 +1,60 @@
+name: cla
+
+# Pide la firma del CLA en PRs externos. El dueño del repo queda exento
+# (allowlist) para no bloquear su propio trabajo.
+#
+# Requiere un secret PERSONAL_ACCESS_TOKEN con permiso `repo`, usado para
+# escribir las firmas en .github/cla/signatures.json. Mientras el secret no
+# exista, el job se salta en vez de fallar: el repo aún no está abierto.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  cla:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comprobar si el CLA está habilitado
+        id: enabled
+        env:
+          PAT: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          if [ -n "$PAT" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLA sin habilitar: falta el secret PERSONAL_ACCESS_TOKEN."
+          fi
+
+      - name: Firma del CLA
+        if: >-
+          steps.enabled.outputs.enabled == 'true' &&
+          (github.event_name == 'pull_request_target' ||
+           contains(github.event.comment.body, 'Acepto el CLA de ORDO'))
+        uses: contributor-assistant/github-action@v2.6.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        with:
+          path-to-signatures: ".github/cla/signatures.json"
+          path-to-document: "https://github.com/feers77/ordo/blob/main/CLA.md"
+          branch: "main"
+          allowlist: "feers77,dependabot[bot]"
+          custom-notsigned-prcomment: >-
+            Gracias por tu aporte. Antes de poder integrarlo necesitamos que
+            aceptes el [CLA de ORDO](https://github.com/feers77/ordo/blob/main/CLA.md).
+            **No cedes tu copyright**: sigues siendo dueño de tu código. Otorgas una
+            licencia amplia, con derecho de sublicencia, para que el proyecto pueda
+            distribuirlo —hoy bajo AGPLv3 y, si algún día hiciera falta, bajo otras
+            licencias. Para aceptar, comenta exactamente:
+          custom-pr-sign-comment: "Acepto el CLA de ORDO, versión 1.0."
+          custom-allsigned-prcomment: "CLA firmado. Gracias por contribuir a ORDO."
