@@ -13,10 +13,16 @@ from typing import Any
 
 from fastapi import Request, Response
 from ordo_core.errors import KernelError
-from ordo_runtime import create_app
+from ordo_runtime import OrdoError, create_app
+from ordo_runtime.authz import (
+    PDPClient,
+    check_tenant_header,
+    enforcement_enabled,
+    warn_if_open,
+)
 
 from ordo_mcp.deps import build_env, session_maker
-from ordo_mcp.tools import HANDLERS, TOOLS
+from ordo_mcp.tools import HANDLERS, TOOLS, tool_authz_target
 
 PROTOCOL_VERSION = "2025-03-26"
 PARSE_ERROR = -32700
@@ -25,6 +31,14 @@ METHOD_NOT_FOUND = -32601
 INVALID_PARAMS = -32602
 
 app = create_app("mcp")
+warn_if_open("ordo-mcp")
+_pdp: PDPClient | None = PDPClient() if enforcement_enabled() else None
+
+
+def set_pdp_client(client: PDPClient | None) -> None:
+    """Inyección para tests; en producción se construye desde ORDO_IAM_URL."""
+    global _pdp
+    _pdp = client
 
 
 def _json_default(value: Any) -> str:
@@ -120,12 +134,30 @@ async def mcp_endpoint(request: Request) -> Response:
     elif method == "tools/list":
         payload = _result(request_id, {"tools": TOOLS})
     elif method == "tools/call":
-        tenant = request.headers.get("X-Ordo-Tenant", "")
+        name = str(params.get("name", ""))
+        arguments = params.get("arguments") or {}
+        header_tenant = request.headers.get("X-Ordo-Tenant", "")
+        if _pdp is not None:
+            authorization = request.headers.get("Authorization", "")
+            bearer = authorization.removeprefix("Bearer ").strip() or None
+            model, operation = tool_authz_target(name, arguments)
+            try:
+                decision = await _pdp.authorize(bearer=bearer, model=model, operation=operation)
+                tenant = check_tenant_header(decision.tenant, header_tenant or None)
+            except OrdoError as exc:
+                payload = _result(
+                    request_id,
+                    _tool_text({"error": exc.to_payload()["error"]}, is_error=True),
+                )
+                return Response(
+                    json.dumps(payload, default=_json_default),
+                    media_type="application/json",
+                )
+        else:
+            tenant = header_tenant
         if not tenant:
             payload = _error(request_id, INVALID_PARAMS, "Falta la cabecera X-Ordo-Tenant")
         else:
-            name = str(params.get("name", ""))
-            arguments = params.get("arguments") or {}
             result = await _call_tool(name, arguments, tenant)
             payload = _result(request_id, result)
     else:

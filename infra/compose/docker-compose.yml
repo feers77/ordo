@@ -16,11 +16,45 @@ services:
     profiles: [app]
     environment:
       ORDO_DATABASE_URL: postgresql+asyncpg://ordo_app:${ORDO_APP_PASSWORD:?definir en .env}@postgres:5432/ordo
+      ORDO_IAM_URL: ${ORDO_IAM_URL:-http://iam:8000}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
       postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request as u; u.urlopen(\"http://127.0.0.1:8000/healthz\", timeout=3)'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  iam:
+    build:
+      context: ../..
+      dockerfile: services/iam/Dockerfile
+    image: ordo-iam:latest
+    profiles: [app]
+    command: >
+      sh -c "python -c 'import asyncio,os; from ordo_iam.migrations import upgrade_to_head;
+      asyncio.run(upgrade_to_head(os.environ[\"IAM_DATABASE_URL\"]))'
+      && uvicorn ordo_iam.main:app --host 0.0.0.0 --port 8000 --forwarded-allow-ips '*'"
+    environment:
+      IAM_DATABASE_URL: postgresql+asyncpg://ordo:${POSTGRES_PASSWORD:?definir en .env}@postgres:5432/ordo_iam
+      REDIS_URL: redis://redis:6379/0
+      IAM_ISSUER: ${IAM_ISSUER:-http://iam:8000}
+      IAM_SIGNING_KEY_FILE: /run/secrets/iam_signing_key
+      OIDC_ISSUER: ${OIDC_ISSUER:-http://keycloak:8080/realms/ordo}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-ordo-api}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./secrets/iam_signing_key.pem:/run/secrets/iam_signing_key:ro
+    ports:
+      - "127.0.0.1:8002:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import urllib.request as u; u.urlopen(\"http://127.0.0.1:8000/healthz\", timeout=3)'"]
@@ -36,6 +70,7 @@ services:
     profiles: [app]
     environment:
       ORDO_DATABASE_URL: postgresql+asyncpg://ordo_app:${ORDO_APP_PASSWORD:?definir en .env}@postgres:5432/ordo
+      ORDO_IAM_URL: ${ORDO_IAM_URL:-http://iam:8000}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "127.0.0.1:8001:8000"
@@ -111,7 +146,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    profiles: [core, dev]
+    profiles: [core, dev, app]
     command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
     volumes:
       - redisdata:/data

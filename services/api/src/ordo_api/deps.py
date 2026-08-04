@@ -7,9 +7,10 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, Header
+from fastapi import Depends, Header, Request
 from ordo_core import Environment, Registry
 from ordo_core.registry import Module
+from ordo_runtime import OrdoError
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -62,10 +63,20 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 
 
 async def get_env(
+    request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],
     registry: Annotated[Registry, Depends(get_registry)],
-    tenant: Annotated[str, Header(alias="X-Ordo-Tenant")],
+    tenant: Annotated[str | None, Header(alias="X-Ordo-Tenant")] = None,
 ) -> Environment:
-    env = Environment(session=session, tenant=tenant, registry=registry)
+    # Con enforcement activo el tenant viene del token (ADR-016); la cabecera
+    # queda para el modo abierto de red interna.
+    effective = getattr(request.state, "authz_tenant", None) or tenant
+    if not effective:
+        raise OrdoError(
+            "Falta el tenant: autentícate o envía X-Ordo-Tenant.",
+            code="TENANT_REQUIRED",
+            status_code=400,
+        )
+    env = Environment(session=session, tenant=effective, registry=registry)
     await env.bind()
     return env

@@ -191,3 +191,14 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `SECURITY_INVALID_YAML` | 500 | no | security.yaml de un módulo ilegible |
 | `SECURITY_INVALID_SHAPE` | 500 | no | security.yaml sin el mapa roles esperado |
 | `SECURITY_INVALID_PERM` | 500 | no | Permiso desconocido en un security.yaml |
+
+## Enforcement de tokens (ADR-016)
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `AUTH_REQUIRED` | 401 | no | Falta el Bearer o el token es inválido/vencido |
+| `AUTH_DENIED` | 403 | no | El PDP negó la operación (cap o RBAC) |
+| `IAM_APPROVAL_REQUIRED` | 403 | no | La operación exige aprobación humana previa |
+| `AUTH_TENANT_MISMATCH` | 403 | no | La cabecera X-Ordo-Tenant contradice al token |
+| `AUTH_PDP_UNAVAILABLE` | 503 | sí | IAM no responde; fail-closed |
+| `TENANT_REQUIRED` | 400 | no | Sin token ni cabecera de tenant en modo abierto |

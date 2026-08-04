@@ -6,6 +6,19 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **Enforcement de tokens** (ADR-016): con `ORDO_IAM_URL` configurada, `ordo-api` y
+  `ordo-mcp` exigen Bearer en toda ruta de datos y consultan al PDP central
+  (`/iam/v1/authorize`, que ahora devuelve el tenant resuelto): el tenant sale del
+  token y una cabecera que lo contradiga es 403; IAM caído es 503 fail-closed, nunca
+  un pase; las operaciones que exigen aprobación responden `IAM_APPROVAL_REQUIRED`
+  con el hint del flujo. Sin la variable, el servicio arranca en modo abierto y lo
+  grita en el log (solo red interna). El servicio IAM se despliega en el perfil `app`
+  del compose (migraciones al arrancar, llave de firma en archivo generado por
+  `make app`, base propia `ordo_iam`). Probado contra IAM real: token firmado de
+  agente con cap + usuario con rol ventas lee sus órdenes, no toca contabilidad, y el
+  `action_invoice` marcado en el cap exige aprobación. 7 tests unitarios y 9 de
+  integración nuevos.
+
 - **F1.8** Roles y ACL por defecto de los módulos comerciales (diseño F1-08): cada
   módulo declara en `security.yaml` qué rol toca qué modelo y cómo; los fragmentos se
   combinan por rol (`ventas`, `compras`, `contabilidad`, `tesoreria`, `facturacion`,

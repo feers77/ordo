@@ -481,6 +481,9 @@ class AuthorizeResponse(BaseModel):
     reason: str
     requires_approval: bool
     record_domain: dict[str, Any]
+    # El tenant resuelto desde el token: los servicios lo usan para el
+    # binding en vez de confiar en la cabecera del cliente (ADR-016).
+    tenant: str = ""
 
 
 @router.post("/authorize", response_model=AuthorizeResponse)
@@ -548,4 +551,5 @@ async def authorize(
         reason=decision.reason,
         requires_approval=decision.requires_approval,
         record_domain=decision.record_domain,
+        tenant=tenant,
     )

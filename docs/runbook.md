@@ -28,8 +28,13 @@ crea las tablas y otorga exactamente los privilegios de datos. Si la clave de
 `ordo_app` no coincide con `ORDO_APP_PASSWORD` del `.env` (initdb anterior al
 cambio), resetear: `ALTER ROLE ordo_app LOGIN PASSWORD '...'` como `ordo`.
 
-El servicio IAM se despliega cuando existan sus secretos (Keycloak,
-Telegram); hasta entonces api y mcp asumen red interna y edge delante.
+IAM corre en el mismo perfil (`make app` genera la llave de firma en
+`infra/compose/secrets/` y crea la base `ordo_iam`). Con `ORDO_IAM_URL`
+(por defecto `http://iam:8000` en compose) api y mcp exigen token: sin
+Bearer todo es 401. Para operar se necesita un token de agente
+(`POST /iam/v1/token`, tutorial §5-6) o de usuario (Keycloak). Modo abierto
+de emergencia: `ORDO_IAM_URL=` vacío en el override y reiniciar — solo red
+interna, el log lo advierte.
 
 ## Rollback
 
