@@ -28,6 +28,7 @@ class KernelHTTPError(OrdoError):
 
     STATUS: ClassVar[dict[str, int]] = {
         "MODEL_NOT_FOUND": 404,
+        "RECORD_NOT_FOUND": 404,
         "ACTION_UNKNOWN": 404,
         "REPORT_UNKNOWN": 404,
         "REPORT_PARAM_REQUIRED": 400,
@@ -40,6 +41,10 @@ class KernelHTTPError(OrdoError):
         "IDEMPOTENCY_KEY_REUSED": 409,
         "INVALID_CURSOR": 400,
         "TENANT_INVALID": 400,
+        "SANDBOX_NESTED": 409,
+        "SANDBOX_SOURCE_NOT_FOUND": 404,
+        "SANDBOX_REFUSED": 403,
+        "SANDBOX_NAME_INVALID": 400,
     }
 
     def __init__(self, error: KernelError) -> None:

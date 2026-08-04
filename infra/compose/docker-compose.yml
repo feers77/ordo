@@ -16,6 +16,9 @@ services:
     profiles: [app]
     environment:
       ORDO_DATABASE_URL: postgresql+asyncpg://ordo_app:${ORDO_APP_PASSWORD:?definir en .env}@postgres:5432/ordo
+      # Rol dueño, exclusivamente para el DDL de los sandboxes (F3-03 §3):
+      # clonar y borrar schemas. El tráfico normal jamás usa esta conexión.
+      ORDO_ADMIN_DATABASE_URL: postgresql+asyncpg://ordo:${POSTGRES_PASSWORD:?definir en .env}@postgres:5432/ordo
       ORDO_IAM_URL: ${ORDO_IAM_URL:-http://iam:8000}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
@@ -94,6 +97,9 @@ services:
     profiles: [app]
     environment:
       ORDO_DATABASE_URL: postgresql+asyncpg://ordo_app:${ORDO_APP_PASSWORD:?definir en .env}@postgres:5432/ordo
+      # Rol dueño, exclusivamente para el DDL de los sandboxes (F3-03 §3):
+      # el worker recoge los vencidos con DROP SCHEMA. Nada más lo usa.
+      ORDO_ADMIN_DATABASE_URL: postgresql+asyncpg://ordo:${POSTGRES_PASSWORD:?definir en .env}@postgres:5432/ordo
       ORDO_EVENTS_INTERVAL: ${ORDO_EVENTS_INTERVAL:-5}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:

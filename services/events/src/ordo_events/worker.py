@@ -17,7 +17,9 @@ from typing import TYPE_CHECKING
 
 import httpx
 from modules.webhook.service import WebhookService
+from ordo_core.sandbox import ensure_registry_table, purge_expired
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from ordo_events import deps
 
@@ -25,7 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
     from fastapi import FastAPI
-    from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+    from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
 logger = logging.getLogger("ordo.events.worker")
 
@@ -38,6 +40,8 @@ NO_RESPONSE_STATUS = 599
 TENANT_QUERY = (
     "SELECT schema_name FROM information_schema.schemata WHERE schema_name LIKE 't\\_%' ESCAPE '\\'"
 )
+
+_admin_engine: AsyncEngine | None = None
 
 
 class HttpxTransport:
@@ -65,6 +69,35 @@ async def discover_tenants(engine: AsyncEngine) -> list[str]:
     return sorted(str(row.schema_name).removeprefix(TENANT_PREFIX) for row in rows)
 
 
+def admin_engine() -> AsyncEngine | None:
+    """Owner-role engine for sandbox DDL, or None if the deploy has no DDL.
+
+    Dropping a schema is DDL and `ORDO_DATABASE_URL` deliberately points at a
+    role without it (AGENTS.md §7): without the admin URL the worker simply
+    does not collect sandboxes.
+    """
+    global _admin_engine
+    url = os.environ.get("ORDO_ADMIN_DATABASE_URL")
+    if not url:
+        return None
+    if _admin_engine is None:
+        _admin_engine = create_async_engine(url, pool_size=1, max_overflow=1)
+    return _admin_engine
+
+
+async def purge_sandboxes() -> None:
+    """Drops the sandboxes whose TTL ran out (F3-03 §3)."""
+    engine = admin_engine()
+    if engine is None:
+        return
+    maker = async_sessionmaker(engine, expire_on_commit=False)
+    async with maker() as session:
+        await ensure_registry_table(session)
+        dropped = await purge_expired(session)
+    if dropped:
+        logger.info("sandboxes vencidos borrados: %d (%s)", len(dropped), ", ".join(dropped))
+
+
 async def worker_loop(interval_s: float | None = None) -> None:
     interval = interval_s or float(os.environ.get("ORDO_EVENTS_INTERVAL", DEFAULT_INTERVAL_S))
     transport = HttpxTransport()
@@ -86,6 +119,13 @@ async def worker_loop(interval_s: float | None = None) -> None:
             except Exception:
                 # Un tenant roto no frena a los demás: se registra y se sigue.
                 logger.exception("ronda de webhooks del tenant %s falló", tenant)
+        try:
+            await purge_sandboxes()
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            # La basura de sandboxes es secundaria: nunca frena las entregas.
+            logger.exception("la limpieza de sandboxes vencidos falló")
         await asyncio.sleep(interval)
 
 
