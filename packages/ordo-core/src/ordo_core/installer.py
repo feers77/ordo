@@ -76,6 +76,34 @@ def _column_ddl(name: str, field: Field) -> str | None:
     return " ".join(parts)
 
 
+def add_column_ddl(definition: ModelDefinition) -> list[str]:
+    """ADD COLUMN IF NOT EXISTS for every stored field.
+
+    A tenant installed before a module grew a field keeps its old table:
+    without this, the column simply never appears and every query that
+    mentions it fails at runtime. New columns are always added nullable —
+    existing rows have no value for them and a NOT NULL would fail.
+    """
+    statements = []
+    for name, field in definition.fields.items():
+        ddl = _column_ddl(name, field)
+        if ddl is None or name in TECHNICAL_DDL:
+            continue
+        column = ddl.removesuffix(" NOT NULL")
+        statements.append(f'ALTER TABLE "{definition.table}" ADD COLUMN IF NOT EXISTS {column}')
+    return statements
+
+
+def index_ddl(definition: ModelDefinition) -> list[str]:
+    """Indexes declared by the model's fields."""
+    return [
+        f'CREATE INDEX IF NOT EXISTS "ix_{definition.table}_{name}" '
+        f'ON "{definition.table}" ("{name}")'
+        for name, field in definition.fields.items()
+        if field.index and field.store and name != "id"
+    ]
+
+
 def table_ddl(definition: ModelDefinition) -> list[str]:
     """CREATE TABLE plus the indexes declared by the model's fields."""
     columns = [
@@ -83,14 +111,10 @@ def table_ddl(definition: ModelDefinition) -> list[str]:
         for name, field in definition.fields.items()
         if (ddl := _column_ddl(name, field)) is not None
     ]
-    statements = [f'CREATE TABLE IF NOT EXISTS "{definition.table}" ({", ".join(columns)})']
-    for name, field in definition.fields.items():
-        if field.index and field.store and name != "id":
-            statements.append(
-                f'CREATE INDEX IF NOT EXISTS "ix_{definition.table}_{name}" '
-                f'ON "{definition.table}" ("{name}")'
-            )
-    return statements
+    return [
+        f'CREATE TABLE IF NOT EXISTS "{definition.table}" ({", ".join(columns)})',
+        *index_ddl(definition),
+    ]
 
 
 class ModuleInstaller:
@@ -116,7 +140,20 @@ class ModuleInstaller:
         created = []
         for name in model_names or self.registry.model_names:
             definition = self.registry[name]
-            for statement in table_ddl(definition):
+            # El orden importa: la tabla, después las columnas que pudieran
+            # faltar (tenant instalado antes de que el módulo creciera), y
+            # solo entonces los índices, que necesitan sus columnas.
+            columns = [
+                ddl
+                for column, field in definition.fields.items()
+                if (ddl := _column_ddl(column, field)) is not None
+            ]
+            await self.session.execute(
+                text(f'CREATE TABLE IF NOT EXISTS "{definition.table}" ({", ".join(columns)})')
+            )
+            for statement in add_column_ddl(definition):
+                await self.session.execute(text(statement))
+            for statement in index_ddl(definition):
                 await self.session.execute(text(statement))
             created.append(definition.table)
         return created

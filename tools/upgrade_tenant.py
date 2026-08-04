@@ -57,6 +57,8 @@ async def upgrade(session: AsyncSession, tenant: str) -> None:
     installed_now = []
     for name in order:
         if name in already:
+            # Ya instalado: puede haber ganado campos desde entonces.
+            await installer.create_tables(loader.models_by_module.get(name, []))
             continue
         await installer.install(manifests[name])
         installed_now.append(name)
