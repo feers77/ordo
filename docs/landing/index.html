@@ -202,6 +202,8 @@ h2:hover .anchor,h3:hover .anchor{opacity:1}
     <span class="badge accent">Python 3.12 · FastAPI · PostgreSQL 17</span>
     <span class="badge ok">F1 IAM implementada</span>
     <span class="badge ok">F2 Kernel funcional</span>
+    <span class="badge ok">F4 Contabilidad + e-invoicing</span>
+    <span class="badge ok">F5 Ventas y compras</span>
     <span class="badge warn">F3 Capa agéntica pendiente</span>
     <span class="badge">AGPLv3</span>
   </div>
@@ -243,6 +245,38 @@ h2:hover .anchor,h3:hover .anchor{opacity:1}
   para declarar impuestos. Cada manifiesto lista qué falta.</p>
   <p>El framework rechaza cargar un pack que no cite sus fuentes normativas: un dato
   fiscal sin norma detrás no se puede verificar ni defender ante una fiscalización.</p>
+
+  <h3>Facturación electrónica: SII y SIFEN</h3>
+  <p>El módulo <code>einvoicing</code> modela el documento electrónico como una máquina
+  de estados explícita: <code>draft → generated → signed → sent →
+  accepted/rejected</code>, con <code>contingency</code> para cuando la autoridad no
+  responde. Cada transición es un método; una transición inválida es
+  <code>EDI_INVALID_TRANSITION</code>. Los rangos de numeración autorizados —el CAF
+  chileno y el timbrado paraguayo son el mismo concepto— asignan folios que no se
+  reciclan: un folio quemado queda quemado.</p>
+  <ul>
+    <li><strong>Chile (SII)</strong>: lectura del CAF, timbre TED firmado de verdad
+    (RSA-SHA1 con la clave del CAF, como exige el formato), DTE 33/34/39/52/56/61 con
+    referencia obligatoria en notas de crédito y débito, sobre EnvioDTE y lectura de
+    acuses (TrackID, EPR/RCT). Un DTE aceptado no se anula: se corrige con NC.</li>
+    <li><strong>Paraguay (SIFEN)</strong>: CDC de 44 dígitos con dígito verificador
+    módulo 11, XML del DE con subtotales por tasa (10&nbsp;%, 5&nbsp;%, exento), URL del
+    QR firmada con el CSC, y respuestas 0260/0300/1xxx. El SIFEN sí permite anular un
+    DE aprobado dentro del plazo.</li>
+  </ul>
+  <p class="warn">La firma XMLDSig del documento completo está detrás de una interfaz
+  (<code>Signer</code>) a la espera de aprobar sus dependencias (ADR-014), y el envío
+  productivo requiere certificados reales en el vault. Todo lo demás —XML, folios,
+  estados, acuses— está implementado y probado.</p>
+
+  <h3>Ventas y compras con asiento automático</h3>
+  <p>Las órdenes de venta y compra (<code>sale.order</code>, <code>purchase.order</code>)
+  cierran el ciclo comercial: confirmar fija los totales con el motor de impuestos y toma
+  número de secuencia; facturar construye el asiento —cliente al debe; ingreso e IVA al
+  haber; retenciones en su propia cuenta reduciendo la contrapartida— y lo contabiliza
+  en la misma operación. No existe el estado &laquo;facturada pero sin asiento&raquo;.
+  El constructor de partidas está probado con Hypothesis: cualquier combinación de
+  líneas, descuentos y retenciones cuadra o falla con un código estable.</p>
 </section>
 <h2 id="que-es">Qué es ORDO <a href="#que-es" class="anchor">#</a></h2>
 
@@ -315,7 +349,9 @@ h2:hover .anchor,h3:hover .anchor{opacity:1}
     <tr><td>F1 — IAM</td><td>Login OIDC, agentes registrables, token exchange con <code>act</code>, capability tokens, PDP RBAC+ABAC, aprobaciones HITL, auditoría encadenada</td><td><span class="pill impl">implementada</span></td></tr>
     <tr><td>F2 — Kernel</td><td>Registry, campos calculados, dominios→SQL, record rules, herencia, secuencias, chatter, jobs, cron, outbox, adjuntos, API genérica, schema semántico</td><td><span class="pill impl">funcional</span></td></tr>
     <tr><td>F3 — Capa agéntica</td><td>Servidor MCP, <code>explain</code>, búsqueda semántica, NL→dominio, suscripciones, sandbox</td><td><span class="pill plan">planificada</span></td></tr>
-    <tr><td>F4+ — Módulos de negocio</td><td>Contabilidad, ventas, compras, inventario, localización CL, manufactura…</td><td><span class="pill plan">planificada</span></td></tr>
+    <tr><td>F4 — Contabilidad</td><td>Partida doble, motor de impuestos, packs CL/PY (draft), framework de facturación electrónica con adaptadores SII y SIFEN</td><td><span class="pill impl">núcleo implementado</span></td></tr>
+    <tr><td>F5 — Ventas y compras</td><td>Órdenes con totales fijados al confirmar y asiento automático al facturar; impuestos como registros con cuenta contable</td><td><span class="pill impl">primer tramo</span></td></tr>
+    <tr><td>F6+ — Resto de módulos</td><td>Inventario, conciliación bancaria, reportes financieros, certificación DTE, manufactura…</td><td><span class="pill plan">planificada</span></td></tr>
   </tbody>
 </table>
 </div>
