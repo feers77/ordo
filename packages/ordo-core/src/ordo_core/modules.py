@@ -79,6 +79,9 @@ class ModuleLoader:
 
     def __init__(self, search_paths: list[Path]) -> None:
         self.search_paths = search_paths
+        # Modelos que define cada módulo. El instalador lo usa para no obligar
+        # a mantener esa lista a mano, que es una fuente segura de olvidos.
+        self.models_by_module: dict[str, list[str]] = {}
 
     def discover(self) -> dict[str, Manifest]:
         manifests: dict[str, Manifest] = {}
@@ -156,6 +159,7 @@ class ModuleLoader:
                             f"'{owner}', sin declararlo en depends",
                             hint="Agrega la dependencia al manifiesto.",
                         )
+            self.models_by_module[name] = [m._name for m in models if m._name]
             modules.append(Module(name=name, models=models, depends=list(manifest.depends)))
         return modules
 

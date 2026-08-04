@@ -36,6 +36,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import ColumnElement, FromClause
 
+from ordo_core.coercion import coerce_query_value
 from ordo_core.errors import KernelError
 from ordo_core.fields import RELATIONAL_TYPES, Field
 from ordo_core.registry import ModelDefinition, Registry
@@ -226,8 +227,9 @@ class DomainCompiler:
                 f"Operador no soportado: {operator!r}",
                 hint=f"Operadores válidos: {sorted(COMPARISON_OPERATORS)}",
             )
-        column, _field = joins.resolve(definition, path)
-        return _apply_operator(column, operator, value)
+        column, field = joins.resolve(definition, path)
+        coerced = coerce_query_value(field, value, f"{definition.name}.{path}")
+        return _apply_operator(column, operator, coerced)
 
 
 class _JoinPlan:

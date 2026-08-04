@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import base64
 from datetime import UTC, datetime
-from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from sqlalchemy import Table, delete, insert, select, update
 
+from ordo_core.coercion import parse_decimal, parse_temporal
 from ordo_core.domains import DomainCompiler
 from ordo_core.environment import Environment
 from ordo_core.errors import KernelError
@@ -230,20 +230,10 @@ def _coerce(field: Field, value: Any, model: str, name: str) -> Any:
         return None
 
     if isinstance(field, Monetary):
-        if isinstance(value, float):
-            raise KernelError(
-                "FIELD_INVALID_VALUE",
-                f"'{model}.{name}' es monetario: usa Decimal o string decimal, nunca float",
-                hint="Los float pierden precisión en importes (AGENTS.md §2.3).",
-            )
-        if isinstance(value, Decimal):
-            return value
-        try:
-            return Decimal(str(value))
-        except (InvalidOperation, ValueError) as exc:
-            raise KernelError(
-                "FIELD_INVALID_VALUE", f"'{model}.{name}' no es un importe válido: {value!r}"
-            ) from exc
+        return parse_decimal(value, f"'{model}.{name}'")
+
+    if field.field_type in {"date", "datetime"} and isinstance(value, str):
+        return parse_temporal(field.field_type, value, f"'{model}.{name}'")
 
     if isinstance(field, Selection) and value not in field.allowed_values:
         raise KernelError(

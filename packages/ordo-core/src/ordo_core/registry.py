@@ -21,7 +21,14 @@ class Module:
 
 def _technical_fields() -> dict[str, Field]:
     return {
-        "id": Integer(readonly=True, index=True),
+        # El id lo usa el agente en cada referencia, así que se describe como
+        # cualquier campo de negocio; los de auditoría quedan fuera del schema.
+        "id": Integer(
+            readonly=True,
+            index=True,
+            agent_hint="Identificador único del registro dentro de su modelo",
+            examples=["1", "42"],
+        ),
         "create_uid": Integer(readonly=True),
         "create_date": Datetime(readonly=True),
         "write_uid": Integer(readonly=True),
