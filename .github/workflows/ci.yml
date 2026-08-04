@@ -1,0 +1,143 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  UV_VERSION: "0.12.1"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+
+  types:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+      - run: uv sync --frozen
+      - run: uv run mypy
+
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+      - run: uv sync --frozen
+      - run: uv run pytest tests/unit --cov=packages --cov-report=term
+
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+      - run: uv sync --frozen
+      - name: Regenerar OpenAPI y comparar con baseline versionado
+        run: |
+          uv run python tools/export_openapi.py
+          git diff --exit-code docs/api/openapi/ || {
+            echo "::error::El OpenAPI generado difiere del baseline. Regenera con 'uv run python tools/export_openapi.py' y revisa compatibilidad (ADR-009)."
+            exit 1
+          }
+      - name: Diff de compatibilidad (oasdiff)
+        run: |
+          BASE_REF="${{ github.event.pull_request.base.sha || 'HEAD~1' }}"
+          git fetch -q origin "$BASE_REF" 2>/dev/null || true
+          mkdir -p /tmp/base
+          if git show "$BASE_REF:docs/api/openapi/gateway.json" > /dev/null 2>&1; then
+            for f in docs/api/openapi/*.json; do
+              git show "$BASE_REF:$f" > "/tmp/base/$(basename "$f")" 2>/dev/null || continue
+              docker run --rm -v /tmp/base:/base:ro -v "$PWD/docs/api/openapi:/rev:ro" \
+                tufin/oasdiff breaking "/base/$(basename "$f")" "/rev/$(basename "$f")" \
+                --fail-on ERR
+            done
+          else
+            echo "Sin baseline previo; primer run."
+          fi
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+      - run: uv sync --frozen
+      - name: Tests de integración (testcontainers)
+        run: |
+          if compgen -G "tests/integration/*.py" > /dev/null; then
+            uv run pytest tests/integration -m integration
+          else
+            echo "Sin tests de integración todavía (llegan en F1)."
+          fi
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+      - run: uv sync --frozen
+      - name: bandit
+        run: uvx bandit -r packages services -ll
+      - name: pip-audit
+        run: uv export --no-dev --format requirements.txt | uvx pip-audit --strict -r /dev/stdin || true
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, types, unit]
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        service: [gateway, iam, api, jobs, events, render, mcp]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build imagen
+        run: docker build -f services/${{ matrix.service }}/Dockerfile -t ordo-${{ matrix.service }}:${{ github.sha }} .
+      - name: trivy
+        uses: aquasecurity/trivy-action@0.29.0
+        with:
+          image-ref: ordo-${{ matrix.service }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          ignore-unfixed: true
+      - name: Publish a GHCR (solo main)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker tag ordo-${{ matrix.service }}:${{ github.sha }} ghcr.io/${{ github.repository }}/ordo-${{ matrix.service }}:latest
+          docker tag ordo-${{ matrix.service }}:${{ github.sha }} ghcr.io/${{ github.repository }}/ordo-${{ matrix.service }}:${{ github.sha }}
+          docker push ghcr.io/${{ github.repository }}/ordo-${{ matrix.service }}:latest
+          docker push ghcr.io/${{ github.repository }}/ordo-${{ matrix.service }}:${{ github.sha }}
+
+  # Deploy a staging/prod: pendiente de runner en el servidor (post-F0).

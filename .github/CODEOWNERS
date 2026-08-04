@@ -1,0 +1,7 @@
+# Zonas con revisión humana obligatoria (PLAN-MAESTRO §10, CLAUDE.md §7)
+/packages/ordo-core/    @feers77
+/packages/ordo-runtime/ @feers77
+/services/iam/          @feers77
+/modules/account/       @feers77
+/infra/                 @feers77
+/ADR/                   @feers77
