@@ -6,6 +6,17 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F3.2** Webhooks (diseño F3-02): módulo `webhook` con suscripciones por patrón de
+  evento (`sale.order.*`) y bitácora de entregas como watermark — cada evento del
+  outbox se entrega una vez por suscripción aunque el worker se caiga a mitad de lote.
+  Cada entrega viaja firmada con HMAC-SHA256 (`X-Ordo-Signature`) y un id de entrega
+  estable (`X-Ordo-Delivery`) que se conserva en los reintentos para que el receptor
+  deduplique. Diez fallos consecutivos suspenden la suscripción; un éxito resetea el
+  contador; los eventos fuera del patrón avanzan el watermark como `skipped`. El
+  servicio `ordo-events` deja de ser esqueleto: un loop multi-tenant (fail-soft por
+  tenant) despacha y reintenta cada pocos segundos, desplegado en el perfil `app` del
+  compose. Rol `integraciones` nuevo en la ACL declarada.
+
 - **F6.2** Inventario integrado al ciclo comercial: las líneas de venta y compra
   aceptan `product_id`; `action_receive` recibe la orden de compra (picking de entrada
   al costo de cada línea, actualiza el promedio) y `action_deliver` entrega la venta

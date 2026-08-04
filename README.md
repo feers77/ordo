@@ -39,6 +39,9 @@ En desarrollo, todavía sin release. Lo que ya funciona y está probado:
   de estados, folios autorizados, certificados), y `product` + `stock` (inventario con
   costo promedio, capas de valorización y asiento automático; entregar una venta o
   recibir una compra mueve stock y libros en una sola operación).
+- **Webhooks** — el outbox transaccional se entrega por HTTP firmado (HMAC-SHA256,
+  id de entrega estable para deduplicar, reintentos, suspensión tras fallos): un
+  agente reacciona a "factura aceptada" sin hacer polling.
 - **Servidor MCP** — cualquier cliente MCP (Claude incluido) descubre y opera ORDO:
   `ordo_schema`, búsqueda, CRUD con dry-run e idempotencia, acciones de negocio con
   su metadato de aprobación y reportes. JSON-RPC sobre `POST /mcp`, sin SDK (ADR-015).

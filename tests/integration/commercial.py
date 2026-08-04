@@ -18,7 +18,16 @@ from ordo_core.taxid import rut_check_digit
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-DEFAULT_MODULES = ("base", "account", "sale", "purchase", "einvoicing", "product", "stock")
+DEFAULT_MODULES = (
+    "base",
+    "account",
+    "sale",
+    "purchase",
+    "einvoicing",
+    "product",
+    "stock",
+    "webhook",
+)
 
 
 def rut(number: int) -> str:
