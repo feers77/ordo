@@ -160,20 +160,21 @@ class ModuleLoader:
                             hint="Agrega la dependencia al manifiesto.",
                         )
             self.models_by_module[name] = [m._name for m in models if m._name]
-            self._import_actions(manifest)
+            self._import_extra(manifest, "actions.py")
+            self._import_extra(manifest, "reports.py")
             modules.append(Module(name=name, models=models, depends=list(manifest.depends)))
         return modules
 
-    def _import_actions(self, manifest: Manifest) -> None:
-        """Imports the module's actions.py, if any, to populate the registry."""
+    def _import_extra(self, manifest: Manifest, filename: str) -> None:
+        """Imports an optional module file (actions.py, reports.py) if present."""
         assert manifest.path is not None
-        actions_file = manifest.path / "actions.py"
-        if not actions_file.exists():
+        extra_file = manifest.path / filename
+        if not extra_file.exists():
             return
-        module_name = f"ordo_modules.{manifest.name}.actions"
-        spec = importlib.util.spec_from_file_location(module_name, actions_file)
+        module_name = f"ordo_modules.{manifest.name}.{extra_file.stem}"
+        spec = importlib.util.spec_from_file_location(module_name, extra_file)
         if spec is None or spec.loader is None:
-            raise KernelError("MODULE_IMPORT_FAILED", f"No se pudo importar {actions_file}")
+            raise KernelError("MODULE_IMPORT_FAILED", f"No se pudo importar {extra_file}")
         imported = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = imported
         spec.loader.exec_module(imported)

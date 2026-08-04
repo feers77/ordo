@@ -266,6 +266,12 @@ class MoveLine(Model):
         agent_hint="Verdadero cuando la partida quedó conciliada contra otras",
         examples=["false"],
     )
+    reconcile_id = Many2one(
+        "account.reconcile",
+        index=True,
+        agent_hint="Grupo de conciliación al que pertenece la partida, si está conciliada",
+        examples=["3"],
+    )
     company_id = Many2one(
         "res.company", required=True, agent_hint="Compañía de la partida", examples=["1"]
     )
@@ -346,4 +352,174 @@ class Settings(Model):
         "account.account",
         agent_hint="Cuenta por pagar donde se abonan las facturas de proveedor",
         examples=["3"],
+    )
+
+
+class Reconcile(Model):
+    _name = "account.reconcile"
+    _description = "Grupo de partidas conciliadas entre sí"
+
+    account_id = Many2one(
+        "account.account",
+        required=True,
+        index=True,
+        agent_hint="Cuenta cuyas partidas se concilian; todas comparten cuenta",
+        examples=["2"],
+    )
+    company_id = Many2one(
+        "res.company", required=True, agent_hint="Compañía del grupo", examples=["1"]
+    )
+
+
+PAYMENT_TYPES = [
+    ("inbound", "Cobro"),
+    ("outbound", "Pago"),
+]
+
+
+class Payment(Model):
+    _name = "account.payment"
+    _description = "Cobro o pago registrado contra un diario de banco o caja"
+
+    payment_type = Selection(
+        PAYMENT_TYPES,
+        required=True,
+        agent_hint="Cobro (entra dinero) o pago (sale dinero)",
+        examples=["inbound"],
+    )
+    partner_id = Many2one(
+        "res.partner",
+        required=True,
+        index=True,
+        agent_hint="Tercero que paga o cobra",
+        examples=["7"],
+    )
+    amount = Monetary(
+        required=True,
+        agent_hint="Importe del pago, siempre positivo; el sentido lo da payment_type",
+        examples=["119000.00"],
+    )
+    date = Date(
+        required=True,
+        index=True,
+        agent_hint="Fecha del pago; también fecha contable de su asiento",
+        examples=["2026-08-10"],
+    )
+    journal_id = Many2one(
+        "account.journal",
+        required=True,
+        agent_hint="Diario de banco o caja por donde se mueve el dinero",
+        examples=["3"],
+    )
+    currency_id = Many2one(
+        "res.currency",
+        required=True,
+        agent_hint="Moneda del pago",
+        examples=["1"],
+    )
+    state = Selection(
+        [("draft", "Borrador"), ("posted", "Contabilizado"), ("cancelled", "Anulado")],
+        default="draft",
+        agent_hint=(
+            "Estado del pago. Usa action_post y action_cancel; nunca escribas este campo directo"
+        ),
+        examples=["draft", "posted"],
+    )
+    move_id = Many2one(
+        "account.move",
+        agent_hint="Asiento generado al contabilizar el pago",
+        examples=["31"],
+    )
+    memo = Char(
+        agent_hint="Referencia o glosa del pago",
+        examples=["Transferencia factura SO/00001"],
+    )
+    company_id = Many2one(
+        "res.company", required=True, agent_hint="Compañía del pago", examples=["1"]
+    )
+
+
+class BankStatement(Model):
+    _name = "account.bank.statement"
+    _description = "Extracto bancario a conciliar"
+
+    name = Char(
+        required=True,
+        agent_hint="Identificador del extracto",
+        examples=["BCO 2026-08"],
+    )
+    journal_id = Many2one(
+        "account.journal",
+        required=True,
+        agent_hint="Diario de banco al que pertenece el extracto",
+        examples=["3"],
+    )
+    date = Date(
+        required=True,
+        index=True,
+        agent_hint="Fecha de cierre del extracto",
+        examples=["2026-08-31"],
+    )
+    balance_start = Monetary(
+        required=True,
+        agent_hint="Saldo inicial según el banco",
+        examples=["500000.00"],
+    )
+    balance_end = Monetary(
+        required=True,
+        agent_hint="Saldo final según el banco; debe cuadrar con las líneas",
+        examples=["619000.00"],
+    )
+    state = Selection(
+        [("open", "Abierto"), ("validated", "Validado")],
+        default="open",
+        agent_hint=(
+            "Un extracto validado quedó cuadrado y con todas sus líneas "
+            "emparejadas; no se edita más. Usa action_validate"
+        ),
+        examples=["open"],
+    )
+    company_id = Many2one(
+        "res.company", required=True, agent_hint="Compañía del extracto", examples=["1"]
+    )
+
+
+class BankStatementLine(Model):
+    _name = "account.bank.statement.line"
+    _description = "Movimiento del extracto bancario"
+
+    statement_id = Many2one(
+        "account.bank.statement",
+        required=True,
+        index=True,
+        agent_hint="Extracto al que pertenece el movimiento",
+        examples=["1"],
+    )
+    date = Date(
+        required=True,
+        agent_hint="Fecha del movimiento según el banco",
+        examples=["2026-08-10"],
+    )
+    amount = Monetary(
+        required=True,
+        agent_hint="Importe con signo: positivo entra dinero, negativo sale",
+        examples=["119000.00", "-45000.00"],
+    )
+    ref = Char(
+        agent_hint="Descripción o referencia bancaria del movimiento",
+        examples=["TRANSF CLIENTE LTDA"],
+    )
+    partner_id = Many2one(
+        "res.partner",
+        agent_hint="Tercero del movimiento, si se conoce",
+        examples=["7"],
+    )
+    matched_move_line_id = Many2one(
+        "account.move.line",
+        index=True,
+        agent_hint="Partida contable contra la que se emparejó el movimiento",
+        examples=["42"],
+    )
+    company_id = Many2one(
+        "res.company", required=True, agent_hint="Compañía de la línea", examples=["1"]
     )

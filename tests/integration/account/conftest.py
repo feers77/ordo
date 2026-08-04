@@ -20,6 +20,21 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 MODULES_ROOT = Path(__file__).resolve().parents[3] / "modules"
 
 
+@pytest.fixture
+async def shop(account_db_url: str) -> AsyncIterator[dict[str, Any]]:
+    """Tenant comercial completo (ventas, compras, banco), para tesorería."""
+    from tests.integration.commercial import build_shop
+
+    tenant = f"tsy{uuid.uuid4().hex[:8]}"
+    engine = create_async_engine(account_db_url)
+    maker = async_sessionmaker(engine, expire_on_commit=False)
+    session: AsyncSession = maker()
+    data = await build_shop(session, tenant, modules_root=MODULES_ROOT)
+    yield data
+    await session.close()
+    await engine.dispose()
+
+
 def _admin_dsn() -> str:
     pw = os.environ.get("POSTGRES_PASSWORD", "")
     return f"postgresql+asyncpg://ordo:{pw}@127.0.0.1:5432/ordo"

@@ -152,3 +152,34 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `PURCHASE_VENDOR_REF_REQUIRED` | 400 | no | Falta el número de la factura del proveedor |
 | `ACCOUNT_SETTINGS_MISSING` | 409 | no | La compañía no tiene configuración contable |
 | `ACCOUNT_TAX_NO_ACCOUNT` | 409 | no | El impuesto no tiene cuenta contable asignada |
+
+## Tesorería y reportes
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `PAYMENT_NON_POSITIVE` | 400 | no | El importe de un pago debe ser positivo |
+| `PAYMENT_JOURNAL_INVALID` | 400 | no | Un pago va contra un diario de banco o caja |
+| `PAYMENT_JOURNAL_NO_ACCOUNT` | 409 | no | El diario no tiene cuenta de banco/caja |
+| `PAYMENT_INVALID_TRANSITION` | 409 | no | La acción no es válida en el estado actual |
+| `PAYMENT_POSTED_IMMUTABLE` | 409 | no | Un pago contabilizado se revierte, no se anula |
+| `PAYMENT_NOT_FOUND` | 404 | no | El pago no existe |
+| `RECONCILE_TOO_FEW` | 400 | no | Conciliar requiere al menos dos partidas |
+| `RECONCILE_LINE_NOT_FOUND` | 404 | no | Alguna partida no existe |
+| `RECONCILE_MIXED_ACCOUNTS` | 400 | no | Todas las partidas comparten cuenta |
+| `RECONCILE_ACCOUNT_NOT_RECONCILABLE` | 409 | no | La cuenta no es conciliable |
+| `RECONCILE_ALREADY_RECONCILED` | 409 | no | Alguna partida ya está en otro grupo |
+| `RECONCILE_UNPOSTED_MOVE` | 409 | no | Solo se concilian asientos contabilizados |
+| `RECONCILE_UNBALANCED` | 400 | no | El grupo no salda en cero |
+| `RECONCILE_GROUP_NOT_FOUND` | 404 | no | El grupo no existe o está vacío |
+| `STATEMENT_EMPTY` | 400 | no | Un extracto necesita movimientos |
+| `STATEMENT_JOURNAL_INVALID` | 400 | no | El extracto pertenece a un diario de banco |
+| `STATEMENT_JOURNAL_NO_ACCOUNT` | 409 | no | El diario de banco no tiene cuenta |
+| `STATEMENT_NOT_FOUND` | 404 | no | El extracto no existe |
+| `STATEMENT_VALIDATED_IMMUTABLE` | 409 | no | Un extracto validado no se modifica |
+| `STATEMENT_WRONG_ACCOUNT` | 400 | no | La partida no es de la cuenta del banco |
+| `STATEMENT_AMOUNT_MISMATCH` | 400 | no | Solo se emparejan importes idénticos |
+| `STATEMENT_LINE_ALREADY_USED` | 409 | no | Esa partida ya está emparejada |
+| `STATEMENT_UNMATCHED` | 409 | no | Quedan movimientos sin emparejar |
+| `STATEMENT_UNBALANCED` | 409 | no | El extracto no cuadra contra sus saldos |
+| `REPORT_UNKNOWN` | 404 | no | No existe el reporte; el hint lista los disponibles |
+| `REPORT_PARAM_REQUIRED` | 400 | no | Falta un parámetro obligatorio del reporte |
