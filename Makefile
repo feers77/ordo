@@ -35,6 +35,9 @@ check: lint types test ## lint + types + tests
 test-load:
 	@echo "pendiente: k6 (F2)" && exit 1
 
+test-e2e: ## E2E contra el stack real
+	uv run pytest tests/e2e -m e2e
+
 test-agent: ## Suite agéntica
 	uv run pytest tests/agent -m agent
 

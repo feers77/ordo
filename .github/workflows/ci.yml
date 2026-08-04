@@ -100,6 +100,55 @@ jobs:
           POSTGRES_PASSWORD: ci
         run: uv run pytest tests/integration -m integration
 
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: ordo
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ordo
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ordo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: ${{ env.UV_VERSION }}
+      - run: uv sync --frozen
+      - name: Levantar Keycloak con el realm versionado
+        run: |
+          docker run -d --name keycloak -p 8080:8080 \
+            -e KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+            -e KC_BOOTSTRAP_ADMIN_PASSWORD=ci-admin \
+            -v "$PWD/infra/keycloak/realm.json:/opt/keycloak/data/import/realm.json:ro" \
+            quay.io/keycloak/keycloak:26.0 start-dev --import-realm --http-port=8080
+          for i in $(seq 1 60); do
+            curl -sf http://127.0.0.1:8080/realms/ordo > /dev/null && break
+            sleep 5
+          done
+          curl -sf http://127.0.0.1:8080/realms/ordo > /dev/null
+      - name: Tests e2e
+        env:
+          POSTGRES_PASSWORD: ci
+          KEYCLOAK_ADMIN_PASSWORD: ci-admin
+          E2E_ENV_FILE: /dev/null
+          REDIS_URL: redis://127.0.0.1:6379/1
+        run: uv run pytest tests/e2e -m e2e
+
   security:
     runs-on: ubuntu-latest
     steps:

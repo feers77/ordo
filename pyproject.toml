@@ -74,6 +74,7 @@ addopts = "-q"
 markers = [
     "integration: requiere stack local (compose)",
     "agent: suite agéntica end-to-end",
+    "e2e: extremo a extremo contra stack real (make up)",
 ]
 
 [tool.commitizen]
