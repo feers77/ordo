@@ -36,6 +36,19 @@ ufw_allowed_ports:
 ufw_edge_ports:
   - { port: 3000, proto: tcp, comment: "HTTP ORDO via edge" }
 
+# Puertos accesibles solo desde la red local. La documentación de la API es
+# pública (el proyecto es AGPLv3) y no expone secretos, pero se limita a la LAN
+# porque no hay razón para publicarla desde el servidor.
+lan_cidr: 192.168.1.0/24
+ufw_lan_ports:
+  - { port: 8888, proto: tcp, comment: "Documentación de la API" }
+
+# --- Documentación ---
+docs_user: feres
+docs_repo_path: /home/feres/ordo
+# serve.py solo usa la biblioteca estándar: no necesita el entorno del proyecto
+docs_python: /usr/bin/python3
+
 # --- Caddy ---
 # TLS lo termina el edge proxy (192.168.1.90); ORDO sirve HTTP plano en LAN.
 edge_proxy_ip: 192.168.1.90
