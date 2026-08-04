@@ -6,6 +6,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F2.6** Chatter como canal agente-humano: mensajes con author_kind obligatorio (user,
+  agent o system, para que quien lee un hilo distinga persona de agente sin inferirlo),
+  seguidores, actividades con estado derivado de la fecha, y tracking automatico de
+  cambios con valor anterior y nuevo. Adjuntos con deduplicacion por sha256: dos archivos
+  identicos comparten objeto y borrar uno no borra los bytes del otro; tamano, checksum
+  y mimetype se derivan del contenido, nunca se confian del cliente.
+- **E2E del kernel**: ciclo completo de un documento (schema semantico, secuencia legal,
+  dry-run, creacion, chatter, bloqueo optimista, adjuntos, outbox y jobs) contra Postgres
+  real, con tenant aislado por test. 19 tests nuevos.
 - **F2.5** Servicios transversales del kernel: secuencias con modo no_gap que bloquea la
   fila (documentos legales sin huecos, verificado con 5 sesiones concurrentes), cola de jobs
   en Postgres con FOR UPDATE SKIP LOCKED (dos workers nunca toman el mismo job), reintentos

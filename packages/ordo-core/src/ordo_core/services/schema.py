@@ -62,6 +62,55 @@ STATEMENTS = [
     )
     """,
     "CREATE INDEX IF NOT EXISTS ix_ir_outbox_pending ON ir_outbox (id) WHERE published_at IS NULL",
+    """
+    CREATE TABLE IF NOT EXISTS mail_message (
+        id bigserial PRIMARY KEY,
+        model text NOT NULL,
+        res_id integer NOT NULL,
+        body text NOT NULL,
+        message_type text NOT NULL DEFAULT 'comment',
+        author_principal text,
+        author_kind text NOT NULL,
+        create_date timestamptz NOT NULL DEFAULT now()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS ix_mail_message_record ON mail_message (model, res_id, id)",
+    """
+    CREATE TABLE IF NOT EXISTS mail_follower (
+        id bigserial PRIMARY KEY,
+        model text NOT NULL,
+        res_id integer NOT NULL,
+        principal_id text NOT NULL,
+        create_date timestamptz NOT NULL DEFAULT now(),
+        UNIQUE (model, res_id, principal_id)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS mail_activity (
+        id bigserial PRIMARY KEY,
+        model text NOT NULL,
+        res_id integer NOT NULL,
+        summary text NOT NULL,
+        assigned_to text NOT NULL,
+        date_deadline date NOT NULL,
+        done boolean NOT NULL DEFAULT false,
+        create_date timestamptz NOT NULL DEFAULT now()
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS ir_attachment (
+        id bigserial PRIMARY KEY,
+        name text NOT NULL,
+        model text,
+        res_id integer,
+        mimetype text NOT NULL,
+        file_size bigint NOT NULL,
+        checksum text NOT NULL,
+        storage_key text NOT NULL,
+        create_date timestamptz NOT NULL DEFAULT now()
+    )
+    """,
+    "CREATE INDEX IF NOT EXISTS ix_ir_attachment_checksum ON ir_attachment (checksum)",
 ]
 
 
