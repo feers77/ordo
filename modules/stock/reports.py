@@ -59,3 +59,49 @@ async def on_hand(env: Environment, params: dict[str, Any]) -> dict[str, Any]:
         "rows": sorted(rows, key=lambda row: row["name"]),
         "total_value": str(total_value),
     }
+
+
+@report(
+    "stock.reorder_alerts",
+    summary="Productos bajo su mínimo con la cantidad sugerida a reponer",
+    params={"company_id": "Compañía (obligatorio)"},
+)
+async def reorder_alerts(env: Environment, params: dict[str, Any]) -> dict[str, Any]:
+    raw = params.get("company_id")
+    if raw is None:
+        raise AccountingError(
+            "REPORT_PARAM_REQUIRED",
+            "El reporte necesita company_id",
+            hint="Pasa company_id como parámetro.",
+        )
+    company_id = int(raw)
+    service = StockService(env)
+    rules = await RecordSet(env, "stock.reorder.rule").search(
+        [("company_id", "=", company_id)],
+        fields=["id", "product_id", "location_id", "min_quantity", "max_quantity"],
+        limit=1000,
+    )
+    products = RecordSet(env, "product.product")
+    alerts = []
+    for rule in rules["rows"]:
+        available = await service.on_hand(rule["product_id"], rule["location_id"])
+        minimum = Decimal(rule["min_quantity"])
+        if available >= minimum:
+            continue
+        [product] = await products.read([rule["product_id"]], fields=["name", "default_code"])
+        alerts.append(
+            {
+                "product_id": rule["product_id"],
+                "name": product["name"],
+                "default_code": product["default_code"],
+                "location_id": rule["location_id"],
+                "on_hand": str(available),
+                "min_quantity": rule["min_quantity"],
+                "suggested_quantity": str(Decimal(rule["max_quantity"]) - available),
+            }
+        )
+    return {
+        "report": "stock.reorder_alerts",
+        "alerts": sorted(alerts, key=lambda row: row["name"]),
+        "count": len(alerts),
+    }

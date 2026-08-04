@@ -220,3 +220,6 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `STOCK_INSUFFICIENT` | 409 | no | No hay existencias suficientes en el origen |
 | `STOCK_NEGATIVE_COST` | 400 | no | El costo unitario no puede ser negativo |
 | `STOCK_CONFIG_MISSING` | 409 | no | Faltan cuentas o diario en stock.config |
+| `STOCK_NO_LOCATION` | 409 | no | Falta una ubicación del tipo requerido en la compañía |
+| `STOCK_ORDER_NOT_READY` | 409 | no | Solo se entrega/recibe una orden confirmada o facturada |
+| `STOCK_NOTHING_TO_MOVE` | 400 | no | La orden no tiene líneas con producto almacenable |

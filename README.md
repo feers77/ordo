@@ -35,8 +35,10 @@ En desarrollo, todavía sin release. Lo que ya funciona y está probado:
   módulos `base` (compañías, monedas, contactos, unidades), `account` (contabilidad
   con partida doble, motor de impuestos, pagos, conciliación, extractos bancarios y
   reportes financieros), `sale` y `purchase` (órdenes que al facturarse generan y
-  contabilizan su asiento solas) y `einvoicing` (documentos electrónicos como máquina
-  de estados, folios autorizados, certificados).
+  contabilizan su asiento solas), `einvoicing` (documentos electrónicos como máquina
+  de estados, folios autorizados, certificados), y `product` + `stock` (inventario con
+  costo promedio, capas de valorización y asiento automático; entregar una venta o
+  recibir una compra mueve stock y libros en una sola operación).
 - **Servidor MCP** — cualquier cliente MCP (Claude incluido) descubre y opera ORDO:
   `ordo_schema`, búsqueda, CRUD con dry-run e idempotencia, acciones de negocio con
   su metadato de aprobación y reportes. JSON-RPC sobre `POST /mcp`, sin SDK (ADR-015).

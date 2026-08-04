@@ -71,6 +71,7 @@ class SaleService:
                 {
                     "order_id": order_id,
                     "name": line["name"],
+                    "product_id": line.get("product_id"),
                     "quantity": str(line.get("quantity", "1")),
                     "price_unit": line["price_unit"],
                     "discount_percent": str(line.get("discount_percent", "0")),

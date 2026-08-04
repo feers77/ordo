@@ -1,5 +1,5 @@
 name: sale
 version: 0.1.0
 summary: "Ventas: órdenes que se confirman, facturan y asientan solas"
-depends: [base, account]
+depends: [base, account, product, stock]
 category: Ventas
