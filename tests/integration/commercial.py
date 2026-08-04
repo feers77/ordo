@@ -18,7 +18,7 @@ from ordo_core.taxid import rut_check_digit
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-DEFAULT_MODULES = ("base", "account", "sale", "purchase", "einvoicing")
+DEFAULT_MODULES = ("base", "account", "sale", "purchase", "einvoicing", "product", "stock")
 
 
 def rut(number: int) -> str:
@@ -116,6 +116,30 @@ async def build_shop(
                 "account_type": "asset",
                 "company_id": company_id,
             },
+            {
+                "code": "1301",
+                "name": "Inventario",
+                "account_type": "asset",
+                "company_id": company_id,
+            },
+            {
+                "code": "2110",
+                "name": "Recepciones por facturar",
+                "account_type": "liability",
+                "company_id": company_id,
+            },
+            {
+                "code": "5201",
+                "name": "Costo de venta",
+                "account_type": "expense",
+                "company_id": company_id,
+            },
+            {
+                "code": "5202",
+                "name": "Ajustes de inventario",
+                "account_type": "expense",
+                "company_id": company_id,
+            },
         ]
     )
     (
@@ -127,6 +151,10 @@ async def build_shop(
         iva_credito,
         retenciones,
         banco,
+        inventario,
+        recepciones,
+        costo_venta,
+        ajustes_inv,
     ) = account_ids
 
     taxes = RecordSet(env, "account.tax")
@@ -189,8 +217,14 @@ async def build_shop(
         prefix="BCO/2026/",
         implementation="no_gap",
     )
+    await sequences.create(
+        code="account.move.inventory",
+        name="Asientos de inventario",
+        prefix="INV/2026/",
+        implementation="no_gap",
+    )
     journals = RecordSet(env, "account.journal")
-    [sale_journal, purchase_journal, bank_journal] = await journals.create(
+    [sale_journal, purchase_journal, bank_journal, inventory_journal] = await journals.create(
         [
             {
                 "code": "VTA",
@@ -216,6 +250,77 @@ async def build_shop(
                 "default_account_id": banco,
                 "company_id": company_id,
             },
+            {
+                "code": "INV",
+                "name": "Inventario",
+                "journal_type": "general",
+                "sequence_code": "account.move.inventory",
+                "default_account_id": None,
+                "company_id": company_id,
+            },
+        ]
+    )
+
+    warehouses = RecordSet(env, "stock.warehouse")
+    [warehouse_id] = await warehouses.create(
+        [{"name": "Bodega Central", "code": "BC", "company_id": company_id}]
+    )
+    stock_locations = RecordSet(env, "stock.location")
+    [loc_stock, loc_supplier, loc_customer, loc_loss] = await stock_locations.create(
+        [
+            {
+                "name": "BC/Existencias",
+                "location_type": "internal",
+                "warehouse_id": warehouse_id,
+                "company_id": company_id,
+            },
+            {
+                "name": "Proveedores",
+                "location_type": "supplier",
+                "warehouse_id": None,
+                "company_id": company_id,
+            },
+            {
+                "name": "Clientes",
+                "location_type": "customer",
+                "warehouse_id": None,
+                "company_id": company_id,
+            },
+            {
+                "name": "Ajuste inventario",
+                "location_type": "inventory_loss",
+                "warehouse_id": None,
+                "company_id": company_id,
+            },
+        ]
+    )
+    await RecordSet(env, "stock.config").create(
+        [
+            {
+                "company_id": company_id,
+                "valuation_account_id": inventario,
+                "input_account_id": recepciones,
+                "cogs_account_id": costo_venta,
+                "loss_account_id": ajustes_inv,
+                "journal_id": inventory_journal,
+            }
+        ]
+    )
+    products = RecordSet(env, "product.product")
+    [product_id, service_id] = await products.create(
+        [
+            {
+                "name": "Notebook 14",
+                "default_code": "NB-14",
+                "product_type": "consu",
+                "company_id": company_id,
+            },
+            {
+                "name": "Soporte anual",
+                "default_code": None,
+                "product_type": "service",
+                "company_id": company_id,
+            },
         ]
     )
     await session.commit()
@@ -238,4 +343,16 @@ async def build_shop(
         "iva_credito": iva_credito,
         "retenciones": retenciones,
         "banco": banco,
+        "inventario": inventario,
+        "recepciones": recepciones,
+        "costo_venta": costo_venta,
+        "ajustes_inv": ajustes_inv,
+        "inventory_journal": inventory_journal,
+        "warehouse_id": warehouse_id,
+        "loc_stock": loc_stock,
+        "loc_supplier": loc_supplier,
+        "loc_customer": loc_customer,
+        "loc_loss": loc_loss,
+        "product_id": product_id,
+        "service_id": service_id,
     }

@@ -1,0 +1,11 @@
+roles:
+  inventario:
+    product.product: [read, write, create]
+  ventas:
+    product.product: [read]
+  compras:
+    product.product: [read, write, create]
+  contabilidad:
+    product.product: [read]
+  auditor:
+    product.product: [read]

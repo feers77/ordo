@@ -1,0 +1,44 @@
+# Inventario opera su mundo; ventas y compras leen existencias. El ajuste
+# de inventario (validar picking contra inventory_loss) exige aprobación
+# vía requires_approval de la acción: es donde se roba.
+roles:
+  inventario:
+    stock.warehouse: [read, write, create]
+    stock.location: [read, write, create]
+    stock.lot: [read, write, create]
+    stock.picking: [read, write, create]
+    stock.move: [read, write, create]
+    stock.valuation.layer: [read]
+    stock.config: [read]
+    stock.reorder.rule: [read, write, create]
+    reports: [read]
+  ventas:
+    stock.picking: [read, write, create]
+    stock.move: [read, write, create]
+    stock.location: [read]
+    stock.lot: [read]
+    stock.reorder.rule: [read]
+  compras:
+    stock.picking: [read, write, create]
+    stock.move: [read, write, create]
+    stock.location: [read]
+    stock.lot: [read]
+    stock.reorder.rule: [read]
+  contabilidad:
+    stock.warehouse: [read]
+    stock.location: [read]
+    stock.lot: [read]
+    stock.picking: [read]
+    stock.move: [read]
+    stock.valuation.layer: [read]
+    stock.config: [read, write, create]
+    stock.reorder.rule: [read]
+  auditor:
+    stock.warehouse: [read]
+    stock.location: [read]
+    stock.lot: [read]
+    stock.picking: [read]
+    stock.move: [read]
+    stock.valuation.layer: [read]
+    stock.config: [read]
+    stock.reorder.rule: [read]

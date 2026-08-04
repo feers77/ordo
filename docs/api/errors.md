@@ -203,3 +203,20 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `AUTH_PDP_UNAVAILABLE` | 503 | sí | IAM no responde; fail-closed |
 | `IAM_APPROVAL_INVALID` | 4xx | no | La aprobación no se pudo consumir (detalle en message) |
 | `TENANT_REQUIRED` | 400 | no | Sin token ni cabecera de tenant en modo abierto |
+
+## Inventario
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `STOCK_PICKING_EMPTY` | 400 | no | Un picking necesita movimientos |
+| `STOCK_PICKING_NOT_FOUND` | 404 | no | El picking no existe |
+| `STOCK_INVALID_TRANSITION` | 409 | no | La acción no es válida en el estado actual |
+| `STOCK_DONE_IMMUTABLE` | 409 | no | Un picking hecho se revierte con el inverso |
+| `STOCK_INVALID_QUANTITY` | 400 | no | Las cantidades deben ser positivas |
+| `STOCK_INVALID_ROUTE` | 400 | no | Ruta sin sentido (virtual a virtual, origen=destino) |
+| `STOCK_SERVICE_PRODUCT` | 400 | no | Los servicios no mueven stock |
+| `STOCK_LOT_REQUIRED` | 400 | no | El producto exige lote o serie |
+| `STOCK_PRICE_REQUIRED` | 400 | no | La recepción exige costo unitario |
+| `STOCK_INSUFFICIENT` | 409 | no | No hay existencias suficientes en el origen |
+| `STOCK_NEGATIVE_COST` | 400 | no | El costo unitario no puede ser negativo |
+| `STOCK_CONFIG_MISSING` | 409 | no | Faltan cuentas o diario en stock.config |
