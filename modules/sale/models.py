@@ -111,6 +111,15 @@ class SaleOrderLine(Model):
         agent_hint="Descripción de lo vendido",
         examples=["Licencia anual plan Pro"],
     )
+    product_id = Many2one(
+        "product.product",
+        index=True,
+        agent_hint=(
+            "Producto vendido, si existe en el catálogo. Con producto almacenable "
+            "la orden puede entregarse con action_deliver y descuenta stock"
+        ),
+        examples=["3"],
+    )
     quantity = Char(
         required=True,
         agent_hint="Cantidad como string decimal, nunca float",

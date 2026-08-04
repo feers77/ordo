@@ -6,6 +6,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F6.2** Inventario integrado al ciclo comercial: las líneas de venta y compra
+  aceptan `product_id`; `action_receive` recibe la orden de compra (picking de entrada
+  al costo de cada línea, actualiza el promedio) y `action_deliver` entrega la venta
+  (salida al costo promedio, COGS asentado) — las líneas de servicio se ignoran porque
+  un servicio no se despacha en camión. Reporte `stock.reorder_alerts`: productos bajo
+  su mínimo con la cantidad sugerida para llegar al máximo; reponer sobre el mínimo
+  apaga la alerta. Verificado de punta a punta: compra → recepción → venta → entrega
+  con el balance de comprobación cuadrado. 5 tests de integración nuevos.
+
 - **F6.1** Inventario con valorización (diseño F6-01): módulos `product` (almacenable o
   servicio, costo promedio mantenido por el sistema, tracking por lote/serie) y `stock`
   (almacenes, ubicaciones internas y virtuales, lotes, pickings y movimientos, capas de

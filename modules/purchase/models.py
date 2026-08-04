@@ -114,6 +114,15 @@ class PurchaseOrderLine(Model):
         agent_hint="Descripción de lo comprado",
         examples=["Hosting dedicado agosto"],
     )
+    product_id = Many2one(
+        "product.product",
+        index=True,
+        agent_hint=(
+            "Producto comprado, si existe en el catálogo. Con producto almacenable "
+            "la orden puede recibirse con action_receive y suma stock al costo"
+        ),
+        examples=["3"],
+    )
     quantity = Char(
         required=True,
         agent_hint="Cantidad como string decimal, nunca float",

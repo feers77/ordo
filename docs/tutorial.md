@@ -322,7 +322,25 @@ await service.action_sign(doc_id, signer)   # el XML queda con su <Signature>
 La clave y el certificado vienen del vault, nunca de la base de datos. El
 envío productivo requiere el ambiente de certificación de cada autoridad.
 
-## 15. Operarlo todo por MCP
+## 15. Inventario: el stock se mueve con asiento
+
+```python
+from ordo_core.actions import dispatch
+
+# compra confirmada con product_id en las líneas → recibir suma stock al costo
+await dispatch(env, "purchase.order", "action_receive", purchase_id, {})
+
+# venta confirmada → entregar descuenta al costo promedio y asienta el COGS
+await dispatch(env, "sale.order", "action_deliver", sale_id, {})
+```
+
+Validar un picking mueve el stock, escribe las capas de valorización y
+contabiliza el asiento en la misma operación. La suma de capas de un
+producto ES su valor contable; `stock.on_hand` y `stock.reorder_alerts`
+están en `GET /api/v1/reports`. No se entrega más de lo que hay
+(`STOCK_INSUFFICIENT`) y un picking hecho solo se revierte con el inverso.
+
+## 16. Operarlo todo por MCP
 
 El servicio `ordo-mcp` expone el contrato completo a cualquier cliente MCP
 (transporte streamable HTTP, `POST /mcp`, tenant en `X-Ordo-Tenant`):

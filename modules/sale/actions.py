@@ -56,3 +56,16 @@ async def credit_note(env: Environment, record_id: int, params: dict[str, Any]) 
 async def cancel(env: Environment, record_id: int, params: dict[str, Any]) -> dict[str, Any]:
     await SaleService(env).action_cancel(record_id)
     return {"state": "cancelled"}
+
+
+@action(
+    "sale.order",
+    "action_deliver",
+    summary="Entrega la orden: picking de salida validado al costo promedio",
+    params={"location_from_id": "Ubicación interna de origen (opcional)"},
+)
+async def deliver(env: Environment, record_id: int, params: dict[str, Any]) -> dict[str, Any]:
+    from modules.stock.fulfillment import deliver_sale
+
+    location = params.get("location_from_id")
+    return await deliver_sale(env, record_id, location_from_id=int(location) if location else None)

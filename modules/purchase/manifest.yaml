@@ -1,5 +1,5 @@
 name: purchase
 version: 0.1.0
 summary: "Compras: órdenes que se confirman, reciben factura y asientan solas"
-depends: [base, account]
+depends: [base, account, product, stock]
 category: Compras
