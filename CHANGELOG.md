@@ -6,6 +6,11 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F1.3/F1.4** Token exchange RFC 8693: POST /iam/v1/token (agente autenticado por secret
+  intercambia token del owner por JWT propio con act, tenant, cap merged, jti, exp 900s),
+  registro de agentes POST /iam/v1/agents (secret una sola vez), grants por owner,
+  JWKS propio en /iam/v1/jwks. Merge de caps: union modelos/deny/requires_approval,
+  limites al minimo, record_domain AND. 19 tests nuevos. (ADR-004)
 - **F1.2** Bridge OIDC: verificador JWT genérico (JWKS con caché y refetch ante rotación,
   solo RS256/ES256, rechaza alg=none y confusión de clave), bridge `idp_sub`→`iam_user`
   con vinculación en primer login verificado y sin auto-creación, endpoint `GET /iam/v1/me`.

@@ -63,3 +63,33 @@ class UnknownIdentityError(IamError):
 class PrincipalSuspendedError(IamError):
     code = "IAM_PRINCIPAL_SUSPENDED"
     status_code = 403
+
+
+class AgentAuthFailedError(IamError):
+    code = "IAM_AGENT_AUTH_FAILED"
+    status_code = 401
+
+
+class AgentSuspendedError(IamError):
+    code = "IAM_AGENT_SUSPENDED"
+    status_code = 403
+
+
+class DelegationNotAllowedError(IamError):
+    code = "IAM_DELEGATION_NOT_ALLOWED"
+    status_code = 403
+
+
+class NoCapabilitiesError(IamError):
+    code = "IAM_NO_CAPABILITIES"
+    status_code = 403
+
+
+class UnsupportedGrantError(IamError):
+    code = "IAM_UNSUPPORTED_GRANT"
+    status_code = 400
+
+
+class NotAgentOwnerError(IamError):
+    code = "IAM_NOT_AGENT_OWNER"
+    status_code = 403

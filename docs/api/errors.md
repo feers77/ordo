@@ -25,3 +25,9 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `IAM_TOKEN_EXPIRED` | 401 | sí | Token vencido; renovar y reintentar |
 | `IAM_UNKNOWN_IDENTITY` | 401 | no | Identidad no registrada en el tenant (sin auto-creación) |
 | `IAM_PRINCIPAL_SUSPENDED` | 403 | no | Principal suspendido |
+| `IAM_AGENT_AUTH_FAILED` | 401 | no | client_id/client_secret de agente inválidos |
+| `IAM_AGENT_SUSPENDED` | 403 | no | Agente suspendido |
+| `IAM_DELEGATION_NOT_ALLOWED` | 403 | no | El subject no es el owner del agente |
+| `IAM_NO_CAPABILITIES` | 403 | no | Agente sin grants vigentes |
+| `IAM_UNSUPPORTED_GRANT` | 400 | no | grant_type no soportado en /iam/v1/token |
+| `IAM_NOT_AGENT_OWNER` | 403 | no | Solo el dueño puede otorgar capacidades |

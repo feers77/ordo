@@ -9,6 +9,7 @@ dependencies = [
     "alembic>=1.14",
     "joserfc>=1.0",
     "httpx>=0.28",
+    "python-multipart>=0.0.18",
 ]
 
 [tool.uv.sources]
