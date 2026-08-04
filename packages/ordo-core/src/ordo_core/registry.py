@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from dataclasses import field as dc_field
 from typing import Any
 
+from ordo_core.compute import DependencyGraph, declared_depends
 from ordo_core.errors import KernelError
 from ordo_core.fields import TECHNICAL_FIELDS, Datetime, Field, Integer, Many2one
 from ordo_core.model import Model
@@ -38,6 +39,7 @@ class ModelDefinition:
         self.fields: dict[str, Field] = {}
         self.inherits: dict[str, str] = {}
         self.modules: list[str] = []
+        self.classes: list[type[Model]] = []
 
     def add_field(self, name: str, field: Field, *, module: str) -> None:
         existing = self.fields.get(name)
@@ -51,6 +53,33 @@ class ModelDefinition:
         bound = field.clone()
         bound.bind(self.name, name)
         self.fields[name] = bound
+
+    def compute_method(self, name: str) -> Any:
+        """Resolve a compute method declared by any of the model's classes."""
+        for model_cls in reversed(self.classes):
+            method = getattr(model_cls, name, None)
+            if method is not None:
+                return method
+        return None
+
+    def run_compute(
+        self,
+        method_name: str,
+        records: list[dict[str, Any]],
+        *,
+        implementation: Any = None,
+    ) -> None:
+        """Run a compute in batch: one call for every affected record."""
+        method = implementation or self.compute_method(method_name)
+        if method is None:
+            raise KernelError(
+                "COMPUTE_METHOD_MISSING",
+                f"{self.name} no define el método '{method_name}'",
+            )
+        if implementation is None:
+            method(None, records)
+        else:
+            method(records)
 
     def describe(self) -> dict[str, Any]:
         return {
@@ -66,6 +95,7 @@ class Registry:
     def __init__(self) -> None:
         self._models: dict[str, ModelDefinition] = {}
         self._frozen = False
+        self.dependency_graph = DependencyGraph()
 
     # -- construcción ----------------------------------------------------
 
@@ -75,7 +105,9 @@ class Registry:
         for module in _topological_order(modules):
             registry._apply_module(module)
         registry._resolve_delegation()
+        registry._resolve_related()
         registry._validate()
+        registry._build_dependency_graph()
         registry._frozen = True
         return registry
 
@@ -107,6 +139,7 @@ class Registry:
         if model_cls._inherits:
             definition.inherits.update(model_cls._inherits)
         definition.modules.append(module.name)
+        definition.classes.append(model_cls)
         for field_name, field_obj in model_cls.declared_fields().items():
             definition.add_field(field_name, field_obj, module=module.name)
 
@@ -120,6 +153,7 @@ class Registry:
                 hint="Declara la dependencia del módulo que define ese modelo.",
             )
         definition.modules.append(module.name)
+        definition.classes.append(model_cls)
         for field_name, field_obj in model_cls.declared_fields().items():
             definition.add_field(field_name, field_obj, module=module.name)
 
@@ -151,6 +185,100 @@ class Registry:
                     delegated.bind(definition.name, field_name)
                     delegated.delegated_from = parent_name
                     definition.fields[field_name] = delegated
+
+    def _resolve_related(self) -> None:
+        """`related="a.b.c"` is sugar over compute: derive method and depends."""
+        for definition in self._models.values():
+            for field_name, field_obj in definition.fields.items():
+                if not field_obj.related:
+                    continue
+                self._validate_path(definition, field_obj.related, field_name)
+                if field_obj.compute is None:
+                    field_obj.compute = f"_compute_related_{field_name}"
+                field_obj.store = False
+
+    def _validate_path(self, definition: ModelDefinition, path: str, field_name: str) -> None:
+        current = definition
+        parts = path.split(".")
+        for index, part in enumerate(parts):
+            field = current.fields.get(part)
+            if field is None:
+                raise KernelError(
+                    "COMPUTE_INVALID_RELATED",
+                    f"{definition.name}.{field_name}: la ruta '{path}' no resuelve en '{part}'",
+                )
+            if index == len(parts) - 1:
+                return
+            if not isinstance(field, Many2one):
+                raise KernelError(
+                    "COMPUTE_INVALID_RELATED",
+                    f"{definition.name}.{field_name}: '{part}' no es relacional en '{path}'",
+                )
+            current = self._models[field.comodel]
+
+    def _build_dependency_graph(self) -> None:
+        graph = self.dependency_graph
+        for definition in self._models.values():
+            for field_name, field_obj in definition.fields.items():
+                if not field_obj.compute:
+                    continue
+                paths = self._depends_paths(definition, field_name, field_obj)
+                for path in paths:
+                    for trigger in self._resolve_triggers(definition, path, field_name):
+                        graph.add_edge(trigger, (definition.name, field_name))
+        graph.validate_acyclic()
+
+    def _depends_paths(
+        self, definition: ModelDefinition, field_name: str, field_obj: Field
+    ) -> tuple[str, ...]:
+        if field_obj.related:
+            return (field_obj.related,)
+        method = definition.compute_method(field_obj.compute or "")
+        if method is None:
+            raise KernelError(
+                "COMPUTE_METHOD_MISSING",
+                f"{definition.name}.{field_name} declara compute='{field_obj.compute}' "
+                "pero el método no existe",
+            )
+        paths = declared_depends(method)
+        if not paths:
+            raise KernelError(
+                "COMPUTE_MISSING_DEPENDS",
+                f"{definition.name}.{field_obj.compute} no declara @depends",
+                hint="Sin dependencias el kernel no sabe cuándo recomputar.",
+            )
+        return paths
+
+    def _resolve_triggers(
+        self, definition: ModelDefinition, path: str, field_name: str
+    ) -> list[tuple[str, str]]:
+        """Every hop of the path triggers recomputation, not only the last one.
+
+        For `partner_id.country_id.code`, changing the partner, its country or
+        the country code must all invalidate the dependent field.
+        """
+        triggers: list[tuple[str, str]] = []
+        current = definition
+        parts = path.split(".")
+        for index, part in enumerate(parts):
+            field = current.fields.get(part)
+            if field is None:
+                raise KernelError(
+                    "COMPUTE_UNKNOWN_DEPENDENCY",
+                    f"{definition.name}.{field_name} depende de '{path}', "
+                    f"pero '{part}' no existe en {current.name}",
+                )
+            triggers.append((current.name, part))
+            if index == len(parts) - 1:
+                return triggers
+            comodel = getattr(field, "comodel", None)
+            if comodel is None:
+                raise KernelError(
+                    "COMPUTE_UNKNOWN_DEPENDENCY",
+                    f"{definition.name}.{field_name}: '{part}' no es relacional en '{path}'",
+                )
+            current = self._models[comodel]
+        raise KernelError("COMPUTE_UNKNOWN_DEPENDENCY", f"Ruta inválida: {path!r}")
 
     def _validate(self) -> None:
         for definition in self._models.values():
