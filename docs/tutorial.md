@@ -245,11 +245,76 @@ para declarar impuestos. Cada manifiesto dice exactamente qué falta.
 
 El framework rechaza cargar un pack que no cite sus fuentes normativas.
 
+## 13. Ventas y compras: el asiento se genera solo
+
+Una orden de venta se confirma (fija totales y toma número) y se factura (crea
+y contabiliza el asiento en la misma operación). Los impuestos se referencian
+por código y viven en `account.tax`, cada uno con su cuenta contable:
+
+```python
+from modules.sale.services import SaleService
+
+service = SaleService(env)
+order_id = await service.create_order(
+    partner_id=cliente,
+    date_order="2026-08-04",
+    currency_id=clp,
+    journal_id=diario_ventas,
+    company_id=compania,
+    lines=[{
+        "name": "Licencia anual",
+        "quantity": "1",
+        "price_unit": Decimal("100000"),
+        "tax_codes": "IVA19",
+    }],
+)
+await service.action_confirm(order_id)   # "SO/00001", totales fijados
+move_id = await service.action_invoice(order_id)
+# El asiento quedó contabilizado: cliente 119.000 al debe,
+# venta 100.000 y IVA débito 19.000 al haber.
+```
+
+Compras es el espejo (`PurchaseService.action_bill`, que exige el número de la
+factura del proveedor). Una orden facturada no se cancela: se revierte su
+asiento. Requisitos previos: una fila en `account.settings` con las cuentas por
+cobrar y por pagar, e impuestos con `account_id` asignado.
+
+## 14. Facturación electrónica
+
+El módulo `einvoicing` lleva el documento por su ciclo:
+`draft → generated → signed → sent → accepted/rejected`, con `contingency`
+para cuando la autoridad está caída. El folio sale de un rango autorizado
+(`edi.folio.range`): el CAF del SII o el timbrado del SIFEN.
+
+```python
+from modules.einvoicing.contracts import AdapterRegistry
+from modules.einvoicing.services import EinvoicingService
+from localizations.cl.einvoicing import SiiAdapter
+
+registry = AdapterRegistry()
+registry.register(SiiAdapter())
+service = EinvoicingService(env, registry)
+
+doc_id = await service.create_document(
+    country_code="cl", document_type_code="33", company_id=compania,
+)
+folio = await service.action_generate(doc_id, invoice_data)  # asigna folio, arma el DTE
+await service.action_sign(doc_id, signer)                    # firma inyectada
+track = await service.action_send(doc_id, transport)         # TrackID del SII
+estado = await service.action_check(doc_id, transport)       # accepted / rejected
+```
+
+El timbre TED chileno se firma de verdad (RSA-SHA1 con la clave del CAF). La
+firma XMLDSig del documento completo queda detrás de la interfaz `Signer`
+hasta aprobar sus dependencias (ADR-014); el envío productivo requiere además
+certificados en el vault y el ambiente de certificación de cada autoridad.
+
 ## Qué no existe todavía
 
-Facturación electrónica (envío al SII o al SIFEN), conciliación bancaria, reportes
-financieros, el servidor MCP, y los módulos de ventas, compras e inventario. El
-detalle está en `PLAN-MAESTRO.md` y en `docs/design/F2-00-resumen.md`.
+La firma XMLDSig productiva y el transporte real hacia SII/SIFEN (ADR-014
+pendiente de aprobación), conciliación bancaria, reportes financieros, el
+servidor MCP y el módulo de inventario. El detalle está en `PLAN-MAESTRO.md` y
+en `docs/design/F2-00-resumen.md`.
 
 ## Siguiente paso
 

@@ -269,3 +269,81 @@ class MoveLine(Model):
     company_id = Many2one(
         "res.company", required=True, agent_hint="Compañía de la partida", examples=["1"]
     )
+
+
+class Tax(Model):
+    _name = "account.tax"
+    _description = "Impuesto aplicable a ventas o compras"
+
+    code = Char(
+        required=True,
+        index=True,
+        agent_hint=(
+            "Código estable del impuesto, el mismo del pack de localización. Las "
+            "líneas de venta y compra lo referencian por este código"
+        ),
+        examples=["IVA19", "IVA10", "EXENTO"],
+    )
+    name = Char(required=True, agent_hint="Nombre del impuesto", examples=["IVA 19%"])
+    rate = Char(
+        required=True,
+        agent_hint="Tasa como string decimal, nunca float: '19' es 19 %",
+        examples=["19", "10.5"],
+    )
+    tax_type = Selection(
+        [("percent", "Porcentaje"), ("fixed", "Monto fijo")],
+        default="percent",
+        agent_hint="Cómo se calcula: porcentaje sobre la base o monto fijo por unidad",
+        examples=["percent"],
+    )
+    price_include = Boolean(
+        default=False,
+        agent_hint="Verdadero si el precio de lista ya trae el impuesto dentro",
+        examples=["false"],
+    )
+    is_withholding = Boolean(
+        default=False,
+        agent_hint="Verdadero si es una retención: resta del total a cobrar o pagar",
+        examples=["false"],
+    )
+    applies_to = Selection(
+        [("sale", "Ventas"), ("purchase", "Compras"), ("both", "Ambos")],
+        default="both",
+        agent_hint="En qué documentos puede usarse el impuesto",
+        examples=["sale", "both"],
+    )
+    account_id = Many2one(
+        "account.account",
+        agent_hint=(
+            "Cuenta donde se acumula el impuesto (IVA débito en ventas, IVA "
+            "crédito en compras). Sin cuenta no se puede facturar con él"
+        ),
+        examples=["6"],
+    )
+    active = Boolean(default=True, agent_hint="Impuesto disponible", examples=["true"])
+    company_id = Many2one(
+        "res.company", required=True, agent_hint="Compañía del impuesto", examples=["1"]
+    )
+
+
+class Settings(Model):
+    _name = "account.settings"
+    _description = "Configuración contable por compañía"
+
+    company_id = Many2one(
+        "res.company",
+        required=True,
+        index=True,
+        agent_hint="Compañía configurada; una fila por compañía",
+        examples=["1"],
+    )
+    receivable_account_id = Many2one(
+        "account.account",
+        agent_hint="Cuenta por cobrar donde se cargan las facturas de cliente",
+        examples=["2"],
+    )
+    payable_account_id = Many2one(
+        "account.account",
+        agent_hint="Cuenta por pagar donde se abonan las facturas de proveedor",
+        examples=["3"],
+    )
