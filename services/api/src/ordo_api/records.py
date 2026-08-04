@@ -28,6 +28,7 @@ class KernelHTTPError(OrdoError):
 
     STATUS: ClassVar[dict[str, int]] = {
         "MODEL_NOT_FOUND": 404,
+        "ACTION_UNKNOWN": 404,
         "FIELD_UNKNOWN": 422,
         "FIELD_REQUIRED": 422,
         "FIELD_READONLY": 422,
