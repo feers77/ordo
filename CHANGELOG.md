@@ -6,6 +6,12 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F2.2** Compilador de dominios a SQL (ADR-006): sintaxis Odoo, operadores de
+  comparacion y logicos con notacion polaca, joins por rutas punteadas (max 4 saltos),
+  record rules global AND / rol OR, active_test. Garantias: cero interpolacion (todo
+  parametro vinculado), identificadores validados contra el registry, limites de tamano.
+  52 tests: 7 de inyeccion, 4 property-based (Hypothesis) y 11 que ejecutan el SQL
+  generado contra Postgres real.
 - **F2.1** Kernel `ordo-core`: sistema de campos (Monetary solo Decimal), registry con
   grafo topologico de modulos, herencia por extension (_inherit) y delegacion (_inherits),
   agent_hint/examples obligatorios en campos de negocio, metadatos en ir_model/ir_model_field
