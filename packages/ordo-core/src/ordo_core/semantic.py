@@ -10,8 +10,13 @@ from __future__ import annotations
 from typing import Any
 
 from ordo_core.errors import KernelError
-from ordo_core.fields import TECHNICAL_FIELDS
 from ordo_core.registry import ModelDefinition, Registry
+
+# Campos que el kernel gestiona y que el agente no necesita ver en el formato
+# compacto. `company_id` NO está aquí a propósito: aunque lo gestione el kernel,
+# a qué compañía pertenece un registro es información de negocio que el agente
+# necesita para operar en un tenant multi-compañía.
+AUDIT_FIELDS = frozenset({"create_uid", "create_date", "write_uid", "write_date", "version"})
 
 OPERATORS = [
     "=",
@@ -32,7 +37,7 @@ OPERATORS = [
 def describe_model(definition: ModelDefinition, *, compact: bool) -> dict[str, Any]:
     fields: dict[str, Any] = {}
     for name, field in sorted(definition.fields.items()):
-        if compact and name in TECHNICAL_FIELDS:
+        if compact and name in AUDIT_FIELDS:
             continue
         entry: dict[str, Any] = {
             "type": field.field_type,

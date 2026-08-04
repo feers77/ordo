@@ -94,9 +94,15 @@ def table_ddl(definition: ModelDefinition) -> list[str]:
 
 
 class ModuleInstaller:
-    def __init__(self, session: AsyncSession, registry: Registry) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        registry: Registry,
+        models_by_module: dict[str, list[str]] | None = None,
+    ) -> None:
         self.session = session
         self.registry = registry
+        self.models_by_module = models_by_module or {}
 
     async def prepare(self) -> None:
         for statement in filter(None, (s.strip() for s in DDL.split(";"))):
@@ -115,8 +121,16 @@ class ModuleInstaller:
             created.append(definition.table)
         return created
 
-    async def install(self, manifest: Manifest, model_names: list[str]) -> dict[str, Any]:
-        """Install or upgrade one module. Atomic: all of it, or none of it."""
+    async def install(
+        self, manifest: Manifest, model_names: list[str] | None = None
+    ) -> dict[str, Any]:
+        """Install or upgrade one module. Atomic: all of it, or none of it.
+
+        `model_names` defaults to every model the module declares, so nobody
+        has to keep that list in sync by hand.
+        """
+        if model_names is None:
+            model_names = self.models_by_module.get(manifest.name, [])
         await self.prepare()
         savepoint = await self.session.begin_nested()
         try:
