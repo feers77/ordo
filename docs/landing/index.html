@@ -264,10 +264,11 @@ h2:hover .anchor,h3:hover .anchor{opacity:1}
     QR firmada con el CSC, y respuestas 0260/0300/1xxx. El SIFEN sí permite anular un
     DE aprobado dentro del plazo.</li>
   </ul>
-  <p class="warn">La firma XMLDSig del documento completo está detrás de una interfaz
-  (<code>Signer</code>) a la espera de aprobar sus dependencias (ADR-014), y el envío
-  productivo requiere certificados reales en el vault. Todo lo demás —XML, folios,
-  estados, acuses— está implementado y probado.</p>
+  <p>La firma XMLDSig del documento completo está implementada (ADR-014 aceptado:
+  firma enveloped con <code>signxml</code>, RSA-SHA256 por defecto y RSA-SHA1 solo
+  donde el formato del SII lo exige; la verificación detecta manipulación y
+  certificado incorrecto). El envío productivo requiere certificados reales en el
+  vault y el ambiente de certificación de cada autoridad.</p>
 
   <h3>Ventas y compras con asiento automático</h3>
   <p>Las órdenes de venta y compra (<code>sale.order</code>, <code>purchase.order</code>)

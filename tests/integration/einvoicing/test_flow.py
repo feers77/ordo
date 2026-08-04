@@ -145,6 +145,30 @@ class TestLifecycle:
         assert excinfo.value.code == "EDI_INVALID_TRANSITION"
 
 
+class TestRealSignature:
+    async def test_full_cycle_with_xmldsig(self, edi: dict[str, Any]) -> None:
+        """El ciclo completo con la firma XMLDSig real (ADR-014 aceptado)."""
+        from modules.einvoicing.signer import XmlDSigSigner
+        from modules.einvoicing.tests.test_signer import make_cert
+
+        await load_folios(edi)
+        service = make_service(edi)
+        document_id = await make_document(edi, service)
+        await service.action_generate(document_id, make_invoice())
+
+        key_pem, cert_pem = make_cert()
+        signer = XmlDSigSigner(key_pem=key_pem, cert_pem=cert_pem, algorithm="rsa-sha1")
+        await service.action_sign(document_id, signer)
+
+        documents = RecordSet(edi["env"], "edi.document")
+        [doc] = await documents.read([document_id], fields=["state", "xml_payload"])
+        assert doc["state"] == "signed"
+        assert "Signature" in doc["xml_payload"]
+
+        track_id = await service.action_send(document_id, StubTransport(ACCEPTED))
+        assert track_id == "424242"
+
+
 class TestFolios:
     async def test_exhausting_the_range_is_a_stable_error(self, edi: dict[str, Any]) -> None:
         await load_folios(edi, range_to=1)

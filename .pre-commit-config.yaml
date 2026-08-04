@@ -11,7 +11,9 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.6
+    # Mantener sincronizado con la versión de ruff del lockfile: las reglas
+    # eliminadas (p. ej. S320) hacen que versiones distintas se contradigan.
+    rev: v0.16.1
     hooks:
       - id: ruff
         args: [--fix]

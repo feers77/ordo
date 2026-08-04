@@ -6,6 +6,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F4.3b** Firma XMLDSig de documento completo (ADR-014 aceptado): `XmlDSigSigner`
+  implementa la interfaz `Signer` con firma enveloped vía `signxml` + `lxml`, nuevas
+  dependencias sancionadas por el ADR. RSA-SHA256 por defecto; RSA-SHA1 disponible solo
+  porque el formato del SII lo exige, habilitado por instancia y nunca global. La
+  verificación (`verify_signature`) usa la configuración segura por defecto y detecta
+  manipulación del contenido y certificado incorrecto, con códigos estables
+  (`EDI_SIGN_*`). El material criptográfico llega por parámetro (vault en producción);
+  nunca toca la base de datos. 6 tests de módulo y 1 de integración nuevos.
+
 - **F5.1** Ventas y compras con asiento automático (diseño F5-01): `sale.order` y
   `purchase.order` con transiciones explícitas (confirmar fija totales con el motor de
   impuestos y toma número de secuencia; facturar crea y contabiliza el asiento en la

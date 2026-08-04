@@ -304,15 +304,24 @@ track = await service.action_send(doc_id, transport)         # TrackID del SII
 estado = await service.action_check(doc_id, transport)       # accepted / rejected
 ```
 
-El timbre TED chileno se firma de verdad (RSA-SHA1 con la clave del CAF). La
-firma XMLDSig del documento completo queda detrás de la interfaz `Signer`
-hasta aprobar sus dependencias (ADR-014); el envío productivo requiere además
-certificados en el vault y el ambiente de certificación de cada autoridad.
+El timbre TED chileno se firma de verdad (RSA-SHA1 con la clave del CAF), y
+el documento completo también: `XmlDSigSigner` implementa la interfaz
+`Signer` con firma enveloped (ADR-014 aceptado):
+
+```python
+from modules.einvoicing.signer import XmlDSigSigner
+
+signer = XmlDSigSigner(key_pem=clave, cert_pem=certificado, algorithm="rsa-sha1")
+await service.action_sign(doc_id, signer)   # el XML queda con su <Signature>
+```
+
+La clave y el certificado vienen del vault, nunca de la base de datos. El
+envío productivo requiere el ambiente de certificación de cada autoridad.
 
 ## Qué no existe todavía
 
-La firma XMLDSig productiva y el transporte real hacia SII/SIFEN (ADR-014
-pendiente de aprobación), conciliación bancaria, reportes financieros, el
+El transporte HTTP real hacia SII/SIFEN (falta el ambiente de certificación y
+certificados en el vault), conciliación bancaria, reportes financieros, el
 servidor MCP y el módulo de inventario. El detalle está en `PLAN-MAESTRO.md` y
 en `docs/design/F2-00-resumen.md`.
 
