@@ -1,0 +1,33 @@
+# Documentos tributarios electrónicos (DTE). Los códigos son los que publica
+# el SII para el formato XML; la lista incluye los de uso general, no todos.
+document_types:
+  - code: "33"
+    name: Factura electrónica
+    kind: invoice
+    electronic: true
+    legal_reference: "Formato DTE del SII, tipo 33"
+  - code: "34"
+    name: Factura no afecta o exenta electrónica
+    kind: invoice
+    electronic: true
+    legal_reference: "Formato DTE del SII, tipo 34"
+  - code: "39"
+    name: Boleta electrónica
+    kind: receipt
+    electronic: true
+    legal_reference: "Formato DTE del SII, tipo 39"
+  - code: "52"
+    name: Guía de despacho electrónica
+    kind: delivery
+    electronic: true
+    legal_reference: "Formato DTE del SII, tipo 52"
+  - code: "56"
+    name: Nota de débito electrónica
+    kind: debit_note
+    electronic: true
+    legal_reference: "Formato DTE del SII, tipo 56"
+  - code: "61"
+    name: Nota de crédito electrónica
+    kind: credit_note
+    electronic: true
+    legal_reference: "Formato DTE del SII, tipo 61"

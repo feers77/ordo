@@ -1,0 +1,28 @@
+# Documentos electrónicos del SIFEN. Los códigos corresponden al campo iTiDE
+# del formato del sistema; la lista cubre los de uso general.
+document_types:
+  - code: "1"
+    name: Factura electrónica
+    kind: invoice
+    electronic: true
+    legal_reference: "SIFEN, tipo de documento electrónico 1"
+  - code: "4"
+    name: Autofactura electrónica
+    kind: invoice
+    electronic: true
+    legal_reference: "SIFEN, tipo de documento electrónico 4"
+  - code: "5"
+    name: Nota de crédito electrónica
+    kind: credit_note
+    electronic: true
+    legal_reference: "SIFEN, tipo de documento electrónico 5"
+  - code: "6"
+    name: Nota de débito electrónica
+    kind: debit_note
+    electronic: true
+    legal_reference: "SIFEN, tipo de documento electrónico 6"
+  - code: "7"
+    name: Nota de remisión electrónica
+    kind: delivery
+    electronic: true
+    legal_reference: "SIFEN, tipo de documento electrónico 7"

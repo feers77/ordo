@@ -1,0 +1,20 @@
+country: py
+name: Paraguay
+version: 0.1.0
+currency: PYG
+review_state: draft
+sources:
+  - "Subsecretaría de Estado de Tributación (SET) — www.set.gov.py"
+  - "Ley 6380/2019 de Modernización y Simplificación del Sistema Tributario Nacional"
+  - "Sistema Integrado de Facturación Electrónica Nacional (SIFEN / e-Kuatia)"
+notes: |
+  ESTADO: borrador estructural. Contiene la forma del pack y los datos que se
+  pueden verificar sin criterio profesional (algoritmo del RUC, estructura de
+  documentos del SIFEN, tasas generales de IVA establecidas por la Ley 6380).
+
+  PENDIENTE ANTES DE USO REAL:
+  - Plan de cuentas completo, revisado por un contador paraguayo.
+  - Régimen de timbrado y su vigencia; numeración por punto de expedición.
+  - IRE, IRP e INR con sus tasas y bases vigentes.
+  - Retenciones de IVA y renta según tipo de contribuyente.
+  - Casos dorados con documentos reales anonimizados.

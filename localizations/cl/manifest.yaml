@@ -1,0 +1,23 @@
+country: cl
+name: Chile
+version: 0.1.0
+currency: CLP
+# draft = los datos NO han sido revisados por un contador chileno y no deben
+# usarse para declarar impuestos. Ver notes.
+review_state: draft
+sources:
+  - "Servicio de Impuestos Internos (SII) — www.sii.cl"
+  - "DL 825 de 1974, Ley sobre Impuesto a las Ventas y Servicios (IVA)"
+  - "Resolución Ex. SII sobre Documentos Tributarios Electrónicos"
+notes: |
+  ESTADO: borrador estructural. Contiene la forma del pack y los datos que se
+  pueden verificar sin criterio profesional (algoritmo del RUT, códigos de DTE
+  publicados por el SII, tasa general de IVA).
+
+  PENDIENTE ANTES DE USO REAL:
+  - Plan de cuentas completo, revisado por un contador chileno.
+  - Impuestos específicos: ILA (bebidas alcohólicas), impuesto al lujo,
+    combustibles, tabaco. Cada uno con su tasa vigente y su norma.
+  - Retenciones de honorarios y su tasa del año en curso.
+  - Reglas de PPM y su cálculo.
+  - Casos dorados: facturas reales anonimizadas con los importes esperados.
