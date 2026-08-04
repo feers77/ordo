@@ -1,5 +1,8 @@
 # Zonas con revisión humana obligatoria (PLAN-MAESTRO §10, CLAUDE.md §7)
 /packages/ordo-core/    @feers77
+# Compilador de dominios: mayor riesgo de fuga entre tenants e inyección
+/packages/ordo-core/src/ordo_core/domains.py  @feers77
+/packages/ordo-core/src/ordo_core/environment.py  @feers77
 /packages/ordo-runtime/ @feers77
 /services/iam/          @feers77
 /modules/account/       @feers77
