@@ -76,19 +76,29 @@ jobs:
 
   integration:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: ordo
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ordo
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ordo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
         with:
           version: ${{ env.UV_VERSION }}
       - run: uv sync --frozen
-      - name: Tests de integración (testcontainers)
-        run: |
-          if compgen -G "tests/integration/*.py" > /dev/null; then
-            uv run pytest tests/integration -m integration
-          else
-            echo "Sin tests de integración todavía (llegan en F1)."
-          fi
+      - name: Tests de integración
+        env:
+          POSTGRES_PASSWORD: ci
+        run: uv run pytest tests/integration -m integration
 
   security:
     runs-on: ubuntu-latest
