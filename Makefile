@@ -1,12 +1,15 @@
 .PHONY: up down health migrate seed check lint types test test-load test-agent schema new-module new-loc
 
-COMPOSE := docker compose -f infra/compose/docker-compose.yml
+COMPOSE := docker compose --env-file infra/compose/.env -f infra/compose/docker-compose.yml
 
-up: ## Levanta stack local
-	$(COMPOSE) --profile dev up -d
+up: ## Levanta stack local (core + dev)
+	$(COMPOSE) --profile dev up -d --wait
+
+up-obs: ## Observabilidad (requiere RAM adicional)
+	$(COMPOSE) --profile obs up -d
 
 down:
-	$(COMPOSE) --profile dev down
+	$(COMPOSE) --profile dev --profile obs down
 
 health: ## Estado de healthchecks del stack
 	@$(COMPOSE) ps --format 'table {{.Name}}\t{{.Status}}'

@@ -1,0 +1,28 @@
+{
+  "realm": "ordo",
+  "enabled": true,
+  "displayName": "ORDO ERP",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "sslRequired": "external",
+  "bruteForceProtected": true,
+  "clients": [
+    {
+      "clientId": "ordo-api",
+      "name": "ORDO API",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "secret": "dev-only-secret-rotar-en-f1"
+    }
+  ],
+  "roles": {
+    "realm": [
+      { "name": "ordo-admin", "description": "Administrador del tenant" },
+      { "name": "ordo-user", "description": "Usuario estándar" }
+    ]
+  }
+}
