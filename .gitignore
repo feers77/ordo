@@ -1,0 +1,26 @@
+# Secretos — nunca en git
+.env
+.env.*
+*.pem
+*.key
+infra/ansible/secrets.yml
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+
+# uv
+uv.lock.bak
+
+# Editor / SO
+.idea/
+.vscode/
+*.swp
+.DS_Store

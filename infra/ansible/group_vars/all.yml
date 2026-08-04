@@ -1,0 +1,50 @@
+# Configuración global del servidor ORDO.
+# Los secretos viven en secrets.yml (gitignored); ver secrets.yml.example.
+
+ordo_domain: ordo.dev.feres.cl
+
+# --- SSH ---
+# Transición segura: mientras ssh_lockdown sea false se mantiene
+# PasswordAuthentication y el puerto 22 abierto. Cambiar a true SOLO
+# después de verificar login por clave en el puerto ssh_port.
+ssh_port: 2222
+ssh_lockdown: false
+
+# --- Usuario de servicio ---
+service_user: ordo
+service_group: ordo
+
+# --- Swap (RAM < 32 GB) ---
+swap_file: /swapfile
+swap_size_mb: 4096
+
+# --- Kernel ---
+sysctl_settings:
+  fs.file-max: 1048576
+  net.core.somaxconn: 4096
+  vm.overcommit_memory: 1
+  vm.swappiness: 10
+
+limits_nofile: 262144
+
+# --- Firewall: puertos abiertos (todo lo demás cerrado) ---
+ufw_allowed_ports:
+  - { port: 22, proto: tcp, comment: "SSH legado - cerrar tras lockdown" }
+  - { port: 2222, proto: tcp, comment: "SSH" }
+
+# Puertos accesibles solo desde el edge proxy
+ufw_edge_ports:
+  - { port: 3000, proto: tcp, comment: "HTTP ORDO via edge" }
+
+# --- Caddy ---
+# TLS lo termina el edge proxy (192.168.1.90); ORDO sirve HTTP plano en LAN.
+edge_proxy_ip: 192.168.1.90
+ordo_http_port: 3000
+
+# --- pgBackRest ---
+# Repo hacia MinIO local (T0.3). PENDIENTE: mover a almacenamiento externo
+# real antes de producción (criterio de salida F0 pide restore probado).
+pgbackrest_stanza: ordo
+pgbackrest_s3_endpoint: "http://127.0.0.1:9000"
+pgbackrest_s3_bucket: pgbackrest
+pgbackrest_s3_region: us-east-1

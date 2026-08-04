@@ -1,0 +1,40 @@
+---
+- name: Comprobar llave GPG de Caddy
+  ansible.builtin.stat:
+    path: /etc/apt/keyrings/caddy.asc
+  register: caddy_key
+
+- name: Llave GPG de Caddy
+  ansible.builtin.get_url:
+    url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+    dest: /etc/apt/keyrings/caddy.asc
+    mode: "0644"
+  when: not caddy_key.stat.exists
+
+- name: Repositorio Caddy
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [signed-by=/etc/apt/keyrings/caddy.asc]
+      https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main
+    filename: caddy
+    state: present
+
+- name: Instalar Caddy
+  ansible.builtin.apt:
+    name: caddy
+    state: present
+    update_cache: true
+
+- name: Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    mode: "0644"
+    validate: "caddy validate --adapter caddyfile --config %s"
+  notify: Recargar caddy
+
+- name: Caddy activo
+  ansible.builtin.service:
+    name: caddy
+    state: started
+    enabled: true

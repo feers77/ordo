@@ -1,0 +1,13 @@
+---
+- name: Provisionar servidor ORDO
+  hosts: server
+  become: true
+  vars_files:
+    - "{{ playbook_dir }}/secrets.yml"
+  roles:
+    - base
+    - security
+    - users
+    - docker
+    - caddy
+    - backup

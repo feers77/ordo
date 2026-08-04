@@ -1,0 +1,78 @@
+---
+- name: Actualizar cache e instalar actualizaciones
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+    cache_valid_time: 3600
+
+- name: Paquetes base
+  ansible.builtin.apt:
+    name:
+      - chrony
+      - curl
+      - gnupg
+      - ca-certificates
+      - python3-passlib
+      - jq
+      - git
+      - make
+    state: present
+
+- name: Zona horaria UTC
+  community.general.timezone:
+    name: Etc/UTC
+
+- name: Chrony habilitado
+  ansible.builtin.service:
+    name: chrony
+    state: started
+    enabled: true
+
+- name: Parámetros de kernel
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-ordo.conf
+    reload: true
+  loop: "{{ sysctl_settings | dict2items }}"
+
+- name: Límite de file descriptors
+  ansible.builtin.copy:
+    dest: /etc/security/limits.d/99-ordo.conf
+    content: |
+      * soft nofile {{ limits_nofile }}
+      * hard nofile {{ limits_nofile }}
+    mode: "0644"
+
+- name: Comprobar swapfile
+  ansible.builtin.stat:
+    path: "{{ swap_file }}"
+  register: swap_stat
+
+- name: Crear swapfile
+  when: not swap_stat.stat.exists
+  block:
+    - name: Reservar espacio
+      ansible.builtin.command: "fallocate -l {{ swap_size_mb }}M {{ swap_file }}"
+      changed_when: true
+
+    - name: Permisos del swapfile
+      ansible.builtin.file:
+        path: "{{ swap_file }}"
+        mode: "0600"
+
+    - name: Formatear swap
+      ansible.builtin.command: "mkswap {{ swap_file }}"
+      changed_when: true
+
+    - name: Activar swap
+      ansible.builtin.command: "swapon {{ swap_file }}"
+      changed_when: true
+
+- name: Swap en fstab
+  ansible.posix.mount:
+    src: "{{ swap_file }}"
+    path: none
+    fstype: swap
+    opts: sw
+    state: present

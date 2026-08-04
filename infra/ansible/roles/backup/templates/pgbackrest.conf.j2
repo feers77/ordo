@@ -1,0 +1,23 @@
+# Gestionado por Ansible — no editar a mano.
+# La stanza se crea en T0.3 cuando exista el Postgres del stack.
+# PENDIENTE: mover el repo a almacenamiento externo real antes de producción.
+[global]
+repo1-type=s3
+repo1-path=/pgbackrest
+repo1-s3-endpoint={{ pgbackrest_s3_endpoint | regex_replace('^https?://', '') }}
+repo1-s3-bucket={{ pgbackrest_s3_bucket }}
+repo1-s3-region={{ pgbackrest_s3_region }}
+repo1-s3-key={{ pgbackrest_s3_key }}
+repo1-s3-key-secret={{ pgbackrest_s3_key_secret }}
+repo1-s3-uri-style=path
+repo1-storage-verify-tls=n
+repo1-retention-full=2
+repo1-retention-diff=6
+start-fast=y
+compress-type=zst
+log-level-console=info
+log-level-file=detail
+
+[{{ pgbackrest_stanza }}]
+pg1-path=/var/lib/ordo/postgres
+pg1-port=5432

@@ -1,0 +1,61 @@
+[project]
+name = "ordo"
+version = "0.1.0"
+description = "ORDO ERP — API-first ERP/CRM operado por agentes de IA"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "ruff>=0.9",
+    "mypy>=1.14",
+    "pytest>=8.3",
+    "pytest-asyncio>=0.25",
+    "pytest-cov>=6.0",
+    "pre-commit>=4.0",
+    "commitizen>=4.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["packages/*", "services/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["packages", "services", "modules"]
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "N", "UP", "B", "A", "C4", "DTZ", "T20",
+    "SIM", "PTH", "RUF", "ASYNC", "S",
+]
+ignore = ["S101"]  # asserts permitidos en tests; bandit corre aparte en CI
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "DTZ"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+# agregar "packages" cuando exista el primer paquete (T0.4)
+files = ["services"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-q"
+markers = [
+    "integration: requiere stack local (compose)",
+    "agent: suite agéntica end-to-end",
+]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_provider = "pep621"
+update_changelog_on_bump = true

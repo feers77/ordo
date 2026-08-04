@@ -1,0 +1,95 @@
+---
+- name: Paquetes de seguridad
+  ansible.builtin.apt:
+    name:
+      - ufw
+      - fail2ban
+      - unattended-upgrades
+    state: present
+
+# Ubuntu 24.04 activa ssh por socket: el puerto lo fija systemd, no sshd_config.
+# Se desactiva el socket para que la configuración del playbook mande.
+- name: Desactivar ssh.socket
+  ansible.builtin.systemd_service:
+    name: ssh.socket
+    state: stopped
+    enabled: false
+
+- name: Habilitar ssh.service
+  ansible.builtin.systemd_service:
+    name: ssh.service
+    enabled: true
+
+- name: Configuración sshd
+  ansible.builtin.template:
+    src: sshd_ordo.conf.j2
+    dest: /etc/ssh/sshd_config.d/10-ordo.conf
+    mode: "0644"
+    validate: "sshd -t -f %s"
+  notify: Reiniciar sshd
+
+- name: Retirar PasswordAuthentication de cloud-init
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d/50-cloud-init.conf
+    state: absent
+  notify: Reiniciar sshd
+
+- name: Reglas UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    comment: "{{ item.comment }}"
+  loop: "{{ ufw_allowed_ports }}"
+
+- name: Reglas UFW solo desde edge proxy
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    from_ip: "{{ edge_proxy_ip }}"
+    comment: "{{ item.comment }}"
+  loop: "{{ ufw_edge_ports }}"
+
+- name: Retirar puertos 80/443 (TLS vive en el edge)
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+    delete: true
+  loop: ["80", "443"]
+
+- name: Cerrar puerto 22 tras lockdown
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    delete: true
+  when: ssh_lockdown
+
+- name: UFW deny por defecto y activo
+  community.general.ufw:
+    state: enabled
+    policy: deny
+    direction: incoming
+
+- name: Configuración fail2ban
+  ansible.builtin.template:
+    src: jail.local.j2
+    dest: /etc/fail2ban/jail.local
+    mode: "0644"
+  notify: Reiniciar fail2ban
+
+- name: Fail2ban activo
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true
+
+- name: Unattended-upgrades activado
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: "0644"

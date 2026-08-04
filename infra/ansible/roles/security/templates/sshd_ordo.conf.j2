@@ -1,0 +1,19 @@
+# Gestionado por Ansible — no editar a mano.
+{% if not ssh_lockdown %}
+# Transición: puerto 22 y password activos hasta ssh_lockdown=true
+Port 22
+{% endif %}
+Port {{ ssh_port }}
+PermitRootLogin no
+{% if ssh_lockdown %}
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+{% else %}
+PasswordAuthentication yes
+{% endif %}
+PermitEmptyPasswords no
+X11Forwarding no
+MaxAuthTries 4
+LoginGraceTime 30
+ClientAliveInterval 300
+ClientAliveCountMax 3

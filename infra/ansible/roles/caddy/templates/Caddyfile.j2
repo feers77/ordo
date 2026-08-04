@@ -1,0 +1,18 @@
+# Gestionado por Ansible — no editar a mano.
+# TLS lo termina el edge proxy ({{ edge_proxy_ip }}); aquí solo HTTP plano.
+{
+	auto_https off
+	servers {
+		trusted_proxies static {{ edge_proxy_ip }}
+	}
+}
+
+:{{ ordo_http_port }} {
+	# Gateway ORDO (T0.4). Hasta entonces, respuesta estática.
+	handle /healthz {
+		respond "ok" 200
+	}
+	handle {
+		reverse_proxy 127.0.0.1:8000
+	}
+}

@@ -1,0 +1,24 @@
+---
+- name: Instalar pgBackRest
+  ansible.builtin.apt:
+    name: pgbackrest
+    state: present
+
+- name: Directorios de configuración
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ service_user }}"
+    group: "{{ service_group }}"
+    mode: "0750"
+  loop:
+    - /etc/pgbackrest
+    - /var/log/pgbackrest
+
+- name: Configuración pgBackRest
+  ansible.builtin.template:
+    src: pgbackrest.conf.j2
+    dest: /etc/pgbackrest/pgbackrest.conf
+    owner: "{{ service_user }}"
+    group: "{{ service_group }}"
+    mode: "0640"

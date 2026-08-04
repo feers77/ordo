@@ -1,0 +1,32 @@
+---
+- name: Grupo de servicio
+  ansible.builtin.group:
+    name: "{{ service_group }}"
+    state: present
+
+- name: Usuario de servicio
+  ansible.builtin.user:
+    name: "{{ service_user }}"
+    group: "{{ service_group }}"
+    shell: /bin/bash
+    password: "{{ service_user_password_hash }}"
+    create_home: true
+    state: present
+
+- name: Sudo con contraseña para usuario de servicio
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/50-{{ service_user }}"
+    content: "{{ service_user }} ALL=(ALL) ALL\n"
+    mode: "0440"
+    validate: "visudo -cf %s"
+
+# "Sin login por password" via SSH: solo clave para este usuario,
+# incluso durante la transición (ssh_lockdown=false).
+- name: Solo clave SSH para usuario de servicio
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/20-ordo-user.conf
+    content: |
+      Match User {{ service_user }}
+          PasswordAuthentication no
+    mode: "0644"
+  notify: Reiniciar sshd
