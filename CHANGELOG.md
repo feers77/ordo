@@ -6,6 +6,12 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F2.3** Campos calculados: decorador @depends, grafo de dependencias con orden
+  topologico y deteccion de ciclos al construir el registry (falla el boot, no en runtime),
+  recomputacion siempre en lote (N+1 imposible por diseno), campos related resueltos como
+  compute con dependencia en cada segmento de la ruta, cache por transaccion con
+  invalidacion en cascada. Filtrar por calculado no almacenado se rechaza con
+  DOMAIN_FIELD_NOT_STORED. 20 tests nuevos.
 - **F2.2** Compilador de dominios a SQL (ADR-006): sintaxis Odoo, operadores de
   comparacion y logicos con notacion polaca, joins por rutas punteadas (max 4 saltos),
   record rules global AND / rol OR, active_test. Garantias: cero interpolacion (todo

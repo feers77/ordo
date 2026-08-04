@@ -39,6 +39,7 @@ class Field:
         index: bool = False,
         default: Any = None,
         store: bool = True,
+        compute: str | None = None,
         related: str | None = None,
         groups: list[str] | None = None,
         company_dependent: bool = False,
@@ -53,6 +54,7 @@ class Field:
         self.index = index
         self.default = default
         self.store = store
+        self.compute = compute
         self.related = related
         self.groups = groups or []
         self.company_dependent = company_dependent
@@ -87,6 +89,8 @@ class Field:
             "readonly": self.readonly,
             "index": self.index,
             "store": self.store,
+            "compute": self.compute,
+            "related": self.related,
             "translate": self.translate,
             "tracking": self.tracking,
             "company_dependent": self.company_dependent,

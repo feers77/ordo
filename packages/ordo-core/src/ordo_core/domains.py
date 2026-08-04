@@ -259,6 +259,13 @@ class _JoinPlan:
                         "DOMAIN_INVALID_PATH",
                         f"'{part}' es {field.field_type}; no se puede comparar directamente",
                     )
+                if not field.store:
+                    raise KernelError(
+                        "DOMAIN_FIELD_NOT_STORED",
+                        f"'{current_def.name}.{part}' es calculado sin almacenar; "
+                        "no se puede filtrar por él",
+                        hint="Marca el campo con store=True o filtra por sus dependencias.",
+                    )
                 return table.c[part], field
             if field.field_type not in RELATIONAL_TYPES or field.field_type != "many2one":
                 raise KernelError(
