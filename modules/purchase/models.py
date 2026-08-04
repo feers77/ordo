@@ -18,6 +18,7 @@ PURCHASE_STATES = [
     ("draft", "Borrador"),
     ("confirmed", "Confirmada"),
     ("billed", "Facturada"),
+    ("credited", "Con nota de crédito"),
     ("cancelled", "Cancelada"),
 ]
 
@@ -85,6 +86,11 @@ class PurchaseOrder(Model):
         "account.move",
         agent_hint="Asiento de la factura de proveedor, si ya se registró",
         examples=["23"],
+    )
+    credit_note_move_id = Many2one(
+        "account.move",
+        agent_hint="Asiento de la nota de crédito del proveedor, si se registró",
+        examples=["25"],
     )
     company_id = Many2one(
         "res.company", required=True, agent_hint="Compañía compradora", examples=["1"]

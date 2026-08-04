@@ -37,7 +37,12 @@ def _tax_id(value: str | None, who: str) -> str:
 
 
 async def invoice_data_from_sale(
-    env: Environment, order_id: int, *, document_type_code: str
+    env: Environment,
+    order_id: int,
+    *,
+    document_type_code: str,
+    reference_document: str = "",
+    reference_reason: str = "",
 ) -> tuple[InvoiceData, str, int]:
     """Devuelve (datos del documento, país en minúscula, company_id)."""
     order = await _one(
@@ -46,7 +51,7 @@ async def invoice_data_from_sale(
         order_id,
         ["id", "name", "state", "partner_id", "company_id", "currency_id", "date_order"],
     )
-    if order["state"] not in ("confirmed", "invoiced"):
+    if order["state"] not in ("confirmed", "invoiced", "credited"):
         raise EdiError(
             "EDI_SOURCE_NOT_READY",
             "Solo una orden confirmada o facturada emite documento electrónico",
@@ -118,5 +123,7 @@ async def invoice_data_from_sale(
         ),
         taxes=totals,
         currency=currency["name"],
+        reference_document=reference_document,
+        reference_reason=reference_reason,
     )
     return invoice, country, order["company_id"]

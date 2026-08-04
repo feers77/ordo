@@ -151,13 +151,36 @@ class SaleService:
         await self.orders.write([order_id], {"state": "invoiced", "invoice_move_id": move_id})
         return move_id
 
+    async def action_credit_note(
+        self, order_id: int, *, reason: str, credit_date: str | None = None
+    ) -> int:
+        """Revierte la factura completa con una nota de crédito. Devuelve el asiento.
+
+        La reversión contable y el estado comercial cambian juntos: no existe
+        la orden "acreditada" cuyo asiento sigue vivo, ni al revés.
+        """
+        order = await self._get(order_id)
+        self._expect(order, "invoiced", "acreditar")
+        if not reason.strip():
+            raise SaleError(
+                "SALE_CREDIT_REASON_REQUIRED",
+                "Una nota de crédito lleva su motivo",
+                hint="Pasa reason con la causa (anulación, devolución, corrección).",
+            )
+        [full] = await self.orders.read([order_id], fields=["invoice_move_id"])
+        reversal_id = await self.accounting.action_reverse(full["invoice_move_id"], credit_date)
+        await self.orders.write(
+            [order_id], {"state": "credited", "credit_note_move_id": reversal_id}
+        )
+        return reversal_id
+
     async def action_cancel(self, order_id: int) -> None:
         order = await self._get(order_id)
         if order["state"] == "invoiced":
             raise SaleError(
                 "SALE_INVALID_TRANSITION",
                 "Una orden facturada no se cancela: revierte su asiento con una nota de crédito",
-                hint="Usa action_reverse sobre invoice_move_id.",
+                hint="Usa action_credit_note para revertir la factura.",
             )
         if order["state"] == "cancelled":
             return

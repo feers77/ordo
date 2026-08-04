@@ -41,6 +41,25 @@ async def bill(env: Environment, record_id: int, params: dict[str, Any]) -> dict
 
 @action(
     "purchase.order",
+    "action_credit_note",
+    summary="Registra la nota de crédito del proveedor: revierte su factura",
+    requires_approval=True,
+    params={
+        "reason": "Motivo de la nota de crédito (obligatorio)",
+        "credit_date": "Fecha del asiento de reversión (opcional, ISO)",
+    },
+)
+async def credit_note(env: Environment, record_id: int, params: dict[str, Any]) -> dict[str, Any]:
+    reversal_id = await PurchaseService(env).action_credit_note(
+        record_id,
+        reason=str(params.get("reason", "")),
+        credit_date=params.get("credit_date"),
+    )
+    return {"credit_note_move_id": reversal_id, "state": "credited"}
+
+
+@action(
+    "purchase.order",
     "action_cancel",
     summary="Cancela una orden sin factura registrada",
 )

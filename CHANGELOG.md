@@ -6,6 +6,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F5.3** Notas de crédito comerciales: `action_credit_note` en ventas y compras
+  revierte la factura completa con motivo obligatorio y deja la orden en `credited`
+  (estado y asiento cambian juntos; el neto por cuenta tras factura + NC es exactamente
+  cero, verificado). `action_einvoice_credit_note` emite la nota de crédito electrónica
+  (DTE 61 en Chile, DE tipo 5 en Paraguay) referenciando el documento original — que
+  debe estar enviado o aceptado; uno en borrador se anula, no se corrige. 6 tests de
+  integración nuevos.
+
 - **F4.4** Tesorería (diseño F4-04): `account.payment` con asiento automático al
   contabilizar (banco contra por cobrar/pagar; un pago contabilizado se revierte, no se
   anula); conciliación de partidas con grupo explícito (`account.reconcile`) que exige
