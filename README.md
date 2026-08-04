@@ -39,8 +39,10 @@ En desarrollo, todavía sin release. Lo que ya funciona y está probado:
 - **Facturación electrónica** — framework común con adaptadores **SII (Chile)**
   (CAF, timbre TED firmado con la clave del CAF, DTE, sobre EnvioDTE, acuses) y
   **SIFEN (Paraguay)** (CDC de 44 dígitos, XML del DE, QR firmado con el CSC).
-  La firma XMLDSig de documento completo espera la aprobación de dependencias
-  (ADR-014); el envío productivo requiere además certificados reales en el vault.
+  Firma XMLDSig de documento completo implementada (ADR-014: `signxml`,
+  enveloped, con verificación y detección de manipulación probadas); el envío
+  productivo requiere certificados reales en el vault y el ambiente de
+  certificación de cada autoridad.
 - **Localizaciones** — framework declarativo de packs fiscales con packs de Chile y
   Paraguay **en borrador**: contienen lo verificable citando la norma, pero el plan de
   cuentas y los impuestos específicos requieren revisión de un contador antes de usarse

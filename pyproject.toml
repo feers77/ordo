@@ -16,6 +16,7 @@ dependencies = [
     "ordo-events",
     "ordo-render",
     "ordo-mcp",
+    "signxml>=5.1.0",
 ]
 
 [tool.uv.sources]

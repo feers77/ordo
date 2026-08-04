@@ -122,6 +122,10 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `PY_DE_EMPTY` | 400 | no | Un DE sin ítems no es un documento |
 | `PY_DE_NO_TIMBRADO` | 409 | no | El rango de numeración no trae el timbrado |
 | `PY_DE_UNKNOWN_RATE` | 400 | no | El SIFEN solo conoce IVA 10 %, 5 % y exento |
+| `EDI_SIGN_BAD_ALGORITHM` | 400 | no | Algoritmo de firma desconocido (rsa-sha1 o rsa-sha256) |
+| `EDI_SIGN_INVALID_XML` | 400 | no | El documento a firmar o verificar no es XML válido |
+| `EDI_SIGN_FAILED` | 500 | no | La firma falló; clave y certificado no se corresponden |
+| `EDI_SIGN_INVALID` | 400 | no | La firma del documento no es válida |
 
 ## Ventas y compras
 

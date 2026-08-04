@@ -1,6 +1,6 @@
 # ADR-014 — Framework de facturación electrónica y firma XML
 
-- **Estado:** propuesto
+- **Estado:** aceptado (2026-08-04, @feers77)
 - **Fecha:** 2026-08-04
 - **Decisores:** @feers77
 
@@ -32,21 +32,23 @@ país. La firma XML plantea una decisión de dependencias (AGENTS.md §2.7).
   con la clave del CAF, como especifica el SII) y el HMAC del QR del SIFEN.
   No es una dependencia nueva: ya está en el árbol y este ADR sanciona su
   uso directo.
-- La firma XMLDSig **de documento completo** (EnvioDTE, DE del SIFEN) queda
-  detrás de la interfaz. Su implementación productiva requiere `signxml` +
-  `lxml`, que **no se agregan hasta aprobar la actualización de este ADR**.
-  Mientras tanto los tests usan un firmador de prueba determinista y los
-  documentos quedan en estado `signed` solo si el firmador inyectado firma.
+- La firma XMLDSig **de documento completo** (EnvioDTE, DE del SIFEN) vive
+  detrás de la interfaz `Signer`. Con la aceptación de este ADR se agregan
+  `signxml` + `lxml` y se implementa `XmlDSigSigner` (firma enveloped;
+  RSA-SHA256 por defecto, RSA-SHA1 solo porque el formato del SII lo exige,
+  habilitado por instancia y nunca global). La verificación usa la
+  configuración segura por defecto de `signxml`.
 - Claves y certificados **nunca en la base de datos en claro** (AGENTS.md §7):
   el modelo `edi.certificate` guarda metadatos y una referencia al secreto
   (`vault_ref`); el material criptográfico se inyecta en runtime.
 
 ## Consecuencias
 
-- Positivas: cero dependencias nuevas hoy; el 95 % del valor (XML correcto,
-  folios, CDC, estados, acuses, contingencia) queda implementado y probado;
-  el TED chileno se firma de verdad.
-- Negativas: no se puede enviar a producción al SII/SIFEN hasta aprobar
-  `signxml`+`lxml` (o alternativa) y cargar certificados reales en el vault.
+- Positivas: todo el circuito de firma queda implementado y probado (firma,
+  verificación, detección de manipulación); el TED chileno y el documento
+  completo se firman de verdad.
+- Negativas: dos dependencias con extensiones en C (`lxml`, `signxml`);
+  el envío productivo al SII/SIFEN sigue requiriendo certificados reales en
+  el vault y el ambiente de certificación de cada autoridad.
 - Invalidaría: que el SII o el SIFEN publiquen un mecanismo de firma no
   basado en XMLDSig.
