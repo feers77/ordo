@@ -16,8 +16,9 @@ make health                                           # todos healthy
 ### Servicios de aplicación (api y mcp)
 
 ```bash
-make app                       # construye y levanta ordo-api (:8000) y ordo-mcp (:8001)
+make app                       # construye y levanta api (:8000), mcp (:8001), iam (:8002), events (:8003)
 make seed TENANT=demo          # crea y puebla un tenant (una sola vez por tenant)
+make upgrade-tenant TENANT=demo  # instala módulos nuevos en un tenant existente
 curl http://127.0.0.1:3000/healthz                                    # Caddy
 curl -H 'X-Ordo-Tenant: demo' http://127.0.0.1:3000/api/v1/res.partner
 ```
