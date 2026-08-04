@@ -318,9 +318,29 @@ await service.action_sign(doc_id, signer)   # el XML queda con su <Signature>
 La clave y el certificado vienen del vault, nunca de la base de datos. El
 envío productivo requiere el ambiente de certificación de cada autoridad.
 
+## 15. Operarlo todo por MCP
+
+El servicio `ordo-mcp` expone el contrato completo a cualquier cliente MCP
+(transporte streamable HTTP, `POST /mcp`, tenant en `X-Ordo-Tenant`):
+
+```json
+{"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+ "params": {"name": "ordo_run_action",
+            "arguments": {"model": "sale.order", "id": 42,
+                          "action": "action_confirm", "dry_run": true}}}
+```
+
+Nueve tools: `ordo_schema`, `ordo_search`, `ordo_read`, `ordo_create`,
+`ordo_write`, `ordo_list_actions`, `ordo_run_action`, `ordo_list_reports`
+y `ordo_run_report`. El agente descubre los modelos, simula con `dry_run`
+(que no quema numeración legal) y sabe qué acciones exigen aprobación
+humana antes de intentarlas. Sin autenticación propia: va detrás del
+gateway, con el PDP delante.
+
 ## Qué no existe todavía
 
-El transporte HTTP real hacia SII/SIFEN (falta el ambiente de certificación y
+El resto de F3 (`explain`, búsqueda semántica, NL→dominio, suscripciones),
+el transporte HTTP real hacia SII/SIFEN (falta el ambiente de certificación y
 certificados en el vault), conciliación bancaria, reportes financieros, el
 servidor MCP y el módulo de inventario. El detalle está en `PLAN-MAESTRO.md` y
 en `docs/design/F2-00-resumen.md`.

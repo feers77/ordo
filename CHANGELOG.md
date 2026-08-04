@@ -6,6 +6,17 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F3.1** Servidor MCP (ADR-015, diseño F3-01): `ordo-mcp` habla JSON-RPC 2.0 sobre
+  `POST /mcp` (transporte streamable HTTP) sin SDK externo. Nueve tools con el mismo
+  contrato de la API: `ordo_schema` (descubrimiento semántico), búsqueda por dominio,
+  lectura, escritura con dry-run e idempotencia (clave propia por llamada, fijable por
+  el agente que reintenta), acciones de negocio con su metadato de aprobación, y
+  reportes. Los errores vuelven con código estable y hint dentro de `isError`. Probado
+  de punta a punta: un cliente MCP descubre los modelos, crea la orden, simula la
+  confirmación sin quemar numeración, confirma, factura y lee el balance de
+  comprobación cuadrado. El tenant viaja en `X-Ordo-Tenant`; el servicio asume el
+  gateway y el PDP delante. 10 tests de integración nuevos.
+
 - **F5.3** Notas de crédito comerciales: `action_credit_note` en ventas y compras
   revierte la factura completa con motivo obligatorio y deja la orden en `credited`
   (estado y asiento cambian juntos; el neto por cuenta tras factura + NC es exactamente
