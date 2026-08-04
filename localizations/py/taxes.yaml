@@ -1,0 +1,27 @@
+# Impuestos de Paraguay.
+# La Ley 6380/2019 establece la tasa general del IVA en 10% y una tasa
+# reducida del 5% para bienes y servicios determinados. Los tributos a la
+# renta (IRE, IRP, INR) y las retenciones requieren revisión profesional.
+taxes:
+  - code: IVA10
+    name: IVA 10%
+    rate: "10"
+    tax_type: percent
+    price_include: false
+    applies_to: [sale, purchase]
+    legal_reference: "Ley 6380/2019 — tasa general del IVA"
+
+  - code: IVA5
+    name: IVA 5%
+    rate: "5"
+    tax_type: percent
+    price_include: false
+    applies_to: [sale, purchase]
+    legal_reference: "Ley 6380/2019 — tasa reducida"
+
+  - code: EXENTA
+    name: Exenta de IVA
+    rate: "0"
+    tax_type: percent
+    applies_to: [sale, purchase]
+    legal_reference: "Ley 6380/2019 — operaciones exoneradas"

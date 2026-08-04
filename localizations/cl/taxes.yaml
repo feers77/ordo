@@ -1,0 +1,27 @@
+# Impuestos de Chile.
+# Solo se incluyen los que se pueden afirmar con la norma citada. Los impuestos
+# específicos (ILA, combustibles, tabaco, lujo) requieren revisión profesional
+# y sus tasas vigentes; no se inventan aquí.
+taxes:
+  - code: IVA19
+    name: IVA 19%
+    rate: "19"
+    tax_type: percent
+    price_include: false
+    applies_to: [sale, purchase]
+    legal_reference: "DL 825/1974, art. 14 — tasa general del IVA"
+
+  - code: IVA19_INC
+    name: IVA 19% incluido en el precio
+    rate: "19"
+    tax_type: percent
+    price_include: true
+    applies_to: [sale]
+    legal_reference: "DL 825/1974, art. 14 — mismo impuesto, precio bruto"
+
+  - code: EXENTO
+    name: Exento de IVA
+    rate: "0"
+    tax_type: percent
+    applies_to: [sale, purchase]
+    legal_reference: "DL 825/1974, art. 12 — operaciones exentas"

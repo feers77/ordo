@@ -1,0 +1,6 @@
+identifier_name: RUC
+validator: py
+format_example: "80012345-6"
+description: |
+  Registro Único de Contribuyentes. El dígito verificador se calcula por
+  módulo 11 con factores crecientes desde 2, de derecha a izquierda.

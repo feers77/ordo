@@ -1,0 +1,9 @@
+# El RUT chileno usa módulo 11 con factores cíclicos 2..7. El algoritmo es
+# público y verificable, así que vive en código (ordo_core.taxid) y aquí solo
+# se declara qué validador aplica.
+identifier_name: RUT
+validator: cl
+format_example: "76.123.456-7"
+description: |
+  Rol Único Tributario. El dígito verificador se calcula por módulo 11; el
+  resultado 10 se representa como K y el 11 como 0.

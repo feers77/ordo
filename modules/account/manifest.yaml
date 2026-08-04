@@ -1,0 +1,5 @@
+name: account
+version: 0.1.0
+summary: "Contabilidad: cuentas, diarios, asientos y partida doble"
+depends: [base]
+category: Contabilidad
