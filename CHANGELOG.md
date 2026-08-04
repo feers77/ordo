@@ -6,6 +6,20 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F6.1** Inventario con valorización (diseño F6-01): módulos `product` (almacenable o
+  servicio, costo promedio mantenido por el sistema, tracking por lote/serie) y `stock`
+  (almacenes, ubicaciones internas y virtuales, lotes, pickings y movimientos, capas de
+  valorización, configuración de cuentas por compañía y reglas de reabastecimiento).
+  Validar un picking mueve el stock, escribe las capas y contabiliza el asiento en la
+  misma operación: recepciones al debe de inventario contra recepciones por facturar,
+  entregas al costo promedio contra costo de venta, mermas contra ajustes; los
+  traslados internos no crean valor. El costo promedio está probado como propiedad
+  (nunca sale del rango de los precios recibidos, el valor total se conserva) y la
+  verdad contable es la suma de capas, verificada contra el balance de comprobación.
+  No se entrega más de lo que hay; un picking hecho es inmutable; los servicios no
+  tocan el inventario. Reporte `stock.on_hand` por la API. 6 tests de propiedad y 12
+  de integración nuevos.
+
 - **HITL dentro del request**: una operación que exige aprobación se ejecuta
   reintentando el mismo request con `X-Ordo-Approval: <id>` (API) o `approval_id`
   (tool MCP `ordo_run_action`); el servicio consume la aprobación sellada contra el

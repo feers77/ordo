@@ -1,0 +1,5 @@
+name: product
+version: 0.1.0
+summary: "Productos y servicios: lo que se vende, se compra y se almacena"
+depends: [base, account]
+category: Inventario
