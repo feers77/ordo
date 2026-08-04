@@ -275,3 +275,48 @@ class TestBusinessFlow:
         assert document.json()["state"] == "generated"
         assert "<TED" in document.json()["xml_payload"]
         assert document.json()["payload_encoding"] == "iso-8859-1"
+
+
+class TestReportsApi:
+    async def test_reports_are_discoverable_and_run(
+        self, client: httpx.AsyncClient, shop: dict[str, Any]
+    ) -> None:
+        listing = await client.get("/api/v1/reports", headers=headers(shop))
+        names = {r["name"] for r in listing.json()["reports"]}
+        assert {
+            "account.trial_balance",
+            "account.income_statement",
+            "account.balance_sheet",
+        } <= names
+
+        order_id = await make_order(shop)
+        await client.post(
+            f"/api/v1/sale.order/{order_id}/actions/action_confirm",
+            json={"params": {}},
+            headers=headers(shop, uuid.uuid4().hex),
+        )
+        await client.post(
+            f"/api/v1/sale.order/{order_id}/actions/action_invoice",
+            json={"params": {}},
+            headers=headers(shop, uuid.uuid4().hex),
+        )
+        result = await client.get(
+            f"/api/v1/reports/account.trial_balance?company_id={shop['company_id']}",
+            headers=headers(shop),
+        )
+        assert result.status_code == 200
+        assert result.json()["balanced"] is True
+
+    async def test_unknown_report_is_404(
+        self, client: httpx.AsyncClient, shop: dict[str, Any]
+    ) -> None:
+        response = await client.get("/api/v1/reports/no.such", headers=headers(shop))
+        assert response.status_code == 404
+        assert response.json()["error"]["code"] == "REPORT_UNKNOWN"
+
+    async def test_missing_param_is_400(
+        self, client: httpx.AsyncClient, shop: dict[str, Any]
+    ) -> None:
+        response = await client.get("/api/v1/reports/account.trial_balance", headers=headers(shop))
+        assert response.status_code == 400
+        assert response.json()["error"]["code"] == "REPORT_PARAM_REQUIRED"

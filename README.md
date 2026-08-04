@@ -33,9 +33,14 @@ En desarrollo, todavía sin release. Lo que ya funciona y está probado:
   trabajos, outbox transaccional, chatter, adjuntos y schema semántico.
 - **Módulos** — sistema de módulos con manifiesto y migraciones propias, más los
   módulos `base` (compañías, monedas, contactos, unidades), `account` (contabilidad
-  con partida doble, motor de impuestos), `sale` y `purchase` (órdenes que al
-  facturarse generan y contabilizan su asiento solas) y `einvoicing` (documentos
-  electrónicos como máquina de estados, folios autorizados, certificados).
+  con partida doble, motor de impuestos, pagos, conciliación, extractos bancarios y
+  reportes financieros), `sale` y `purchase` (órdenes que al facturarse generan y
+  contabilizan su asiento solas) y `einvoicing` (documentos electrónicos como máquina
+  de estados, folios autorizados, certificados).
+- **API agéntica** — las transiciones de negocio son operaciones de primera clase:
+  descubrimiento en `GET /api/v1/{model}/actions` (con `requires_approval` para el
+  PDP), ejecución idempotente con `dry_run` que no quema numeración legal, eventos al
+  outbox, y reportes en `GET /api/v1/reports/{name}`.
 - **Facturación electrónica** — framework común con adaptadores **SII (Chile)**
   (CAF, timbre TED firmado con la clave del CAF, DTE, sobre EnvioDTE, acuses) y
   **SIFEN (Paraguay)** (CDC de 44 dígitos, XML del DE, QR firmado con el CSC).

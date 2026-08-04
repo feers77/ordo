@@ -6,6 +6,19 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F4.4** Tesorería (diseño F4-04): `account.payment` con asiento automático al
+  contabilizar (banco contra por cobrar/pagar; un pago contabilizado se revierte, no se
+  anula); conciliación de partidas con grupo explícito (`account.reconcile`) que exige
+  misma cuenta, cuenta conciliable, asientos contabilizados y suma exactamente cero,
+  más `open_items()` para que un agente elija qué saldar; extractos bancarios con
+  emparejamiento automático conservador (solo con candidato único por importe; ante
+  ambigüedad no adivina) y validación que exige todo emparejado y cuadrado contra los
+  saldos del banco. Registro de reportes en el kernel (`ordo_core.reports`, simétrico
+  al de acciones) con `GET /api/v1/reports/{name}`: balance de comprobación, estado de
+  resultados y balance general, cada uno con su check de cuadratura. Todo expuesto
+  también como acciones con `requires_approval` donde corresponde. 13 tests de
+  integración de tesorería y 3 de API nuevos.
+
 - **F5.2** Acciones de negocio por la API: registro `ordo_core.actions` con decorador
   (`actions.py` por módulo, importado por el loader), descubrimiento en
   `GET /api/v1/{model}/actions` con metadato `requires_approval` para el PDP, y
