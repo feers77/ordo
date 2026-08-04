@@ -1,6 +1,8 @@
 # Secretos — nunca en git
 .env
 .env.*
+# La plantilla sí va: sólo trae CHANGEME y docs/tutorial.md la copia
+!.env.example
 *.pem
 *.key
 infra/ansible/secrets.yml

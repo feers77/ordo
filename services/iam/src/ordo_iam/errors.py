@@ -134,3 +134,44 @@ class NotApproverError(IamError):
 class IdempotencyKeyRequiredError(IamError):
     code = "IAM_IDEMPOTENCY_KEY_REQUIRED"
     status_code = 400
+
+
+# -- canales de notificación / HITL por Telegram (F1-07) ---------------------
+
+
+class LinkCodeInvalidError(IamError):
+    """Un solo código para inexistente, vencido y ya usado: no da información."""
+
+    code = "IAM_LINK_CODE_INVALID"
+    status_code = 400
+
+
+class ChannelAlreadyLinkedError(IamError):
+    code = "IAM_CHANNEL_ALREADY_LINKED"
+    status_code = 409
+
+
+class ChannelNotVerifiedError(IamError):
+    code = "IAM_CHANNEL_NOT_VERIFIED"
+    status_code = 403
+
+
+class CallbackInvalidError(IamError):
+    code = "IAM_CALLBACK_INVALID"
+    status_code = 403
+
+
+class WebhookUnauthorizedError(IamError):
+    code = "IAM_WEBHOOK_UNAUTHORIZED"
+    status_code = 403
+
+
+class TelegramNotConfiguredError(IamError):
+    code = "IAM_TELEGRAM_NOT_CONFIGURED"
+    status_code = 503
+
+
+class TelegramDeliveryError(IamError):
+    code = "IAM_TELEGRAM_DELIVERY_FAILED"
+    status_code = 502
+    retryable = True

@@ -242,6 +242,35 @@
         "title": "HTTPValidationError",
         "type": "object"
       },
+      "LinkCodeResponse": {
+        "properties": {
+          "channel_type": {
+            "title": "Channel Type",
+            "type": "string"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "hint": {
+            "title": "Hint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "channel_type",
+          "expires_at",
+          "hint"
+        ],
+        "title": "LinkCodeResponse",
+        "type": "object"
+      },
       "MeResponse": {
         "properties": {
           "display_name": {
@@ -915,6 +944,33 @@
         ]
       }
     },
+    "/iam/v1/channels/telegram/link": {
+      "post": {
+        "description": "Emite el código de un solo uso que vincula un chat de Telegram al usuario.\n\nEl código nace dentro del sistema y sólo lo ve quien está autenticado: es\nlo único que prueba que ese chat es de este principal.",
+        "operationId": "link_telegram_channel_iam_v1_channels_telegram_link_post",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkCodeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Link Telegram Channel",
+        "tags": [
+          "iam"
+        ]
+      }
+    },
     "/iam/v1/jwks": {
       "get": {
         "operationId": "jwks_iam_v1_jwks_get",
@@ -959,6 +1015,58 @@
           }
         ],
         "summary": "Me",
+        "tags": [
+          "iam"
+        ]
+      }
+    },
+    "/iam/v1/telegram/webhook": {
+      "post": {
+        "description": "Entrada de updates de Telegram. Sin el secreto acordado no se lee el cuerpo.",
+        "operationId": "telegram_webhook_iam_v1_telegram_webhook_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Telegram-Bot-Api-Secret-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Telegram-Bot-Api-Secret-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Telegram Webhook Iam V1 Telegram Webhook Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Telegram Webhook",
         "tags": [
           "iam"
         ]

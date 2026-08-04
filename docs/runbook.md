@@ -53,6 +53,7 @@ Point-in-time: agregar `--type=time --target="YYYY-MM-DD HH:MM:SS+00"` al restor
 | Rol de app Postgres (`ordo_app`) | `ORDO_APP_PASSWORD` en `.env` | `ALTER ROLE ordo_app PASSWORD '...'` + actualizar `.env`. **Nunca** conectar la app con el rol `ordo` (superuser): anula RLS |
 | Postgres / MinIO / Keycloak / Grafana | `infra/compose/.env` | cambiar valor + `make up` (recrea contenedores) |
 | Credenciales backup S3 | `.env` + `secrets.yml` | crear usuario nuevo en MinIO, actualizar ambos, borrar el viejo |
+| Bot de Telegram (HITL) | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` en `.env` | rotar con BotFather / `setWebhook`; el webhook secret deriva la firma de los botones, así que rotarlo invalida los callbacks aún sin resolver (el aprobador reintenta desde la API) |
 | Token GitHub | GitHub → Settings → Developer settings | revocar y reemplazar en `~/.ordo-git-credentials` |
 | Certificado MinIO | `infra/compose/minio/gen-certs.sh` | regenerar y reiniciar minio |
 
