@@ -289,7 +289,7 @@ class Registry:
                     raise KernelError(
                         "FIELD_MISSING_AGENT_METADATA",
                         f"{definition.name}.{field_name} requiere agent_hint y examples",
-                        hint="Todo campo de negocio alimenta el schema semántico (CLAUDE.md §4).",
+                        hint="Todo campo de negocio alimenta el schema semántico (AGENTS.md §4).",
                     )
                 if isinstance(field_obj, Many2one) and field_obj.comodel not in self._models:
                     raise KernelError(

@@ -1,13 +1,13 @@
 """Domain language → SQL compiler (design F2-02, ADR-006).
 
 Highest-risk component of the kernel: a defect here leaks data across
-tenants or allows injection. Every change needs human review (CLAUDE.md §7).
+tenants or allows injection. Every change needs human review (AGENTS.md §7).
 
 Invariants:
 - values only ever travel as bound parameters; nothing is interpolated;
 - field and model identifiers are validated against the registry before use;
 - path depth and term count are bounded;
-- record rules are applied with Odoo semantics (global AND, role OR).
+- record rules are applied with classic semantics (global AND, role OR).
 """
 
 from __future__ import annotations
@@ -351,7 +351,7 @@ def _apply_operator(column: ColumnElement[Any], operator: str, value: Any) -> Co
 
 
 def _to_prefix(domain: list[Any]) -> list[Any]:
-    """Insert the implicit `&` operators Odoo notation allows."""
+    """Insert the implicit `&` operators the prefix notation allows."""
     operand_count = sum(1 for item in domain if not _is_logic(item))
     explicit_binary = sum(1 for item in domain if _is_logic(item) and item != "!")
     missing = operand_count - explicit_binary - 1

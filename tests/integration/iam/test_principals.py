@@ -61,7 +61,7 @@ class TestAgentInvariants:
                 tenant="acme",
                 owner_user_id=uuid.uuid4(),
                 display_name="bot",
-                model="claude-fable-5",
+                model="agente-v1",
             )
         assert exc.value.code == "IAM_OWNER_NOT_FOUND"
 
@@ -74,7 +74,7 @@ class TestAgentInvariants:
                 tenant="acme",
                 owner_user_id=user.principal_id,
                 display_name="bot",
-                model="claude-fable-5",
+                model="agente-v1",
             )
 
     async def test_agent_owner_same_tenant(self, session: AsyncSession) -> None:
@@ -85,7 +85,7 @@ class TestAgentInvariants:
                 tenant="globex",
                 owner_user_id=user.principal_id,
                 display_name="bot",
-                model="claude-fable-5",
+                model="agente-v1",
             )
 
     async def test_autonomy_defaults_to_observer(self, session: AsyncSession) -> None:
@@ -95,7 +95,7 @@ class TestAgentInvariants:
             tenant="acme",
             owner_user_id=user.principal_id,
             display_name="bot",
-            model="claude-fable-5",
+            model="agente-v1",
         )
         assert agent.autonomy_level == "observer"
 
@@ -106,7 +106,7 @@ class TestAgentInvariants:
             tenant="acme",
             owner_user_id=user.principal_id,
             display_name="bot",
-            model="claude-fable-5",
+            model="agente-v1",
         )
         await repo.suspend_principal(user.principal_id)
         refreshed = await repo.get_principal(agent.principal_id)
@@ -121,7 +121,7 @@ class TestCapabilityGrants:
             tenant="acme",
             owner_user_id=user.principal_id,
             display_name="bot",
-            model="claude-fable-5",
+            model="agente-v1",
         )
         return user, agent
 

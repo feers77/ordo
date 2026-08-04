@@ -1,7 +1,7 @@
 """Field system (design F2-01).
 
 Business fields must carry `agent_hint` and `examples`: they feed the
-semantic schema agents consume (CLAUDE.md §4). Money is Decimal only.
+semantic schema agents consume (AGENTS.md §4). Money is Decimal only.
 """
 
 from __future__ import annotations
@@ -137,7 +137,7 @@ class Monetary(Field):
     def __init__(self, currency_field: str = "currency_id", **kwargs: Any) -> None:
         super().__init__(**kwargs)
         if self.default is not None and not isinstance(self.default, Decimal):
-            raise self._invalid("Monetary.default debe ser Decimal (nunca float): CLAUDE.md §2.3")
+            raise self._invalid("Monetary.default debe ser Decimal (nunca float): AGENTS.md §2.3")
         self.currency_field = currency_field
 
 

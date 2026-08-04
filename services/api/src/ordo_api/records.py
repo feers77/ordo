@@ -1,7 +1,7 @@
 """Generic record API (design F2-04).
 
 Every write requires `Idempotency-Key` and supports `?dry_run=true`
-(CLAUDE.md §6). Errors keep the standard payload shape (§5).
+(AGENTS.md §6). Errors keep the standard payload shape (§5).
 """
 
 from __future__ import annotations
@@ -65,7 +65,7 @@ async def _idempotent(env: Environment, key: str | None, payload: Any, run: Any)
             "Falta el header Idempotency-Key.",
             code="IDEMPOTENCY_KEY_REQUIRED",
             status_code=400,
-            hint="Toda escritura debe ser idempotente (CLAUDE.md §6).",
+            hint="Toda escritura debe ser idempotente (AGENTS.md §6).",
         )
     await create_table(env.session)
     try:

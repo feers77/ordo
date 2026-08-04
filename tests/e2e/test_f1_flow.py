@@ -106,7 +106,7 @@ class TestFase1EndToEnd:
             # 2. registro de agente
             reg = await client.post(
                 "/iam/v1/agents",
-                json={"display_name": "agente e2e", "model": "claude-fable-5"},
+                json={"display_name": "agente e2e", "model": "agente-v1"},
                 headers=auth_user,
             )
             assert reg.status_code == 201, reg.text

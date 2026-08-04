@@ -1,4 +1,4 @@
-"""Kernel errors. Codes are part of the public contract (CLAUDE.md §5)."""
+"""Kernel errors. Codes are part of the public contract (AGENTS.md §5)."""
 
 from __future__ import annotations
 

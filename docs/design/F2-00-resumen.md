@@ -1,7 +1,7 @@
 # Fase 2 — Kernel: resumen de entrega
 
 Estado: kernel funcional con CI verde. Pendiente de revisión humana y merge
-(`packages/ordo-core/**` exige revisión obligatoria, CLAUDE.md §7).
+(`packages/ordo-core/**` exige revisión obligatoria, AGENTS.md §7).
 
 ## Entregables vs. §3 del PLAN-MAESTRO
 

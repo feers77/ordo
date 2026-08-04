@@ -1,4 +1,4 @@
-# Fase 0 — Bootstrap (para ejecutar con Claude Code)
+# Fase 0 — Bootstrap (para ejecutar con un agente de desarrollo)
 
 Objetivo: al terminar esta fase tienes un servidor Ubuntu provisionado, un repositorio con estructura, CI funcionando, el stack de infraestructura levantado con healthchecks verdes, y los 10 ADRs fundacionales escritos. **Ningún módulo de negocio todavía.**
 
@@ -6,11 +6,11 @@ Duración estimada: 1–2 semanas.
 
 ---
 
-## Prompt inicial para Claude Code
+## Prompt inicial para el agente de desarrollo
 
-Copia esto tal cual en la primera sesión, tras poner `PLAN-MAESTRO.md` y `CLAUDE.md` en la raíz del repo.
+Copia esto tal cual en la primera sesión, tras poner `PLAN-MAESTRO.md` y `AGENTS.md` en la raíz del repo.
 
-> Lee `PLAN-MAESTRO.md` y `CLAUDE.md` completos antes de hacer nada. Vamos a ejecutar la Fase 0 descrita en `FASE-0-BOOTSTRAP.md`.
+> Lee `PLAN-MAESTRO.md` y `AGENTS.md` completos antes de hacer nada. Vamos a ejecutar la Fase 0 descrita en `FASE-0-BOOTSTRAP.md`.
 >
 > Trabaja tarea por tarea, en orden. Antes de cada tarea, escribe en 5 líneas qué vas a hacer y espera mi confirmación. Después de cada tarea, muéstrame los archivos creados y el resultado de la verificación correspondiente.
 >
@@ -60,7 +60,7 @@ ordo/
 ├── Makefile
 ├── pyproject.toml          uv como gestor; ruff, mypy, pytest configurados
 ├── .pre-commit-config.yaml
-├── CLAUDE.md
+├── AGENTS.md
 └── PLAN-MAESTRO.md
 ```
 
@@ -99,7 +99,7 @@ Perfil `dev` y perfil `prod`. En prod: sin mailpit, con réplicas y límites de 
 Crea `services/gateway`, `services/iam`, `services/api`, `services/jobs`, `services/events`, `services/render`, `services/mcp` con:
 
 - FastAPI mínimo, logging estructurado JSON, OpenTelemetry instrumentado.
-- Middleware común extraído a `packages/ordo-runtime`: request id, trace propagation, manejo de errores con el formato estándar de `CLAUDE.md` §5, timeouts.
+- Middleware común extraído a `packages/ordo-runtime`: request id, trace propagation, manejo de errores con el formato estándar de `AGENTS.md` §5, timeouts.
 - Dockerfile multi-stage, imagen no-root, distroless o slim.
 - Graceful shutdown.
 
@@ -133,7 +133,7 @@ Escribir en `ADR/`, formato corto (contexto / opciones / decisión / consecuenci
 3. `ADR-003` IAM: Keycloak como OP en F0–F2, `ordo-iam` propio desde F3, interfaz OIDC estable
 4. `ADR-004` Capability tokens: estructura del claim `cap`, intersección de permisos
 5. `ADR-005` Campos dinámicos: JSONB `x_custom` + índices de expresión, materialización opcional
-6. `ADR-006` Lenguaje de dominios compatible con Odoo; compilador propio a SQLAlchemy Core
+6. `ADR-006` Lenguaje de dominios de sintaxis prefija; compilador propio a SQLAlchemy Core
 7. `ADR-007` Jobs: cola en Postgres con `SKIP LOCKED`; NATS solo para eventos
 8. `ADR-008` Eventos: patrón outbox transaccional → relay → JetStream → webhooks
 9. `ADR-009` Versionado de API, política de deprecación, tests de contrato bloqueantes

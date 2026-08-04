@@ -1,7 +1,7 @@
 # Fase 1 — IAM: resumen de entrega
 
 Estado: implementada, con CI verde. Pendiente de revisión humana y merge
-(`services/iam/**` exige revisión obligatoria, CLAUDE.md §7).
+(`services/iam/**` exige revisión obligatoria, AGENTS.md §7).
 
 ## Entregables vs. §2 del PLAN-MAESTRO
 

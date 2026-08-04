@@ -1,4 +1,4 @@
-"""Tests del runtime común (T0.4): healthchecks y formato de error CLAUDE.md §5."""
+"""Tests del runtime común (T0.4): healthchecks y formato de error AGENTS.md §5."""
 
 from fastapi.testclient import TestClient
 from ordo_runtime import OrdoError, create_app

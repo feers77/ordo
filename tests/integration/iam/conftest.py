@@ -130,7 +130,7 @@ async def setup_agent(
     owner_token = kc_token(f"kc-{email}", email)
     resp = await client.post(
         "/iam/v1/agents",
-        json={"display_name": "bot", "model": "claude-fable-5"},
+        json={"display_name": "bot", "model": "agente-v1"},
         headers={"Authorization": f"Bearer {owner_token}"},
     )
     assert resp.status_code == 201, resp.text

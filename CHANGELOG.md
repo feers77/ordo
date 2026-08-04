@@ -39,7 +39,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
   compute con dependencia en cada segmento de la ruta, cache por transaccion con
   invalidacion en cascada. Filtrar por calculado no almacenado se rechaza con
   DOMAIN_FIELD_NOT_STORED. 20 tests nuevos.
-- **F2.2** Compilador de dominios a SQL (ADR-006): sintaxis Odoo, operadores de
+- **F2.2** Compilador de dominios a SQL (ADR-006): sintaxis prefija con tuplas, operadores de
   comparacion y logicos con notacion polaca, joins por rutas punteadas (max 4 saltos),
   record rules global AND / rol OR, active_test. Garantias: cero interpolacion (todo
   parametro vinculado), identificadores validados contra el registry, limites de tamano.

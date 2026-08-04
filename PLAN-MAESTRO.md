@@ -1,7 +1,7 @@
 # ORDO ERP — Plan Maestro
 
 > ERP/CRM completo, **API-first, sin frontend**, diseñado para ser operado por agentes de IA.
-> Paridad funcional con Odoo Community + reimplementación propia de las funciones Enterprise + framework de localizaciones.
+> Cobertura funcional completa de un ERP, incluidas las capacidades que suelen quedar tras una licencia comercial + framework de localizaciones.
 >
 > `ORDO` es un nombre placeholder. Cámbialo antes de la Fase 0 (afecta namespaces de paquetes, prefijos de tablas y `iss` de los tokens).
 
@@ -11,7 +11,7 @@
 
 ### 0.1 Qué estamos construyendo realmente
 
-No es "Odoo sin frontend". Odoo sin frontend es una API CRUD sobre un ORM. Lo que diferencia este producto es que **el consumidor primario es un agente de IA, no un humano con pantalla**. Eso cambia requisitos de fondo:
+No es "un ERP clásico sin frontend". Eso sería una API CRUD sobre un ORM. Lo que diferencia este producto es que **el consumidor primario es un agente de IA, no un humano con pantalla**. Eso cambia requisitos de fondo:
 
 | Requisito | ERP tradicional | ERP agéntico |
 |---|---|---|
@@ -30,7 +30,7 @@ No es "Odoo sin frontend". Odoo sin frontend es una API CRUD sobre un ORM. Lo qu
 
 | Capa | Elección | Por qué |
 |---|---|---|
-| Lenguaje | Python 3.12 | Semántica más cercana a Odoo (facilita portar lógica de localizaciones), ecosistema contable/fiscal maduro, y es donde Claude Code produce mejor código de dominio |
+| Lenguaje | Python 3.12 | Semántica cercana a la de los ERP libres de referencia (facilita portar lógica de localizaciones), ecosistema contable/fiscal maduro, y es donde las herramientas de generación de código rinden mejor en lógica de dominio |
 | Framework HTTP | FastAPI + Uvicorn (workers) | ASGI, OpenAPI 3.1 nativo, Pydantic v2 |
 | ORM base | SQLAlchemy 2.0 async (Core + ORM) | Necesitamos el Core para generar SQL desde nuestro lenguaje de dominios |
 | Validación/serialización | Pydantic v2 | Generación dinámica de schemas desde el registry |
@@ -54,15 +54,15 @@ Modelo por defecto: **schema-per-tenant** en Postgres, con enrutamiento en el ga
 - Tenants pequeños/medianos: N schemas por cluster, pool compartido.
 - Tenants grandes: base de datos dedicada (misma abstracción, distinto DSN).
 - Defensa en profundidad: RLS de Postgres además del filtro de aplicación.
-- **Multi-company dentro del tenant** es una dimensión distinta (como Odoo): `company_id` + `allowed_company_ids` en el contexto.
+- **Multi-company dentro del tenant** es una dimensión distinta (dimensión propia del modelo): `company_id` + `allowed_company_ids` en el contexto.
 
 Ambas capas deben ser transparentes para el código de dominio: se resuelven en el middleware que construye el `Environment`.
 
 ### 0.4 Aviso legal (importante, no lo saltes)
 
-- Odoo Community es **LGPLv3**. Puedes estudiar su comportamiento y reimplementarlo, pero **no copiar código, ni planes contables, ni plantillas de impuestos, ni traducciones** de sus repositorios sin cumplir la LGPL (y sin arrastrar esa licencia a tu producto).
+- Los ERP libres de referencia son **copyleft (LGPLv3 o similar)**. Puedes estudiar su comportamiento observable y reimplementarlo, pero **no copiar código, ni planes contables, ni plantillas de impuestos, ni traducciones** de sus repositorios sin cumplir esa licencia (y sin arrastrarla a tu producto).
 - Los datos de localización (planes de cuentas, tasas de IVA, formatos de reportes legales) deben obtenerse de **fuentes primarias**: normativa del SII, AEAT, IRS, SUNAT, etc. Documenta la fuente de cada pack.
-- "Odoo" es marca registrada. Puedes decir "compatible con", no "Odoo".
+
 - Define tu propia licencia antes de la Fase 0 (recomendación: AGPLv3 con excepción comercial, o BSL con conversión a Apache 2.0 a los 4 años).
 
 ---
@@ -111,7 +111,7 @@ Construir un OP (OpenID Provider) desde cero y que sea *correcto* toma meses. Es
 - **En paralelo:** `ordo-iam` propio, que arranca como *Authorization Layer* (emisión de capability tokens, delegación, políticas, cuotas) delegando la autenticación en Keycloak vía OIDC.
 - **Fase 3+:** `ordo-iam` absorbe también la autenticación (Authlib para el plumbing OAuth). Como todo el sistema habla OIDC estándar, el reemplazo es transparente.
 
-Documenta esto como un ADR. Si Claude Code intenta escribir un OP desde cero en la semana 1, detenlo.
+Documenta esto como un ADR. Si alguien intenta escribir un OP desde cero en la semana 1, detenlo.
 
 ### 2.2 Tipos de principal (esto es lo que Keycloak no te da)
 
@@ -121,7 +121,7 @@ Principal
 ├── ServiceClient integración máquina-máquina clásica (client_credentials)
 └── Agent         ★ ciudadano de primera clase
     ├── owner_user_id        a nombre de quién actúa por defecto
-    ├── model / version      claude-opus-5, gpt-x, etc. (para auditoría)
+    ├── model / version      modelo-a, modelo-b, etc. (para auditoría)
     ├── capability_grants[]  qué puede hacer, con qué límites
     ├── budget               llamadas/día, tokens de escritura, monto acumulado
     └── autonomy_level       observador | propone | ejecuta | ejecuta+aprueba
@@ -183,7 +183,7 @@ Reglas:
 Tres capas que se componen:
 
 1. **RBAC** — grupos y permisos por modelo/operación (`ir.model.access` equivalente).
-2. **ABAC / record rules** — dominios asociados a grupos, evaluados a nivel de fila. Semántica Odoo: reglas globales en `AND`, reglas de grupo en `OR`.
+2. **ABAC / record rules** — dominios asociados a grupos, evaluados a nivel de fila. Semántica clásica: reglas globales en `AND`, reglas de grupo en `OR`.
 3. **Capabilities** — restricciones del token, evaluadas primero.
 
 Implementación: **PDP embebido como librería** en `ordo-api` (sin salto de red), con caché de políticas invalidado por evento. Expón además `POST /iam/v1/authorize` para consultas externas (útil para que un agente pregunte "¿puedo hacer esto?" antes de intentarlo).
@@ -209,7 +209,7 @@ Cada evento de auth y cada escritura de negocio registra: `principal_id`, `act_c
 
 ---
 
-## 3. `ordo-core` — El kernel tipo Odoo
+## 3. `ordo-core` — El kernel del ERP
 
 Esta es la pieza que hace posible todo lo demás. **No empieces por CRM.**
 
@@ -233,7 +233,7 @@ Atributos clave: `required, readonly, index, default, compute, inverse, search, 
 
 ### 3.3 Lenguaje de dominios
 
-Mantén compatibilidad sintáctica con Odoo (facilita migraciones y el conocimiento previo de los LLMs):
+Sintaxis prefija con tuplas, ampliamente difundida en ERP libres: facilita migraciones y aprovecha el conocimiento previo de los LLMs:
 
 ```python
 [('state','=','sale'), '|', ('partner_id.country_id.code','=','CL'),
@@ -299,7 +299,7 @@ Endpoints y comportamientos que se implementan **una vez en el kernel** y aplica
 /api/v1/{model}/{id}/{method}        POST  (métodos de negocio: action_confirm, etc.)
 /api/v1/{model}/aggregate            POST  (read_group: agrupaciones y métricas)
 /api/v1/tx                           POST  (transacción multi-operación)
-/api/v1/rpc                          POST  (RPC genérico compatible Odoo)
+/api/v1/rpc                          POST  (RPC genérico compatible con clientes existentes)
 /meta/v1/...                         schema, acciones, traducción de queries
 /events/v1/...                       suscripciones, replay
 /reports/v1/{report}                 generación de reportes
@@ -307,7 +307,7 @@ Endpoints y comportamientos que se implementan **una vez en el kernel** y aplica
 /mcp                                 servidor MCP
 ```
 
-Además: **shim JSON-RPC/XML-RPC compatible con Odoo** (`/jsonrpc`, `/xmlrpc/2/object`) para que herramientas existentes se conecten sin cambios. Es un diferenciador comercial fuerte para migraciones.
+Además: **shim JSON-RPC/XML-RPC de sintaxis prefija** (`/jsonrpc`, `/xmlrpc/2/object`) para que herramientas existentes se conecten sin cambios. Es un diferenciador comercial fuerte para migraciones.
 
 ### 4.2 Convenciones no negociables
 
@@ -338,7 +338,7 @@ Estos números van en un test de carga en CI desde la Fase 2. Si se degradan, el
 ### 5.1 Fundacionales
 `base` · `iam-bridge` · `mail` (chatter) · `attachments` · `sequences` · `currency` · `uom` · `partner` · `product` · `settings` · `automation` · `reports` · `studio-api`
 
-### 5.2 Paridad Odoo Community
+### 5.2 Cobertura funcional de referencia
 
 | Área | Módulos |
 |---|---|
@@ -353,9 +353,9 @@ Estos números van en un test de carga en CI desde la Fase 2. Si se degradan, el
 | Punto de venta | Sesiones, Órdenes, Cierre de caja, Métodos de pago (API; el terminal es del cliente) |
 | Otros | Mantenimiento, Flota, Encuestas, eLearning, Eventos, Marketing por email, Suscripciones a listas |
 
-### 5.3 Reimplementación de funciones Enterprise (diseño propio)
+### 5.3 Capacidades que otros ERP reservan a su edición comercial (diseño propio)
 
-| Función Odoo Enterprise | Nuestro equivalente | Nota de diseño |
+| Capacidad de edición comercial | Nuestro equivalente | Nota de diseño |
 |---|---|---|
 | Studio | `studio-api` | CRUD de modelos/campos/reglas vía API. Para un agente esto es *superpoder*: puede extender el ERP solo |
 | Reportes contables | `account-reports` | Motor declarativo de reportes (definición en YAML) + engine de expresiones |
@@ -363,7 +363,7 @@ Estos números van en un test de carga en CI desde la Fase 2. Si se degradan, el
 | Sincronización bancaria | `bank-sync` | Conectores: Plaid, Salt Edge, Belvo (LatAm), PSD2/Open Banking |
 | Documents / OCR | `documents` | Ingesta, clasificación, extracción con modelo de visión, workspaces, flujos |
 | Sign | `sign` | Firma electrónica; integrar con proveedores locales de firma avanzada/cualificada |
-| Approvals | Ya en `ordo-iam` | Se unifica con el HITL de agentes — mejor que Odoo |
+| Approvals | Ya en `ordo-iam` | Se unifica con el HITL de agentes |
 | Planning | `planning` | Turnos, disponibilidad, asignación con optimizador |
 | Field Service | `fsm` | Órdenes de servicio, rutas, geolocalización, partes en terreno |
 | Helpdesk | `helpdesk` | Tickets, SLA, escalamiento, base de conocimiento |
@@ -391,7 +391,7 @@ Estos números van en un test de carga en CI desde la Fase 2. Si se degradan, el
 
 ## 6. Framework de localizaciones
 
-Odoo tiene ~90 localizaciones. Replicarlas a mano es inviable; hay que construir un **framework declarativo** y luego llenar packs.
+Un ERP maduro cubre ~90 localizaciones. Escribirlas a mano es inviable; hay que construir un **framework declarativo** y luego llenar packs.
 
 ### 6.1 Anatomía de un pack de país
 
@@ -451,7 +451,7 @@ Cada pack debe traer **tests dorados**: facturas reales anonimizadas con los imp
 | **F10 — Olas de localización** | continuo | 2–3 países por ola, en paralelo con lo demás |
 | **F11 — Endurecimiento** | continuo | Carga, caos, pentest, DR, SOC 2 readiness |
 
-Estimaciones para un equipo Claude Code trabajando en paralelo con revisión humana. **No comprimas F1 ni F2**: todo lo demás se apoya en ellas.
+Estimaciones para un equipo trabajando en paralelo con revisión humana. **No comprimas F1 ni F2**: todo lo demás se apoya en ellas.
 
 ---
 
@@ -514,13 +514,13 @@ La última es la más importante y la que nadie hace. Constrúyela temprano.
 
 | Riesgo | Mitigación |
 |---|---|
-| Alcance infinito (Odoo son ~20 años-persona) | Priorizar por lo que un agente realmente necesita; publicar API estable temprano; no perseguir paridad de UI que no existe |
+| Alcance infinito (un ERP completo son ~20 años-persona) | Priorizar por lo que un agente realmente necesita; publicar API estable temprano; no perseguir paridad de UI que no existe |
 | El compilador de dominios filtra datos entre tenants | Tests de seguridad obligatorios; RLS como segunda barrera; revisión humana de todo cambio en ese archivo |
 | Contabilidad incorrecta | Property-based testing + revisión de un contador por localización; nunca aceptar un pack sin tests dorados |
 | Construir un OP OIDC desde cero se come 3 meses | Keycloak primero, migración posterior detrás de interfaz estándar |
 | Rendimiento del ORM genérico | SLO en CI desde F2; presupuesto de queries por endpoint (detección de N+1 automática) |
-| Deuda de Claude Code sin revisión | Todo PR pasa por revisión humana en `packages/ordo-core`, `modules/account` y `services/iam`; el resto por muestreo |
-| Contaminación de licencia por copiar de Odoo | Prohibición explícita en `CLAUDE.md`; revisión de similitud antes de cada release |
+| Deuda de código generado sin revisión | Todo PR pasa por revisión humana en `packages/ordo-core`, `modules/account` y `services/iam`; el resto por muestreo |
+| Contaminación de licencia por copiar de otro ERP | Prohibición explícita en `AGENTS.md`; revisión de similitud antes de cada release |
 
 ---
 
@@ -531,7 +531,7 @@ La última es la más importante y la que nadie hace. Constrúyela temprano.
 3. Estrategia IAM: Keycloak ahora, propio después
 4. Diseño de capability tokens
 5. Campos dinámicos: JSONB vs. DDL
-6. Compatibilidad del lenguaje de dominios con Odoo
+6. Sintaxis del lenguaje de dominios
 7. Cola de jobs en Postgres vs. broker externo
 8. Bus de eventos y patrón outbox
 9. Versionado y política de compatibilidad de la API

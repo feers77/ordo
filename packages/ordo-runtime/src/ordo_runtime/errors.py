@@ -1,4 +1,4 @@
-"""Domain error hierarchy and the stable error payload (CLAUDE.md §5)."""
+"""Domain error hierarchy and the stable error payload (AGENTS.md §5)."""
 
 from __future__ import annotations
 

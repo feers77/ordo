@@ -409,7 +409,7 @@ def get_usage_counter() -> UsageCounter:
 
 class AmountBody(BaseModel):
     currency: str
-    value: str  # decimal como string, nunca float (CLAUDE.md §2.3)
+    value: str  # decimal como string, nunca float (AGENTS.md §2.3)
 
 
 class AuthorizeRequest(BaseModel):

@@ -16,7 +16,7 @@ class SaleOrder(Model):
                       agent_hint="Estado del ciclo de vida")
 ```
 
-- `agent_hint` y `examples` **obligatorios** en campos de negocio (CLAUDE.md §4);
+- `agent_hint` y `examples` **obligatorios** en campos de negocio (AGENTS.md §4);
   el registry falla al construirse si faltan. Campos técnicos del kernel
   (`id`, `create_uid`, `write_date`, `version`, `company_id`, `x_custom`) exentos.
 - Tipos F2.1: `Char, Text, Html, Integer, Float, Monetary, Boolean, Date, Datetime,
@@ -51,7 +51,7 @@ env = Environment(session, tenant="acme", user_id=..., agent_id=None,
   del tenant en cada transacción y `SET LOCAL ordo.tenant` para las políticas RLS.
 - El código de dominio **nunca** escribe el nombre del schema ni filtra por tenant:
   eso vive aquí. Cualquier query que no pase por `Environment` se rechaza en revisión
-  (CLAUDE.md §7).
+  (AGENTS.md §7).
 - `env.companies` alimenta las record rules de multi-company (dimensión distinta).
 
 ## Tests (primero)

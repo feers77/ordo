@@ -5,7 +5,7 @@ Layer 2: RBAC (roles + ACL per model/op) on the effective user.
 Layer 3: record rules — returned as domains for the kernel to compile (F2).
 
 Money is Decimal end to end; daily accumulators are integer micros in the
-usage counter (never float, CLAUDE.md §2.3).
+usage counter (never float, AGENTS.md §2.3).
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ class Amount:
 
     def __post_init__(self) -> None:
         if not isinstance(self.value, Decimal):
-            # defensa runtime contra floats (CLAUDE.md §2.3); mypy lo ve imposible
+            # defensa runtime contra floats (AGENTS.md §2.3); mypy lo ve imposible
             msg = "Amount.value debe ser Decimal (nunca float)"  # type: ignore[unreachable]
             raise TypeError(msg)
 
