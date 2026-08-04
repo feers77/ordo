@@ -26,6 +26,7 @@ from ordo_iam.errors import (
     NotApproverError,
 )
 from ordo_iam.models import Agent, ApprovalRequest, ApprovalStatus
+from ordo_iam.notifications import enqueue_approval_notification
 
 DEFAULT_TTL = timedelta(hours=24)
 
@@ -67,6 +68,11 @@ class ApprovalService:
             expires_at=datetime.now(UTC) + DEFAULT_TTL,
         )
         self.session.add(request)
+        # El aviso al aprobador se encola en la misma transacción: si la
+        # creación no cuaja, el mensaje nunca existió; y si Telegram está
+        # caído, el request igual responde 201.
+        await self.session.flush()
+        await enqueue_approval_notification(self.session, approval_id=request.id, tenant=tenant)
         await self.session.commit()
         await append_audit(
             self.session,

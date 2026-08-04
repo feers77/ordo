@@ -238,6 +238,62 @@ class ApprovalRequest(TimestampMixin, Base):
     reason: Mapped[str | None] = mapped_column(Text)
 
 
+class ChannelType(enum.StrEnum):
+    telegram = "telegram"
+
+
+class NotificationChannel(TimestampMixin, Base):
+    """Dirección externa por la que un principal recibe avisos y resuelve HITL.
+
+    Sólo un canal con `verified_at` y `active` puede resolver aprobaciones: la
+    dirección la prueba el propio principal canjeando un código de un solo uso.
+    """
+
+    __tablename__ = "iam_notification_channel"
+    __table_args__ = (
+        Index(
+            "uq_iam_channel_address_active",
+            "channel_type",
+            "address",
+            unique=True,
+            postgresql_where=text("active"),
+        ),
+        Index("ix_iam_channel_principal", "principal_id", "channel_type"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant: Mapped[str] = mapped_column(String(64), index=True)
+    principal_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("iam_principal.id", ondelete="CASCADE")
+    )
+    channel_type: Mapped[ChannelType] = mapped_column(_enum(ChannelType, "channel_type"))
+    address: Mapped[str] = mapped_column(String(128))
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("true"))
+
+
+class ChannelLinkCode(Base):
+    """Código de un solo uso que prueba que la dirección externa es del principal.
+
+    Se guarda sólo el sha256: quien lea la base no puede vincular un chat ajeno.
+    """
+
+    __tablename__ = "iam_channel_link_code"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant: Mapped[str] = mapped_column(String(64))
+    principal_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("iam_principal.id", ondelete="CASCADE"), index=True
+    )
+    channel_type: Mapped[ChannelType] = mapped_column(_enum(ChannelType, "channel_type"))
+    code_hash: Mapped[str] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    create_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
 class CapabilityGrant(TimestampMixin, Base):
     __tablename__ = "iam_capability_grant"
 

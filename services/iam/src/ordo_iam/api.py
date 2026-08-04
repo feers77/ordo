@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 from dataclasses import dataclass
 from datetime import datetime
@@ -11,7 +12,7 @@ from functools import lru_cache
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Form, Header, Response
+from fastapi import APIRouter, Depends, Form, Header, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +22,7 @@ from ordo_iam.approvals import ApprovalService
 from ordo_iam.audit import append_audit
 from ordo_iam.bridge import IdentityBridge
 from ordo_iam.captokens import merge_caps
+from ordo_iam.channels import ChannelService
 from ordo_iam.db import get_session
 from ordo_iam.errors import (
     AgentAuthFailedError,
@@ -32,9 +34,10 @@ from ordo_iam.errors import (
     NotAgentOwnerError,
     TokenInvalidError,
     UnsupportedGrantError,
+    WebhookUnauthorizedError,
 )
 from ordo_iam.keys import public_jwks
-from ordo_iam.models import AutonomyLevel, Principal, PrincipalStatus, User
+from ordo_iam.models import AutonomyLevel, ChannelType, Principal, PrincipalStatus, User
 from ordo_iam.oidc import OIDCVerifier
 from ordo_iam.pdp import (
     AccessRequest,
@@ -44,6 +47,11 @@ from ordo_iam.pdp import (
     UsageCounter,
 )
 from ordo_iam.repository import PrincipalRepository
+from ordo_iam.telegram import (
+    WEBHOOK_SECRET_HEADER,
+    TelegramWebhook,
+    verify_webhook_secret,
+)
 from ordo_iam.tokens import AGENT_TOKEN_TTL_S, issue_agent_token
 
 router = APIRouter(prefix="/iam/v1", tags=["iam"])
@@ -387,6 +395,56 @@ async def consume_approval(
         approval_id, agent_id=agent.agent_id, operation=body.operation
     )
     return _approval_response(request_row)
+
+
+# ---------------------------------------------------------------- canales / Telegram
+
+
+class LinkCodeResponse(BaseModel):
+    code: str
+    channel_type: str
+    expires_at: datetime
+    hint: str
+
+
+@router.post("/channels/telegram/link", response_model=LinkCodeResponse, status_code=201)
+async def link_telegram_channel(
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> LinkCodeResponse:
+    """Emite el código de un solo uso que vincula un chat de Telegram al usuario.
+
+    El código nace dentro del sistema y sólo lo ve quien está autenticado: es
+    lo único que prueba que ese chat es de este principal.
+    """
+    code, row = await ChannelService(session).issue_link_code(
+        tenant=user.tenant,
+        principal_id=user.principal_id,
+        channel_type=ChannelType.telegram,
+    )
+    return LinkCodeResponse(
+        code=code,
+        channel_type=row.channel_type.value,
+        expires_at=row.expires_at,
+        hint="Envía este código al bot en un chat privado antes de que expire.",
+    )
+
+
+@router.post("/telegram/webhook")
+async def telegram_webhook(
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    secret_token: Annotated[str | None, Header(alias=WEBHOOK_SECRET_HEADER)] = None,
+) -> dict[str, Any]:
+    """Entrada de updates de Telegram. Sin el secreto acordado no se lee el cuerpo."""
+    verify_webhook_secret(secret_token)
+    try:
+        update = json.loads(await request.body())
+    except ValueError as exc:
+        raise WebhookUnauthorizedError("Update de Telegram ilegible.") from exc
+    if not isinstance(update, dict):
+        raise WebhookUnauthorizedError("Update de Telegram ilegible.")
+    return await TelegramWebhook(session).handle(update)
 
 
 # ---------------------------------------------------------------- authorize
