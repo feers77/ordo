@@ -1,6 +1,81 @@
 {
   "components": {
     "schemas": {
+      "AmountBody": {
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "currency",
+          "value"
+        ],
+        "title": "AmountBody",
+        "type": "object"
+      },
+      "AuthorizeRequest": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AmountBody"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "operation": {
+            "title": "Operation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model",
+          "operation"
+        ],
+        "title": "AuthorizeRequest",
+        "type": "object"
+      },
+      "AuthorizeResponse": {
+        "properties": {
+          "allowed": {
+            "title": "Allowed",
+            "type": "boolean"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "record_domain": {
+            "additionalProperties": true,
+            "title": "Record Domain",
+            "type": "object"
+          },
+          "requires_approval": {
+            "title": "Requires Approval",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "allowed",
+          "reason",
+          "requires_approval",
+          "record_domain"
+        ],
+        "title": "AuthorizeResponse",
+        "type": "object"
+      },
       "AutonomyLevel": {
         "enum": [
           "observer",
@@ -414,6 +489,52 @@
           }
         ],
         "summary": "Grant Capability",
+        "tags": [
+          "iam"
+        ]
+      }
+    },
+    "/iam/v1/authorize": {
+      "post": {
+        "operationId": "authorize_iam_v1_authorize_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthorizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Authorize",
         "tags": [
           "iam"
         ]
