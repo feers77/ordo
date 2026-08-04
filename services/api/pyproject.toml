@@ -2,10 +2,11 @@
 name = "ordo-api"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["ordo-runtime"]
+dependencies = ["ordo-runtime", "ordo-core"]
 
 [tool.uv.sources]
 ordo-runtime = { workspace = true }
+ordo-core = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

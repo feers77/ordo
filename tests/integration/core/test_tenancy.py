@@ -111,12 +111,40 @@ class TestTenantIsolation:
         assert rows == []
         await core_session.rollback()
 
-    async def test_binding_is_transaction_scoped(self, core_session: AsyncSession) -> None:
+    async def test_binding_survives_commit_and_rollback(self, core_session: AsyncSession) -> None:
+        """El binding se re-aplica en cada transacción nueva de la sesión.
+
+        Los ajustes son transaccionales: sin esto, un commit a mitad de un
+        request dejaría las consultas siguientes sin filtro de tenant.
+        """
         await provision_tenant(core_session, "acme")
         env = Environment(session=core_session, tenant="acme", registry=EMPTY_REGISTRY)
         await env.bind()
+        await core_session.commit()
+        after_commit = await core_session.scalar(
+            text(f"SELECT current_setting('{TENANT_GUC}', true)")
+        )
+        assert after_commit == "acme"
         await core_session.rollback()
-        leaked = await core_session.scalar(text(f"SELECT current_setting('{TENANT_GUC}', true)"))
+        after_rollback = await core_session.scalar(
+            text(f"SELECT current_setting('{TENANT_GUC}', true)")
+        )
+        assert after_rollback == "acme"
+
+    async def test_binding_does_not_leak_to_other_sessions(
+        self, core_session: AsyncSession, core_db_url: str
+    ) -> None:
+        from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+        await provision_tenant(core_session, "acme")
+        env = Environment(session=core_session, tenant="acme", registry=EMPTY_REGISTRY)
+        await env.bind()
+
+        engine = create_async_engine(core_db_url)
+        maker = async_sessionmaker(engine, expire_on_commit=False)
+        async with maker() as other:
+            leaked = await other.scalar(text(f"SELECT current_setting('{TENANT_GUC}', true)"))
+        await engine.dispose()
         assert leaked in (None, "")
 
     async def test_invalid_tenant_name_rejected(self, core_session: AsyncSession) -> None:

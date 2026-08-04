@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from dataclasses import field as dc_field
 from typing import Any
 
-from sqlalchemy import text
+from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ordo_core.errors import KernelError
@@ -59,9 +59,15 @@ class Environment:
     async def bind(self) -> None:
         """Pin schema and tenant GUC for the current transaction.
 
+        The settings are transaction-scoped, so a commit inside a request
+        would silently drop them. A listener re-applies the binding on every
+        new transaction of this session: the tenant filter can never be lost
+        halfway through a request.
+
         `set_config(..., is_local => true)` takes bound parameters, so no
         value is ever interpolated into SQL (CLAUDE.md §2.5).
         """
+        self._install_rebind_listener()
         await self.session.execute(
             text("SELECT set_config('search_path', :path, true)"),
             {"path": f"{self.schema},public"},
@@ -74,6 +80,27 @@ class Environment:
             # Defensa en profundidad: aunque el DSN traiga un rol privilegiado,
             # la transacción corre como rol sujeto a RLS.
             await self.session.execute(text(f"SET LOCAL ROLE {self.app_role}"))
+
+    def _install_rebind_listener(self) -> None:
+        if getattr(self, "_listener_installed", False):
+            return
+        sync_session = self.session.sync_session
+        schema, tenant, app_role = self.schema, self.tenant, self.app_role
+
+        @event.listens_for(sync_session, "after_begin")
+        def _rebind(session: Any, transaction: Any, connection: Any) -> None:
+            connection.execute(
+                text("SELECT set_config('search_path', :path, true)"),
+                {"path": f"{schema},public"},
+            )
+            connection.execute(
+                text(f"SELECT set_config('{TENANT_GUC}', :tenant, true)"),
+                {"tenant": tenant},
+            )
+            if app_role is not None:
+                connection.execute(text(f"SET LOCAL ROLE {app_role}"))
+
+        self._listener_installed = True
 
     @property
     def company_id(self) -> int | None:
