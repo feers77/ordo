@@ -5,10 +5,10 @@ comerciales, y modificarlo. A cambio, si lo modificas y lo despliegas —incluso
 solo lo ofreces por red, como SaaS— debes publicar el código de tus cambios bajo la
 misma licencia. Ver [`ADR/ADR-010-licencia.md`](ADR/ADR-010-licencia.md).
 
-## Certificado de origen (DCO)
+## Firma: DCO en cada commit, CLA una sola vez
 
-No pedimos cesión de derechos ni firma de CLA. Solo que firmes cada commit afirmando
-que tienes derecho a aportar ese código:
+**DCO en cada commit.** Firma tus commits para afirmar que tienes derecho a aportar
+ese código:
 
 ```bash
 git commit -s -m "feat: ..."
@@ -16,6 +16,17 @@ git commit -s -m "feat: ..."
 
 Eso agrega `Signed-off-by: Tu Nombre <tu@email>`, que equivale a aceptar el
 [Developer Certificate of Origin](https://developercertificate.org/).
+
+**CLA una sola vez.** En tu primer pull request, un bot te pedirá aceptar el
+[CLA de ORDO](CLA.md) con un comentario. Vale para todas tus contribuciones futuras.
+
+Qué implica, en corto: **no cedes tu copyright**, sigues siendo dueño de tu código y
+puedes usarlo donde quieras. Otorgas al proyecto una licencia amplia —incluido el
+derecho de sublicencia— para distribuirlo. Hoy ORDO se distribuye bajo AGPLv3 y esa
+es la intención; el derecho de sublicencia existe para no dejar al proyecto sin
+salidas si en el futuro hiciera falta otra licencia. Está escrito de forma explícita
+en el CLA en vez de dejarlo en letra chica: si no te acomoda, es preferible saberlo
+antes de invertir tiempo.
 
 ## Antes de abrir un PR
 

@@ -40,10 +40,10 @@ y a cambio debe:
   software se ofrece por red** (§13 de la licencia), que es el caso de un ERP SaaS;
 - conservar los avisos de copyright y licencia.
 
-Contribuciones bajo **DCO** (Developer Certificate of Origin, `Signed-off-by`) en lugar
-de un CLA: no se pide cesión de derechos, solo que quien contribuye afirme tener el
-derecho de hacerlo. Es coherente con un proyecto que quiere colaboración, no con uno
-que se reserva relicenciar.
+Contribuciones bajo **DCO** (`Signed-off-by`) en cada commit **y CLA una sola vez**
+(ver ADR-012): el CLA no cede copyright, otorga licencia amplia con derecho de
+sublicencia. Eso mantiene abierta la opción de relicenciar sin perseguir después el
+permiso de cada contribuyente.
 
 ## Política anti-contaminación (vigente, independiente de la licencia)
 
@@ -64,6 +64,6 @@ que se reserva relicenciar.
 - Negativas: algunas empresas evitan AGPL por política interna, lo que puede frenar
   cierta adopción corporativa. Sin dual licensing no hay ingreso por vender excepciones;
   el modelo de negocio deberá venir de servicios, hosting o soporte.
-- Qué invalidaría esta decisión: querer vender excepciones propietarias más adelante.
-  Eso exigiría CLA con cesión de derechos **desde el primer commit externo**; migrar
-  después es prácticamente inviable porque requiere el permiso de cada contribuyente.
+- Qué invalidaría esta decisión: que el negocio exija licencias propietarias. Ese
+  riesgo quedó **mitigado por el CLA de ADR-012**, adoptado mientras el copyright era
+  íntegramente del titular (37 commits, cero contribuyentes externos).
