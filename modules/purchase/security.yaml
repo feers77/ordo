@@ -1,0 +1,10 @@
+roles:
+  compras:
+    purchase.order: [read, write, create]
+    purchase.order.line: [read, write, create]
+  contabilidad:
+    purchase.order: [read]
+    purchase.order.line: [read]
+  auditor:
+    purchase.order: [read]
+    purchase.order.line: [read]

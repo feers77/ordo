@@ -1,0 +1,33 @@
+# Roles por defecto sobre los modelos maestros. Denegación por defecto: lo
+# que no está aquí no lo alcanza nadie sin un rol propio del tenant.
+roles:
+  ventas:
+    res.partner: [read, write, create]
+    res.currency: [read]
+    res.company: [read]
+    uom.uom: [read]
+    uom.category: [read]
+  compras:
+    res.partner: [read, write, create]
+    res.currency: [read]
+    res.company: [read]
+    uom.uom: [read]
+    uom.category: [read]
+  contabilidad:
+    res.partner: [read, write, create]
+    res.currency: [read, write, create]
+    res.currency.rate: [read, write, create]
+    res.company: [read, write]
+    uom.uom: [read]
+    uom.category: [read]
+  tesoreria:
+    res.partner: [read]
+    res.currency: [read]
+    res.company: [read]
+  auditor:
+    res.partner: [read]
+    res.currency: [read]
+    res.currency.rate: [read]
+    res.company: [read]
+    uom.uom: [read]
+    uom.category: [read]

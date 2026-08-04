@@ -1,0 +1,17 @@
+# Los documentos electrónicos los emite facturación; los certificados y los
+# rangos de folios son material sensible: solo contabilidad los administra.
+roles:
+  facturacion:
+    edi.document: [read, write, create]
+    edi.folio.range: [read]
+    sale.order: [read]
+  contabilidad:
+    edi.document: [read, write, create]
+    edi.folio.range: [read, write, create]
+    edi.certificate: [read, write, create]
+  ventas:
+    edi.document: [read]
+  auditor:
+    edi.document: [read]
+    edi.folio.range: [read]
+    edi.certificate: [read]
