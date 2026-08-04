@@ -8,12 +8,15 @@ name: ordo
 
 services:
   postgres:
-    image: pgvector/pgvector:pg17
+    build: ./postgres
+    image: ordo-postgres:17
     profiles: [core, dev]
     environment:
       POSTGRES_USER: ordo
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?definir en .env}
       POSTGRES_DB: ordo
+      PGBACKREST_REPO1_S3_KEY: ${PGBACKREST_S3_KEY:?definir en .env}
+      PGBACKREST_REPO1_S3_KEY_SECRET: ${PGBACKREST_S3_SECRET:?definir en .env}
     command:
       - postgres
       - -c
@@ -29,7 +32,7 @@ services:
       - -c
       - archive_mode=on
       - -c
-      - archive_command=/bin/true  # pgBackRest lo reemplaza al crear la stanza
+      - archive_command=pgbackrest --stanza=ordo archive-push %p
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/10-extensions.sql:ro
@@ -101,11 +104,12 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?definir en .env}
     volumes:
       - miniodata:/data
+      - ./minio/certs:/root/.minio/certs:ro
     ports:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD-SHELL", "curl -sk -f https://127.0.0.1:9000/minio/health/live"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -118,10 +122,10 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-      mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD &&
-      mc mb -p local/attachments local/reports local/einvoicing local/pgbackrest &&
-      mc admin user add local $$PGBACKREST_S3_KEY $$PGBACKREST_S3_SECRET &&
-      mc admin policy attach local readwrite --user $$PGBACKREST_S3_KEY || true"
+      mc alias set local https://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD --insecure &&
+      mc mb -p local/attachments local/reports local/einvoicing local/pgbackrest --insecure &&
+      mc admin user add local $$PGBACKREST_S3_KEY $$PGBACKREST_S3_SECRET --insecure &&
+      mc admin policy attach local readwrite --user $$PGBACKREST_S3_KEY --insecure || true"
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}

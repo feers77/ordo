@@ -22,3 +22,16 @@
     owner: "{{ service_user }}"
     group: "{{ service_group }}"
     mode: "0640"
+
+# El backup corre dentro del contenedor postgres (imagen ordo-postgres:17
+# con pgBackRest integrado). Full domingos 03:15 UTC, diff resto de días.
+- name: Cron backup diario
+  ansible.builtin.cron:
+    name: "pgbackrest backup ordo"
+    minute: "15"
+    hour: "3"
+    job: >-
+      docker exec -u postgres ordo-postgres-1 pgbackrest --stanza=ordo
+      backup --type=$([ "$(date +\%u)" = "7" ] && echo full || echo diff)
+      >> /var/log/pgbackrest/cron.log 2>&1
+    user: root

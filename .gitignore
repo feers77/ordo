@@ -24,3 +24,4 @@ uv.lock.bak
 .vscode/
 *.swp
 .DS_Store
+infra/compose/minio/certs/
