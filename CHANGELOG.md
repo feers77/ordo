@@ -6,6 +6,13 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F2.1** Kernel `ordo-core`: sistema de campos (Monetary solo Decimal), registry con
+  grafo topologico de modulos, herencia por extension (_inherit) y delegacion (_inherits),
+  agent_hint/examples obligatorios en campos de negocio, metadatos en ir_model/ir_model_field
+  y Environment con schema-per-tenant + RLS.
+- **Seguridad**: rol `ordo_app` sin SUPERUSER ni BYPASSRLS. Conectarse con el rol dueno
+  dejaba RLS inerte (segunda barrera de ADR-002 no se aplicaba). Environment fuerza
+  `SET LOCAL ROLE` en cada transaccion. 15 tests nuevos de aislamiento y registry.
 - **F1.6** Aprobaciones HITL: iam_approval_request con operacion serializada y sellada por
   hash (se ejecuta exactamente lo aprobado), creacion idempotente por Idempotency-Key,
   approve/reject solo por el dueno, consumo unico, expiracion 24h; cada transicion auditada.

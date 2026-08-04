@@ -10,6 +10,7 @@ resolution-markers = [
 members = [
     "ordo",
     "ordo-api",
+    "ordo-core",
     "ordo-events",
     "ordo-gateway",
     "ordo-iam",
@@ -1092,6 +1093,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "ordo-api" },
+    { name = "ordo-core" },
     { name = "ordo-events" },
     { name = "ordo-gateway" },
     { name = "ordo-iam" },
@@ -1118,6 +1120,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "ordo-api", editable = "services/api" },
+    { name = "ordo-core", editable = "packages/ordo-core" },
     { name = "ordo-events", editable = "services/events" },
     { name = "ordo-gateway", editable = "services/gateway" },
     { name = "ordo-iam", editable = "services/iam" },
@@ -1151,6 +1154,21 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "ordo-runtime", editable = "packages/ordo-runtime" }]
+
+[[package]]
+name = "ordo-core"
+version = "0.1.0"
+source = { editable = "packages/ordo-core" }
+dependencies = [
+    { name = "asyncpg" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "asyncpg", specifier = ">=0.30" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0" },
+]
 
 [[package]]
 name = "ordo-events"

@@ -18,6 +18,15 @@ Tenants de tamaños muy dispares; el aislamiento de datos entre tenants es el ri
 
 Schema-per-tenant en Postgres con enrutamiento en el gateway, **más RLS como segunda barrera** (defensa en profundidad). Tenants grandes: base de datos dedicada con la misma abstracción (distinto DSN). Multi-company es una dimensión aparte dentro del tenant (`company_id` + `allowed_company_ids` en el `Environment`). Ambas capas se resuelven en el middleware; el código de dominio nunca escribe el nombre del schema.
 
+## Nota de implementación (F2.1)
+
+RLS **no aplica a roles `SUPERUSER` ni con `BYPASSRLS`**: conectarse con el rol dueño
+de las tablas deja la segunda barrera inerte. Por eso existe el rol `ordo_app`
+(`NOSUPERUSER NOBYPASSRLS`, creado en `infra/compose/postgres/init-app-role.sh`) y
+`Environment.bind()` hace `SET LOCAL ROLE ordo_app` en cada transacción, de modo que
+la política se aplique aunque el DSN traiga credenciales privilegiadas.
+Además de ocultar filas ajenas, la política impide **escribirlas**.
+
 ## Consecuencias
 
 - Positivas: fuga entre tenants requiere fallar dos capas; migración de tenant a DB dedicada sin tocar código.
