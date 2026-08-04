@@ -14,7 +14,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
   secreta antes de leer el cuerpo; una firma valida desde otro usuario no aprueba nada,
   porque la resolucion sigue exigiendo que el aprobador sea el dueno del agente. El aviso
   se encola como job en la misma transaccion que crea la aprobacion: el request nunca sale
-  a la red. 30 tests nuevos.
+  a la red. 36 tests nuevos.
 - **F2.6** Chatter como canal agente-humano: mensajes con author_kind obligatorio (user,
   agent o system, para que quien lee un hilo distinga persona de agente sin inferirlo),
   seguidores, actividades con estado derivado de la fecha, y tracking automatico de
