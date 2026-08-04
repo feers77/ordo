@@ -50,6 +50,7 @@ Point-in-time: agregar `--type=time --target="YYYY-MM-DD HH:MM:SS+00"` al restor
 | Secreto | Dónde | Rotación |
 |---|---|---|
 | Password sudo `ordo` | `infra/ansible/secrets.yml` (hash) | regenerar hash, re-aplicar playbook |
+| Rol de app Postgres (`ordo_app`) | `ORDO_APP_PASSWORD` en `.env` | `ALTER ROLE ordo_app PASSWORD '...'` + actualizar `.env`. **Nunca** conectar la app con el rol `ordo` (superuser): anula RLS |
 | Postgres / MinIO / Keycloak / Grafana | `infra/compose/.env` | cambiar valor + `make up` (recrea contenedores) |
 | Credenciales backup S3 | `.env` + `secrets.yml` | crear usuario nuevo en MinIO, actualizar ambos, borrar el viejo |
 | Token GitHub | GitHub → Settings → Developer settings | revocar y reemplazar en `~/.ordo-git-credentials` |
