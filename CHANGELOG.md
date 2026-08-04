@@ -6,6 +6,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F2.5** Servicios transversales del kernel: secuencias con modo no_gap que bloquea la
+  fila (documentos legales sin huecos, verificado con 5 sesiones concurrentes), cola de jobs
+  en Postgres con FOR UPDATE SKIP LOCKED (dos workers nunca toman el mismo job), reintentos
+  con backoff exponencial y DLQ, cron con lock de fila que avanza next_call antes de
+  ejecutar, y outbox transaccional con relay idempotente (message id = id del outbox, para
+  que el broker deduplique tras un crash).
+- **Schema semantico** generado desde el registry (`GET /meta/v1/schema`, formato llm o
+  full) con convenciones para agentes: dinero como string decimal, dry_run e Idempotency-Key
+  en escrituras, paginacion por cursor. 25 tests nuevos.
 - **F2.4** ORM de escritura y API generica: RecordSet batch-first (create/read/write/
   unlink/search) con validaciones (required, readonly, selection, tipos, Monetary rechaza
   float), bloqueo optimista que devuelve el estado actual del registro en el 409,
