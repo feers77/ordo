@@ -2,7 +2,10 @@
 name = "ordo-render"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["ordo-runtime"]
+
+[tool.uv.sources]
+ordo-runtime = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

@@ -3,10 +3,30 @@ name = "ordo"
 version = "0.1.0"
 description = "ORDO ERP — API-first ERP/CRM operado por agentes de IA"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "ordo-runtime",
+    "ordo-gateway",
+    "ordo-iam",
+    "ordo-api",
+    "ordo-jobs",
+    "ordo-events",
+    "ordo-render",
+    "ordo-mcp",
+]
+
+[tool.uv.sources]
+ordo-runtime = { workspace = true }
+ordo-gateway = { workspace = true }
+ordo-iam = { workspace = true }
+ordo-api = { workspace = true }
+ordo-jobs = { workspace = true }
+ordo-events = { workspace = true }
+ordo-render = { workspace = true }
+ordo-mcp = { workspace = true }
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28",
     "ruff>=0.9",
     "mypy>=1.14",
     "pytest>=8.3",
@@ -42,8 +62,7 @@ ignore = ["S101"]  # asserts permitidos en tests; bandit corre aparte en CI
 python_version = "3.12"
 strict = true
 warn_unreachable = true
-# agregar "packages" cuando exista el primer paquete (T0.4)
-files = ["services"]
+files = ["packages", "services"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
