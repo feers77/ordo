@@ -169,10 +169,14 @@ curl -X POST "$ORDO/iam/v1/authorize" \
 # -> {"allowed": true, "requires_approval": true, ...}
 ```
 
-El agente crea entonces una solicitud de aprobación, la persona la resuelve, y solo
-entonces el agente ejecuta **exactamente** lo aprobado: la operación se guarda sellada
-por hash, así que intentar consumir la aprobación con otros datos falla con
-`IAM_APPROVAL_MISMATCH`.
+El agente crea entonces una solicitud de aprobación **con la operación sellada en el
+formato canónico** `{"model", "operation", "payload": {"record_id", "body"}}`, la
+persona la resuelve, y el agente reintenta el mismo request agregando
+`X-Ordo-Approval: <id>` (o `approval_id` en la tool MCP `ordo_run_action`): el
+servicio consume la aprobación y ejecuta en un solo paso. La operación se guarda
+sellada por hash: consumirla con otro cuerpo falla con `IAM_APPROVAL_MISMATCH`, una
+pendiente con `IAM_APPROVAL_PENDING`, y repetirla con `IAM_APPROVAL_CONSUMED` — una
+aprobación ejecuta exactamente una vez.
 
 ```bash
 curl -X POST "$ORDO/iam/v1/approvals" \

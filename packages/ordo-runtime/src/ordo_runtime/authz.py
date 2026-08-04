@@ -34,6 +34,8 @@ class ApprovalRequiredError(OrdoError):
     code = "IAM_APPROVAL_REQUIRED"
     status_code = 403
     requires_approval = True
+    # Tenant resuelto por el PDP: lo usa quien consume la aprobación y sigue.
+    decision_tenant: str = ""
 
 
 class PdpUnavailableError(OrdoError):
@@ -134,17 +136,68 @@ class PDPClient:
                 hint="Revisa el rol del usuario efectivo y el cap del agente.",
             )
         if decision.requires_approval:
-            raise ApprovalRequiredError(
+            error = ApprovalRequiredError(
                 f"'{model}.{operation}' exige aprobación humana.",
                 model=model,
                 hint=(
-                    "Crea la solicitud en POST /iam/v1/approvals y reintenta cuando esté aprobada."
+                    "Crea la solicitud en POST /iam/v1/approvals, espera la "
+                    "resolución y reintenta con X-Ordo-Approval: <id>."
                 ),
             )
+            # El middleware necesita el tenant si va a consumir una aprobación
+            # y seguir adelante sin re-autorizar.
+            error.decision_tenant = decision.tenant
+            raise error
         return decision
+
+    async def consume_approval(
+        self,
+        *,
+        bearer: str,
+        approval_id: str,
+        operation: dict[str, Any],
+    ) -> None:
+        """Consumes the sealed approval; IAM's stable error passes through."""
+        try:
+            response = await self._client.post(
+                f"/iam/v1/approvals/{approval_id}/consume",
+                json={"operation": operation},
+                headers={"Authorization": f"Bearer {bearer}"},
+            )
+        except httpx.HTTPError as exc:
+            raise PdpUnavailableError(
+                "IAM no responde al consumir la aprobación; el request se rechaza."
+            ) from exc
+        if response.status_code < 300:
+            return
+        try:
+            error = response.json().get("error", {})
+        except ValueError:
+            error = {}
+        raise OrdoError(
+            str(error.get("message", "No se pudo consumir la aprobación.")),
+            code=str(error.get("code", "IAM_APPROVAL_INVALID")),
+            status_code=response.status_code,
+            hint=error.get("hint"),
+        )
 
     async def aclose(self) -> None:
         await self._client.aclose()
+
+
+def sealed_operation(
+    model: str, operation: str, record_id: int | None, body: Any
+) -> dict[str, Any]:
+    """La operación tal como debe sellarse en la aprobación (contrato público).
+
+    El agente crea la aprobación con EXACTAMENTE este objeto; consumirla con
+    cualquier otra cosa es IAM_APPROVAL_MISMATCH, byte a byte.
+    """
+    return {
+        "model": model,
+        "operation": operation,
+        "payload": {"record_id": record_id, "body": body if body is not None else {}},
+    }
 
 
 def check_tenant_header(decision_tenant: str, header_tenant: str | None) -> str:

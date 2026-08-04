@@ -114,7 +114,13 @@ CAP = {
 }
 
 
-def make_token(user_id: uuid.UUID, *, tenant: str = TENANT, cap: dict[str, Any] = CAP) -> str:
+def make_token(
+    user_id: uuid.UUID,
+    *,
+    tenant: str = TENANT,
+    cap: dict[str, Any] = CAP,
+    agent_id: uuid.UUID | None = None,
+) -> str:
     from joserfc import jwt
     from ordo_iam.keys import issuer, signing_key
 
@@ -123,7 +129,7 @@ def make_token(user_id: uuid.UUID, *, tenant: str = TENANT, cap: dict[str, Any] 
     claims = {
         "iss": issuer(),
         "aud": "ordo-api",
-        "sub": f"agent:{uuid.uuid4()}",
+        "sub": f"agent:{agent_id or uuid.uuid4()}",
         "act": {"sub": f"user:{user_id}"},
         "tenant": tenant,
         "cap": cap,
@@ -312,3 +318,176 @@ class TestMcpEnforcement:
                     mcp_deps._registry = None
         finally:
             set_pdp_client(None)
+
+
+@pytest.fixture
+async def real_agent(iam_session: AsyncSession, seeded_user: uuid.UUID) -> uuid.UUID:
+    """Agente registrado de verdad, dueño: el usuario con rol ventas."""
+    from ordo_iam.repository import PrincipalRepository
+
+    agent = await PrincipalRepository(iam_session).create_agent(
+        tenant=TENANT,
+        owner_user_id=seeded_user,
+        display_name="Agente aprobaciones",
+        model="test-model",
+    )
+    await iam_session.commit()
+    return agent.principal_id
+
+
+class TestApprovalConsumption:
+    async def make_approval(
+        self,
+        pdp: PDPClient,
+        iam_session: AsyncSession,
+        agent_id: uuid.UUID,
+        seeded_user: uuid.UUID,
+        operation: dict[str, Any],
+        *,
+        approve: bool = True,
+    ) -> tuple[str, str]:
+        """Crea la aprobación como agente y la resuelve como dueño."""
+        from ordo_runtime.authz import sealed_operation  # noqa: F401
+
+        token = make_token(seeded_user, agent_id=agent_id)
+        response = await pdp._client.post(
+            "/iam/v1/approvals",
+            json={"operation": operation},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Idempotency-Key": uuid.uuid4().hex,
+            },
+        )
+        assert response.status_code == 201, response.text
+        approval_id = response.json()["approval_id"]
+        if approve:
+            from ordo_iam.approvals import ApprovalService
+
+            await ApprovalService(iam_session).resolve(
+                uuid.UUID(approval_id), approver_id=seeded_user, approve=True
+            )
+        return approval_id, token
+
+    async def test_full_hitl_cycle_executes_exactly_once(
+        self,
+        api: httpx.AsyncClient,
+        pdp: PDPClient,
+        iam_session: AsyncSession,
+        shop: dict[str, Any],
+        seeded_user: uuid.UUID,
+        real_agent: uuid.UUID,
+    ) -> None:
+        """403 → aprobación → consumo → 200; el replay de la aprobación es 409."""
+        from decimal import Decimal
+
+        from modules.sale.services import SaleService
+        from ordo_runtime.authz import sealed_operation
+
+        service = SaleService(shop["env"])
+        order_id = await service.create_order(
+            partner_id=shop["customer_id"],
+            date_order="2026-08-04",
+            currency_id=shop["currency_id"],
+            journal_id=shop["sale_journal"],
+            company_id=shop["company_id"],
+            lines=[
+                {
+                    "name": "Licencia",
+                    "price_unit": Decimal("100000"),
+                    "tax_codes": "IVA19",
+                }
+            ],
+        )
+        await service.action_confirm(order_id)
+
+        operation = sealed_operation("sale.order", "action_invoice", order_id, {"params": {}})
+        approval_id, token = await self.make_approval(
+            pdp, iam_session, real_agent, seeded_user, operation
+        )
+
+        blocked = await api.post(
+            f"/api/v1/sale.order/{order_id}/actions/action_invoice",
+            json={"params": {}},
+            headers={"Authorization": f"Bearer {token}", "Idempotency-Key": uuid.uuid4().hex},
+        )
+        assert blocked.status_code == 403
+        assert blocked.json()["error"]["code"] == "IAM_APPROVAL_REQUIRED"
+
+        executed = await api.post(
+            f"/api/v1/sale.order/{order_id}/actions/action_invoice",
+            json={"params": {}},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Idempotency-Key": uuid.uuid4().hex,
+                "X-Ordo-Approval": approval_id,
+            },
+        )
+        assert executed.status_code == 200, executed.text
+        assert executed.json()["result"]["move_id"] > 0
+
+        replay = await api.post(
+            f"/api/v1/sale.order/{order_id}/actions/action_invoice",
+            json={"params": {}},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Idempotency-Key": uuid.uuid4().hex,
+                "X-Ordo-Approval": approval_id,
+            },
+        )
+        assert replay.status_code == 409
+        assert replay.json()["error"]["code"] == "IAM_APPROVAL_CONSUMED"
+
+    async def test_pending_approval_does_not_execute(
+        self,
+        api: httpx.AsyncClient,
+        pdp: PDPClient,
+        iam_session: AsyncSession,
+        shop: dict[str, Any],
+        seeded_user: uuid.UUID,
+        real_agent: uuid.UUID,
+    ) -> None:
+        from ordo_runtime.authz import sealed_operation
+
+        operation = sealed_operation("sale.order", "action_invoice", 999, {"params": {}})
+        approval_id, token = await self.make_approval(
+            pdp, iam_session, real_agent, seeded_user, operation, approve=False
+        )
+        response = await api.post(
+            "/api/v1/sale.order/999/actions/action_invoice",
+            json={"params": {}},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Idempotency-Key": uuid.uuid4().hex,
+                "X-Ordo-Approval": approval_id,
+            },
+        )
+        assert response.status_code == 409
+        assert response.json()["error"]["code"] == "IAM_APPROVAL_PENDING"
+
+    async def test_tampered_body_never_executes(
+        self,
+        api: httpx.AsyncClient,
+        pdp: PDPClient,
+        iam_session: AsyncSession,
+        shop: dict[str, Any],
+        seeded_user: uuid.UUID,
+        real_agent: uuid.UUID,
+    ) -> None:
+        """Aprobado con un cuerpo, ejecutado con otro: mismatch, no ejecución."""
+        from ordo_runtime.authz import sealed_operation
+
+        operation = sealed_operation("sale.order", "action_invoice", 1, {"params": {}})
+        approval_id, token = await self.make_approval(
+            pdp, iam_session, real_agent, seeded_user, operation
+        )
+        response = await api.post(
+            "/api/v1/sale.order/1/actions/action_invoice",
+            json={"params": {"sneaky": True}},
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Idempotency-Key": uuid.uuid4().hex,
+                "X-Ordo-Approval": approval_id,
+            },
+        )
+        assert response.status_code == 409
+        assert response.json()["error"]["code"] == "IAM_APPROVAL_MISMATCH"

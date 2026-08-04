@@ -15,9 +15,11 @@ from fastapi import Request, Response
 from ordo_core.errors import KernelError
 from ordo_runtime import OrdoError, create_app
 from ordo_runtime.authz import (
+    ApprovalRequiredError,
     PDPClient,
     check_tenant_header,
     enforcement_enabled,
+    sealed_operation,
     warn_if_open,
 )
 
@@ -142,8 +144,26 @@ async def mcp_endpoint(request: Request) -> Response:
             bearer = authorization.removeprefix("Bearer ").strip() or None
             model, operation = tool_authz_target(name, arguments)
             try:
-                decision = await _pdp.authorize(bearer=bearer, model=model, operation=operation)
-                tenant = check_tenant_header(decision.tenant, header_tenant or None)
+                try:
+                    decision_tenant = (
+                        await _pdp.authorize(bearer=bearer, model=model, operation=operation)
+                    ).tenant
+                except ApprovalRequiredError as pending:
+                    approval_id = str(arguments.get("approval_id", "")).strip()
+                    if not approval_id or bearer is None:
+                        raise
+                    await _pdp.consume_approval(
+                        bearer=bearer,
+                        approval_id=approval_id,
+                        operation=sealed_operation(
+                            model,
+                            operation,
+                            int(arguments["id"]) if "id" in arguments else None,
+                            {"params": arguments.get("params") or {}},
+                        ),
+                    )
+                    decision_tenant = getattr(pending, "decision_tenant", "")
+                tenant = check_tenant_header(decision_tenant, header_tenant or None)
             except OrdoError as exc:
                 payload = _result(
                     request_id,
