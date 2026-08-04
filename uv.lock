@@ -1286,14 +1286,18 @@ name = "ordo-api"
 version = "0.1.0"
 source = { editable = "services/api" }
 dependencies = [
+    { name = "cryptography" },
     { name = "ordo-core" },
     { name = "ordo-runtime" },
+    { name = "signxml" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "cryptography", specifier = ">=42" },
     { name = "ordo-core", editable = "packages/ordo-core" },
     { name = "ordo-runtime", editable = "packages/ordo-runtime" },
+    { name = "signxml", specifier = ">=5" },
 ]
 
 [[package]]
@@ -1378,14 +1382,18 @@ name = "ordo-mcp"
 version = "0.1.0"
 source = { editable = "services/mcp" }
 dependencies = [
+    { name = "cryptography" },
     { name = "ordo-core" },
     { name = "ordo-runtime" },
+    { name = "signxml" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "cryptography", specifier = ">=42" },
     { name = "ordo-core", editable = "packages/ordo-core" },
     { name = "ordo-runtime", editable = "packages/ordo-runtime" },
+    { name = "signxml", specifier = ">=5" },
 ]
 
 [[package]]

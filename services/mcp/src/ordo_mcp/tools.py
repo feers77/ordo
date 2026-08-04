@@ -14,7 +14,7 @@ from typing import Any
 
 from ordo_core import Environment
 from ordo_core.actions import actions_for, dispatch
-from ordo_core.idempotency import create_table, remember, replay
+from ordo_core.idempotency import remember, replay
 from ordo_core.recordset import RecordSet
 from ordo_core.reports import reports_available, run_report
 from ordo_core.semantic import build_schema
@@ -27,7 +27,6 @@ async def _idempotent(
 ) -> Any:
     """Same guarantee as the HTTP API; the key defaults to one per call."""
     effective = key or uuid.uuid4().hex
-    await create_table(env.session)
     cached = await replay(env.session, effective, payload)
     if cached is not None:
         return cached

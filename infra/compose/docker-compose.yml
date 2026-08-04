@@ -3,14 +3,55 @@ name: ordo
 # Perfiles:
 #   core: postgres, pgbouncer, redis, nats, minio        (siempre)
 #   dev:  keycloak, mailpit                              (desarrollo)
+#   app:  api, mcp                                       (servicios ORDO)
 #   obs:  otel-collector, prometheus, grafana, loki, tempo
 # Prod: docker-compose.prod.yml (override con límites, sin mailpit).
 
 services:
+  api:
+    build:
+      context: ../..
+      dockerfile: services/api/Dockerfile
+    image: ordo-api:latest
+    profiles: [app]
+    environment:
+      ORDO_DATABASE_URL: postgresql+asyncpg://ordo_app:${ORDO_APP_PASSWORD:?definir en .env}@postgres:5432/ordo
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request as u; u.urlopen(\"http://127.0.0.1:8000/healthz\", timeout=3)'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  mcp:
+    build:
+      context: ../..
+      dockerfile: services/mcp/Dockerfile
+    image: ordo-mcp:latest
+    profiles: [app]
+    environment:
+      ORDO_DATABASE_URL: postgresql+asyncpg://ordo_app:${ORDO_APP_PASSWORD:?definir en .env}@postgres:5432/ordo
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "127.0.0.1:8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request as u; u.urlopen(\"http://127.0.0.1:8000/healthz\", timeout=3)'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
   postgres:
     build: ./postgres
     image: ordo-postgres:17
-    profiles: [core, dev]
+    profiles: [core, dev, app]
     environment:
       POSTGRES_USER: ordo
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?definir en .env}

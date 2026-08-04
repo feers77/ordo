@@ -132,8 +132,8 @@ def main() -> None:
 
     depends = [d.strip() for d in args.depends.split(",") if d.strip()]
     directory = create_module(args.name, Path(args.path), depends)
-    print(f"Módulo creado en {directory}")  # noqa: T201
-    print(f"Pruébalo: uv run pytest {directory}")  # noqa: T201
+    print(f"Módulo creado en {directory}")
+    print(f"Pruébalo: uv run pytest {directory}")
 
 
 if __name__ == "__main__":

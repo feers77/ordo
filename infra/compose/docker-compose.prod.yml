@@ -1,6 +1,20 @@
 # Override de producción: docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile core up -d
 # Sin mailpit (perfil dev apagado). Límites de recursos explícitos.
 services:
+  api:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  mcp:
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
   postgres:
     restart: unless-stopped
     deploy:

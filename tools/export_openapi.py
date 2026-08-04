@@ -21,7 +21,7 @@ def main() -> None:
         schema = module.app.openapi()
         out = OUT_DIR / f"{service}.json"
         out.write_text(json.dumps(schema, indent=2, ensure_ascii=False, sort_keys=True) + "\n")
-        print(f"{service}: {out.relative_to(OUT_DIR.parent.parent.parent)}")  # noqa: T201
+        print(f"{service}: {out.relative_to(OUT_DIR.parent.parent.parent)}")
 
 
 if __name__ == "__main__":

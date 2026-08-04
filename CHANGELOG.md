@@ -6,6 +6,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **Despliegue de servicios**: perfil `app` en compose (`make app`) levanta `ordo-api`
+  y `ordo-mcp` construidos desde el repo con los módulos de negocio dentro de la
+  imagen, corriendo como `ordo_app` (sin DDL) contra Postgres; Caddy enruta `/mcp*` al
+  servidor MCP y el resto a la API. `make seed TENANT=x` crea un tenant real: schema,
+  módulos instalados, datos mínimos y los grants exactos para el rol de aplicación.
+  La tabla de idempotencia pasa a crearse con el kernel (no lazy por request, que era
+  DDL y el rol de la app no puede ni debe). Verificado en vivo: venta completa por MCP
+  a través del edge, con dry-run que no quema numeración y balance cuadrado.
+
 - **F3.1** Servidor MCP (ADR-015, diseño F3-01): `ordo-mcp` habla JSON-RPC 2.0 sobre
   `POST /mcp` (transporte streamable HTTP) sin SDK externo. Nueve tools con el mismo
   contrato de la API: `ordo_schema` (descubrimiento semántico), búsqueda por dominio,

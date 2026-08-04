@@ -5,10 +5,10 @@
   vars_files:
     - "{{ playbook_dir }}/secrets.yml"
   roles:
-    - base
-    - security
-    - users
-    - docker
-    - caddy
-    - backup
-    - docs
+    - { role: base, tags: [base] }
+    - { role: security, tags: [security] }
+    - { role: users, tags: [users] }
+    - { role: docker, tags: [docker] }
+    - { role: caddy, tags: [caddy] }
+    - { role: backup, tags: [backup] }
+    - { role: docs, tags: [docs] }

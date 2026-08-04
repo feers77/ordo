@@ -2,7 +2,7 @@
 name = "ordo-mcp"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["ordo-runtime", "ordo-core"]
+dependencies = ["ordo-runtime", "ordo-core", "cryptography>=42", "signxml>=5"]
 
 [tool.uv.sources]
 ordo-runtime = { workspace = true }

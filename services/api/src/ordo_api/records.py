@@ -12,7 +12,7 @@ from typing import Annotated, Any, ClassVar
 from fastapi import APIRouter, Depends, Header, Query
 from ordo_core import Environment
 from ordo_core.errors import KernelError
-from ordo_core.idempotency import create_table, remember, replay
+from ordo_core.idempotency import remember, replay
 from ordo_core.recordset import RecordSet
 from ordo_core.transactions import TransactionRunner
 from ordo_runtime import OrdoError
@@ -70,7 +70,6 @@ async def _idempotent(env: Environment, key: str | None, payload: Any, run: Any)
             status_code=400,
             hint="Toda escritura debe ser idempotente (AGENTS.md §6).",
         )
-    await create_table(env.session)
     try:
         cached = await replay(env.session, key, payload)
     except KernelError as exc:

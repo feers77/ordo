@@ -28,8 +28,12 @@ def partner_registry() -> Registry:
 
 
 async def make_partner_env(session: AsyncSession, tenant: str) -> Environment:
+    from ordo_core.idempotency import create_table as create_idempotency_table
+
     schema = f"t_{tenant}"
     await session.execute(text(f'CREATE SCHEMA IF NOT EXISTS "{schema}"'))
+    await session.execute(text(f"SELECT set_config('search_path', '{schema},public', false)"))
+    await create_idempotency_table(session)
     await session.execute(
         text(
             f'CREATE TABLE IF NOT EXISTS "{schema}".res_partner ('

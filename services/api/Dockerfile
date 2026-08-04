@@ -12,7 +12,10 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/packages /app/packages
 COPY --from=builder /app/services/api /app/services/api
-ENV PATH="/app/.venv/bin:$PATH"
+# Módulos de negocio y adaptadores de país: el loader los importa en runtime.
+COPY modules /app/modules
+COPY localizations /app/localizations
+ENV PATH="/app/.venv/bin:$PATH" PYTHONPATH=/app ORDO_MODULES_PATH=/app/modules
 USER ordo
 EXPOSE 8000
 CMD ["uvicorn", "ordo_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--forwarded-allow-ips", "*"]
