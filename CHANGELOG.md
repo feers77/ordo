@@ -4,6 +4,18 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ## [Unreleased]
 
+### Changed
+
+- **Deuda saldada.** (1) La cola de jobs vuelve a ser una sola: `ordo-iam` ahora depende
+  de `ordo-core` (paquete interno, actualización en ADR-011) y se elimina la copia
+  `ordo_iam/jobs.py` que podía divergir. (2) El worker de notificaciones existe de
+  verdad: un loop de fondo en el proceso IAM drena `ir_job` cada pocos segundos cuando
+  hay canal configurado (`TELEGRAM_BOT_TOKEN`), con kill switch `ORDO_NOTIFY_WORKER=0`;
+  varias réplicas no duplican envíos porque el claim usa FOR UPDATE SKIP LOCKED.
+  (3) Los documentos electrónicos guardan `payload_encoding` y firman/envían con los
+  bytes de la codificación que exige el formato del país (ISO-8859-1 en el SII): una ñ
+  ya no se corrompe entre generar y enviar, verificado de punta a punta. 8 tests nuevos.
+
 ### Added
 
 - **F4.3b** Firma XMLDSig de documento completo (ADR-014 aceptado): `XmlDSigSigner`

@@ -81,6 +81,15 @@ class EdiDocument(Model):
         agent_hint="XML del documento tal como se firmó o se firmará",
         examples=['<DTE version="1.0">...</DTE>'],
     )
+    payload_encoding = Char(
+        default="utf-8",
+        agent_hint=(
+            "Codificación de bytes del XML según el formato del país: el SII "
+            "exige ISO-8859-1, el SIFEN UTF-8. Firmar o enviar con otra "
+            "codificación invalida la firma"
+        ),
+        examples=["iso-8859-1", "utf-8"],
+    )
     track_id = Char(
         index=True,
         agent_hint=(

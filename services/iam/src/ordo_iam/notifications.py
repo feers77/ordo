@@ -14,9 +14,8 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
+from ordo_core.services.jobs import JobQueue
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from ordo_iam.jobs import JobQueue
 
 NOTIFY_APPROVAL_JOB = "iam.notify_approval"
 SEND_MESSAGE_JOB = "iam.send_message"

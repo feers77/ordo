@@ -32,6 +32,7 @@ def _random_security_code() -> int:
 class SifenAdapter:
     country = "py"
     supports_direct_cancellation = True
+    xml_encoding = "utf-8"
 
     def __init__(
         self,
