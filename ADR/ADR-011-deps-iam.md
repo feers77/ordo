@@ -18,6 +18,8 @@ F1 implementa `ordo-iam` (principals, bridge OIDC, token exchange, capability to
 
 `sqlalchemy[asyncio]>=2.0`, `asyncpg`, `alembic`, `joserfc`, `httpx`, `python-multipart` (forms RFC 8693) y `redis` (contadores de límites diarios) como dependencias de `ordo-iam`. Ninguna otra librería de crypto/auth sin nuevo ADR.
 
+**Actualización 2026-08-04:** `ordo-iam` depende además de `ordo-core` (paquete interno del workspace, sin dependencias externas nuevas) para usar la única implementación de la cola de jobs. La copia local `ordo_iam/jobs.py` reimplementaba el contrato de `ordo_core.services.jobs` y las dos podían divergir; era deuda registrada desde F1.7.
+
 ## Consecuencias
 
 - Positivas: stack alineado con ADR-001/003; migración a Authlib (F3) sin cambiar formato de tokens.

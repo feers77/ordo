@@ -130,12 +130,14 @@ class EinvoicingService:
             on_date=invoice.issue_date,
         )
         xml = adapter.render(invoice, folio)
+        encoding = getattr(adapter, "xml_encoding", "utf-8")
         await self.documents.write(
             [document_id],
             {
                 "state": target,
                 "number": folio.number,
-                "xml_payload": xml.decode("utf-8", errors="replace"),
+                "xml_payload": xml.decode(encoding, errors="replace"),
+                "payload_encoding": encoding,
                 "error_message": None,
             },
         )
@@ -144,7 +146,9 @@ class EinvoicingService:
     async def action_sign(self, document_id: int, signer: Signer) -> None:
         document = await self._get(document_id)
         target = next_state(document["state"], "sign")
-        payload = (document["xml_payload"] or "").encode()
+        payload = (document["xml_payload"] or "").encode(
+            document["payload_encoding"] or "utf-8", errors="replace"
+        )
         if not payload:
             raise EdiError(
                 "EDI_NOT_GENERATED",
@@ -154,7 +158,12 @@ class EinvoicingService:
         signed = signer.sign(payload, reference=str(document["number"]))
         await self.documents.write(
             [document_id],
-            {"state": target, "xml_payload": signed.decode("utf-8", errors="replace")},
+            {
+                "state": target,
+                "xml_payload": signed.decode(
+                    document["payload_encoding"] or "utf-8", errors="replace"
+                ),
+            },
         )
 
     async def action_send(self, document_id: int, transport: Transport) -> str:
@@ -163,7 +172,11 @@ class EinvoicingService:
         target = next_state(document["state"], "send")
         adapter = self._adapter(document["country_code"])
 
-        raw = await transport.send((document["xml_payload"] or "").encode())
+        raw = await transport.send(
+            (document["xml_payload"] or "").encode(
+                document["payload_encoding"] or "utf-8", errors="replace"
+            )
+        )
         result = adapter.parse_send_response(raw)
         values: dict[str, Any] = {
             "state": target,
@@ -242,6 +255,7 @@ class EinvoicingService:
                 "document_type_code",
                 "number",
                 "xml_payload",
+                "payload_encoding",
                 "track_id",
                 "attempts",
                 "company_id",

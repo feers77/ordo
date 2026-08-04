@@ -101,6 +101,7 @@ class EinvoiceAdapter(Protocol):
 
     country: str
     supports_direct_cancellation: bool
+    xml_encoding: str  # codificación de bytes que exige el formato del país
 
     def render(self, invoice: InvoiceData, folio: FolioAssignment) -> bytes:
         """Construye el XML del documento, sin firmar."""

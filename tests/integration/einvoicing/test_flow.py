@@ -169,6 +169,43 @@ class TestRealSignature:
         assert track_id == "424242"
 
 
+class TestEncoding:
+    async def test_latin1_survives_the_whole_cycle(self, edi: dict[str, Any]) -> None:
+        """El SII exige ISO-8859-1: la ñ debe llegar al transporte intacta."""
+        from dataclasses import replace as dc_replace
+        from decimal import Decimal
+
+        from modules.einvoicing.contracts import InvoiceLine
+
+        await load_folios(edi)
+        service = make_service(edi)
+        document_id = await make_document(edi, service)
+
+        invoice = dc_replace(
+            make_invoice(),
+            lines=(
+                InvoiceLine(
+                    description="Ñandú añejo",
+                    quantity=Decimal("1"),
+                    price_unit=Decimal("100000"),
+                ),
+            ),
+        )
+        await service.action_generate(document_id, invoice)
+
+        documents = RecordSet(edi["env"], "edi.document")
+        [doc] = await documents.read([document_id], fields=["payload_encoding", "xml_payload"])
+        assert doc["payload_encoding"] == "iso-8859-1"
+        assert "Ñandú añejo" in doc["xml_payload"]
+
+        await service.action_sign(document_id, StubSigner())
+        transport = StubTransport(ACCEPTED)
+        await service.action_send(document_id, transport)
+        sent = transport.sent[0]
+        assert "Ñandú añejo".encode("iso-8859-1") in sent
+        assert "Ñandú añejo".encode() not in sent
+
+
 class TestFolios:
     async def test_exhausting_the_range_is_a_stable_error(self, edi: dict[str, Any]) -> None:
         await load_folios(edi, range_to=1)

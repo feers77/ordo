@@ -27,6 +27,7 @@ from ordo_core import taxid
 class SiiAdapter:
     country = "cl"
     supports_direct_cancellation = False
+    xml_encoding = "iso-8859-1"  # el formato DTE del SII lo exige
 
     def __init__(self, *, now: datetime | None = None) -> None:
         # `now` inyectable para que los tests produzcan bytes deterministas.
