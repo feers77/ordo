@@ -30,7 +30,7 @@ antes de invertir tiempo.
 
 ## Antes de abrir un PR
 
-1. Lee [`CLAUDE.md`](CLAUDE.md): es vinculante para humanos y agentes.
+1. Lee [`AGENTS.md`](AGENTS.md): es vinculante para humanos y agentes.
 2. Si la decisión es estructural (un servicio, una dependencia, un cambio de contrato),
    escribe primero un ADR en `ADR/` y espera aprobación.
 3. En lógica de dominio (contabilidad, impuestos, stock, permisos) **escribe los tests
@@ -41,9 +41,9 @@ antes de invertir tiempo.
 
 ## Lo que no aceptamos
 
-- **Código copiado de Odoo** o de repos derivados, en ninguna forma: ni código, ni
-  planes de cuentas, ni plantillas de impuestos, ni traducciones. Odoo Community es
-  LGPLv3 y copiarlo contamina la licencia del producto. Se puede estudiar el
+- **Código copiado de otro ERP copyleft** o de repos derivados, en ninguna forma: ni
+  código, ni planes de cuentas, ni plantillas de impuestos, ni traducciones. Esas bases
+  son LGPL/GPL y copiarlas contamina la licencia del producto. Se puede estudiar el
   comportamiento observable y reimplementarlo desde cero.
 - **Datos fiscales sin fuente normativa citada** en el `manifest.yaml` del pack.
 - **Secretos** de cualquier tipo en el repositorio.

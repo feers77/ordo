@@ -6,7 +6,7 @@
 
 ## Contexto
 
-F1 implementa `ordo-iam` (principals, bridge OIDC, token exchange, capability tokens, PDP). Requiere acceso a Postgres, migraciones y criptografía JOSE. CLAUDE.md §2.7 exige ADR para dependencias nuevas.
+F1 implementa `ordo-iam` (principals, bridge OIDC, token exchange, capability tokens, PDP). Requiere acceso a Postgres, migraciones y criptografía JOSE. AGENTS.md §2.7 exige ADR para dependencias nuevas.
 
 ## Opciones consideradas
 

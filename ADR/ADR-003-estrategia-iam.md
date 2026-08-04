@@ -16,7 +16,7 @@ Un OpenID Provider correcto toma meses; lo necesitamos desde F1. Pero el modelo 
 
 ## Decisión
 
-F0–F2: Keycloak 26 como OP detrás de interfaz OIDC estándar. `ordo-iam` nace como Authorization Layer (capability tokens, delegación, políticas, PDP) delegando autenticación a Keycloak. F3+: `ordo-iam` absorbe la autenticación (Authlib). Todo el sistema habla solo OIDC estándar; el reemplazo es transparente. **Prohibido** escribir un OP desde cero antes de F3 (CLAUDE.md §2.2).
+F0–F2: Keycloak 26 como OP detrás de interfaz OIDC estándar. `ordo-iam` nace como Authorization Layer (capability tokens, delegación, políticas, PDP) delegando autenticación a Keycloak. F3+: `ordo-iam` absorbe la autenticación (Authlib). Todo el sistema habla solo OIDC estándar; el reemplazo es transparente. **Prohibido** escribir un OP desde cero antes de F3 (AGENTS.md §2.2).
 
 ## Consecuencias
 

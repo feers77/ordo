@@ -11,8 +11,8 @@ El repo `github.com/feers77/ordo` es público. El dueño quiere que el producto 
 devuelva esos cambios al proyecto** — incluido quien lo ofrezca como servicio, que es
 el caso natural de un ERP operado por agentes.
 
-Además, Odoo Community es LGPLv3: copiar su código, datos o traducciones contaminaría
-nuestra licencia.
+Además, Los ERP libres de referencia son copyleft (LGPLv3 o similar): copiar su código,
+datos o traducciones contaminaría nuestra licencia.
 
 ## Opciones consideradas
 
@@ -47,14 +47,14 @@ permiso de cada contribuyente.
 
 ## Política anti-contaminación (vigente, independiente de la licencia)
 
-- Prohibido copiar código, datos o traducciones de Odoo o repos derivados
-  (CLAUDE.md §2.1). Solo reimplementación de comportamiento observable.
+- Prohibido copiar código, datos o traducciones de otro ERP copyleft o repos derivados
+  (AGENTS.md §2.1). Solo reimplementación de comportamiento observable.
 - Datos fiscales desde fuentes normativas primarias (SII, AEAT, SUNAT, etc.), citadas
   en el `manifest.yaml` de cada pack de localización.
 - Dependencias: permitidas MIT/BSD/Apache/PSF. Una dependencia GPL/AGPL de terceros
   requiere ADR propio.
 - Revisión de similitud de código antes de cada release.
-- "Odoo" es marca registrada: decimos "compatible con", nunca implicamos afiliación.
+
 
 ## Consecuencias
 

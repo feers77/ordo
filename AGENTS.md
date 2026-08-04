@@ -1,12 +1,12 @@
-# CLAUDE.md — Reglas de trabajo para ORDO ERP
+# AGENTS.md — Reglas de trabajo para ORDO ERP
 
-Este archivo va en la raíz del repositorio. Claude Code lo lee en cada sesión. Es vinculante.
+Este archivo va en la raíz del repositorio. El agente de desarrollo lo lee en cada sesión. Es vinculante.
 
 ---
 
 ## 1. Qué es este proyecto
 
-ERP/CRM completo **solo backend (API)**, con paridad funcional respecto a Odoo Community más equivalentes propios de las funciones Enterprise, diseñado para que el operador principal sea un **agente de IA**, no un humano frente a una pantalla.
+ERP/CRM completo **solo backend (API)**, con cobertura funcional completa —incluidas las capacidades que otros ERP reservan a su edición comercial—, diseñado para que el operador principal sea un **agente de IA**, no un humano frente a una pantalla.
 
 **No se escribe frontend. Nunca.** Si una tarea parece requerir UI, el entregable es un endpoint más el schema que permite a un cliente construir esa UI.
 
@@ -15,7 +15,7 @@ ERP/CRM completo **solo backend (API)**, con paridad funcional respecto a Odoo C
 ## 2. Prohibiciones absolutas
 
 0. **Licencia del proyecto: AGPLv3** (ADR-010). Todo aporte se publica bajo ella. Se contribuye con DCO (`git commit -s`) en cada commit y CLA (`CLA.md`) una vez.
-1. **No copiar código, datos ni traducciones de Odoo** (ni de repos derivados). Odoo Community es LGPLv3; copiar contamina la licencia del producto. Se permite estudiar el comportamiento observable y reimplementarlo. Los planes de cuentas y tablas de impuestos se obtienen de **fuentes normativas oficiales**, citadas en `manifest.yaml` de cada pack.
+1. **No copiar código, datos ni traducciones de otro ERP** con licencia copyleft (LGPL/GPL) ni de repos derivados de él; copiar contamina la licencia del producto. Se permite estudiar el comportamiento observable y reimplementarlo. Los planes de cuentas y tablas de impuestos se obtienen de **fuentes normativas oficiales**, citadas en `manifest.yaml` de cada pack.
 2. **No escribir un OpenID Provider desde cero** antes de la Fase 3. Hasta entonces, Keycloak.
 3. **No usar `float` para dinero.** `Decimal` en Python, `NUMERIC` en Postgres, string decimal en JSON.
 4. **No hacer `datetime.now()` sin tz.** Siempre UTC explícito.

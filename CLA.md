@@ -55,8 +55,8 @@ Declaras que:
    o tu empleador firmó el acuerdo corporativo (§6).
 3. Tus Contribuciones no incluyen código de terceros sin identificarlo claramente,
    indicando su origen y licencia.
-4. **No incluyen código, datos ni traducciones copiados de Odoo** ni de repositorios
-   derivados. Ver `CONTRIBUTING.md`.
+4. **No incluyen código, datos ni traducciones copiados de otro ERP copyleft** ni de
+   repositorios derivados de él. Ver `CONTRIBUTING.md`.
 
 ## 5. Sin garantías
 

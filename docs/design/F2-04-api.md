@@ -49,7 +49,7 @@ y **hace rollback siempre**. Nunca escribe, ni siquiera parcialmente.
 
 ## Idempotencia
 
-`Idempotency-Key` obligatorio en toda escritura (CLAUDE.md §6). La respuesta se
+`Idempotency-Key` obligatorio en toda escritura (AGENTS.md §6). La respuesta se
 guarda en `ir_idempotency` (clave, hash del request, respuesta, expiración 24h):
 - misma clave + mismo request ⇒ se devuelve la respuesta guardada (no se re-ejecuta);
 - misma clave + request distinto ⇒ `IDEMPOTENCY_KEY_REUSED` (409).

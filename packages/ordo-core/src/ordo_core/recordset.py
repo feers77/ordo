@@ -234,7 +234,7 @@ def _coerce(field: Field, value: Any, model: str, name: str) -> Any:
             raise KernelError(
                 "FIELD_INVALID_VALUE",
                 f"'{model}.{name}' es monetario: usa Decimal o string decimal, nunca float",
-                hint="Los float pierden precisión en importes (CLAUDE.md §2.3).",
+                hint="Los float pierden precisión en importes (AGENTS.md §2.3).",
             )
         if isinstance(value, Decimal):
             return value

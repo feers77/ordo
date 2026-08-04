@@ -1,4 +1,4 @@
-"""Idempotency store for write operations (design F2-04, CLAUDE.md §6).
+"""Idempotency store for write operations (design F2-04, AGENTS.md §6).
 
 Same key + same request → the stored response is replayed, never re-executed.
 Same key + different request → explicit conflict, never a silent overwrite.

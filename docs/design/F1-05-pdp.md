@@ -9,7 +9,7 @@ de `ordo-iam` en F1; F2 lo extrae a librería embebida en `ordo-api`.
 - `iam_role_member` — principal∈rol.
 - `iam_acl` — por rol y modelo: `perm_read/write/create/unlink` (equivalente `ir.model.access`).
 - `iam_record_rule` — dominio JSONB por modelo+ops; `role_id NULL` ⇒ global.
-  Semántica Odoo: globales en AND, de rol en OR.
+  Semántica clásica: globales en AND, de rol en OR.
 - `iam_audit_log` — append-only con cadena de hash por tenant:
   `hash = sha256(prev_hash + json_canónico(evento))`.
 
@@ -30,7 +30,7 @@ Intersección efectiva: agente pasa 1 Y 2 (cap nunca amplía al usuario).
 ```
 
 - Montos: `Decimal` vía string; acumulados diarios en Redis como **enteros en micros**
-  (`INCRBY`, TTL 25h) — nunca float (CLAUDE.md §2.3). Contador inyectable
+  (`INCRBY`, TTL 25h) — nunca float (AGENTS.md §2.3). Contador inyectable
   (`UsageCounter`): Redis en producción, memoria en tests. Redis caído ⇒ deniega
   operaciones con límite diario (fail-closed).
 - Patrones `deny`/`requires_approval`: glob estilo `fnmatch` sobre `model.op`

@@ -1,4 +1,4 @@
-"""Stable IAM error codes (public contract, CLAUDE.md §5)."""
+"""Stable IAM error codes (public contract, AGENTS.md §5)."""
 
 from __future__ import annotations
 

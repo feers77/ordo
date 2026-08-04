@@ -65,7 +65,7 @@ class Environment:
         halfway through a request.
 
         `set_config(..., is_local => true)` takes bound parameters, so no
-        value is ever interpolated into SQL (CLAUDE.md §2.5).
+        value is ever interpolated into SQL (AGENTS.md §2.5).
         """
         self._install_rebind_listener()
         await self.session.execute(

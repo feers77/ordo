@@ -1,6 +1,6 @@
 # Catálogo de códigos de error (contrato público)
 
-Los `code` se agregan, nunca se renombran ni eliminan (CLAUDE.md §5).
+Los `code` se agregan, nunca se renombran ni eliminan (AGENTS.md §5).
 Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 
 ## Runtime (todos los servicios)

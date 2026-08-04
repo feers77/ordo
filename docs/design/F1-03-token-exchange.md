@@ -23,7 +23,7 @@ Agente (agent_id + secret) ──POST /iam/v1/token──▶ ordo-iam
 - `models`: unión de operaciones por modelo.
 - `deny` y `requires_approval`: unión (deny siempre gana en el PDP).
 - `limits`: el más restrictivo — mínimo por moneda/valor numérico.
-- `record_domain`: concatenación (AND, semántica dominio Odoo).
+- `record_domain`: concatenación (AND, semántica de dominios).
 - El claim **nunca amplía** permisos del usuario: la intersección con RBAC/record
   rules del owner la aplica el PDP en cada evaluación (F1-05).
 

@@ -2,9 +2,9 @@
 
 **Componente de mayor riesgo del kernel** (PLAN §10): una falla aquí filtra datos
 entre tenants o permite inyección. Revisión humana obligatoria en cada cambio
-(CLAUDE.md §7). Property-based testing y tests de inyección son bloqueantes.
+(AGENTS.md §7). Property-based testing y tests de inyección son bloqueantes.
 
-## Lenguaje (compatible con Odoo, ADR-006)
+## Lenguaje (sintaxis prefija con tuplas, ADR-006)
 
 ```python
 [("state", "=", "sale"), "|", ("partner_id.country_id.code", "=", "CL"),
@@ -26,7 +26,7 @@ entre tenants o permite inyección. Revisión humana obligatoria en cada cambio
 4. **Todas las tablas se resuelven con el schema del tenant** del `Environment`;
    el compilador jamás recibe un nombre de schema por parámetro.
 5. **Record rules siempre aplicadas**: `compile(...)` exige el resultado del PDP.
-   Semántica Odoo: reglas globales en `AND`, reglas de grupo en `OR`.
+   Semántica clásica: reglas globales en `AND`, reglas de grupo en `OR`.
 6. `active_test`: si el modelo tiene `active` y el contexto no lo desactiva,
    se agrega `active = true` automáticamente.
 
