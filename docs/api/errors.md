@@ -43,3 +43,16 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `CAP_DAILY_LIMIT` | Supera max_amount_per_day acumulado |
 | `CAP_LIMIT_BACKEND_DOWN` | Contador de límites caído (fail-closed) |
 | `RBAC_DENIED` | Usuario efectivo sin ACL para la operación |
+
+## Aprobaciones HITL
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `IAM_APPROVAL_NOT_FOUND` | 404 | no | Solicitud inexistente o de otro agente |
+| `IAM_APPROVAL_PENDING` | 409 | sí | Aún sin resolver; reintentar con la misma Idempotency-Key |
+| `IAM_APPROVAL_REJECTED` | 403 | no | El aprobador rechazó la operación |
+| `IAM_APPROVAL_EXPIRED` | 410 | no | Venció la ventana de aprobación |
+| `IAM_APPROVAL_CONSUMED` | 409 | no | Ya se ejecutó (una aprobación ejecuta una sola vez) |
+| `IAM_APPROVAL_MISMATCH` | 409 | no | La operación no coincide byte a byte con lo aprobado |
+| `IAM_NOT_APPROVER` | 403 | no | Solo el dueño del agente puede resolver |
+| `IAM_IDEMPOTENCY_KEY_REQUIRED` | 400 | no | Falta header Idempotency-Key |

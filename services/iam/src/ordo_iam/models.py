@@ -202,6 +202,42 @@ class AuditLog(Base):
     hash: Mapped[str] = mapped_column(String(64))
 
 
+class ApprovalStatus(enum.StrEnum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    expired = "expired"
+    consumed = "consumed"
+
+
+class ApprovalRequest(TimestampMixin, Base):
+    __tablename__ = "iam_approval_request"
+    __table_args__ = (
+        Index("uq_iam_approval_tenant_idem", "tenant", "idempotency_key", unique=True),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    tenant: Mapped[str] = mapped_column(String(64), index=True)
+    agent_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("iam_agent.principal_id", ondelete="CASCADE"), index=True
+    )
+    requested_by: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("iam_user.principal_id", ondelete="RESTRICT")
+    )
+    operation: Mapped[dict[str, Any]] = mapped_column()
+    operation_hash: Mapped[str] = mapped_column(String(64))
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    status: Mapped[ApprovalStatus] = mapped_column(
+        _enum(ApprovalStatus, "approval_status"),
+        default=ApprovalStatus.pending,
+        server_default=ApprovalStatus.pending.value,
+    )
+    approver_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    reason: Mapped[str | None] = mapped_column(Text)
+
+
 class CapabilityGrant(TimestampMixin, Base):
     __tablename__ = "iam_capability_grant"
 

@@ -93,3 +93,44 @@ class UnsupportedGrantError(IamError):
 class NotAgentOwnerError(IamError):
     code = "IAM_NOT_AGENT_OWNER"
     status_code = 403
+
+
+class ApprovalNotFoundError(IamError):
+    code = "IAM_APPROVAL_NOT_FOUND"
+    status_code = 404
+
+
+class ApprovalPendingError(IamError):
+    code = "IAM_APPROVAL_PENDING"
+    status_code = 409
+    retryable = True
+
+
+class ApprovalRejectedError(IamError):
+    code = "IAM_APPROVAL_REJECTED"
+    status_code = 403
+
+
+class ApprovalExpiredError(IamError):
+    code = "IAM_APPROVAL_EXPIRED"
+    status_code = 410
+
+
+class ApprovalConsumedError(IamError):
+    code = "IAM_APPROVAL_CONSUMED"
+    status_code = 409
+
+
+class ApprovalMismatchError(IamError):
+    code = "IAM_APPROVAL_MISMATCH"
+    status_code = 409
+
+
+class NotApproverError(IamError):
+    code = "IAM_NOT_APPROVER"
+    status_code = 403
+
+
+class IdempotencyKeyRequiredError(IamError):
+    code = "IAM_IDEMPOTENCY_KEY_REQUIRED"
+    status_code = 400

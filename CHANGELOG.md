@@ -6,6 +6,12 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F1.6** Aprobaciones HITL: iam_approval_request con operacion serializada y sellada por
+  hash (se ejecuta exactamente lo aprobado), creacion idempotente por Idempotency-Key,
+  approve/reject solo por el dueno, consumo unico, expiracion 24h; cada transicion auditada.
+  Suite e2e contra Keycloak real: login OIDC, vinculacion, agente, grant, token exchange
+  con act, PDP allow/deny/monto, HITL completo y verificacion de la cadena de auditoria.
+  Nuevo job e2e en CI. 11 tests nuevos.
 - **F1.5** PDP tres capas (cap primero, RBAC del usuario efectivo, record rules global
   AND / rol OR) con denegacion por defecto, limites monetarios en Decimal y acumulados
   diarios en micros enteros (Redis, fail-closed), POST /iam/v1/authorize, y auditoria

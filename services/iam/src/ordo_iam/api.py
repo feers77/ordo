@@ -4,18 +4,20 @@ from __future__ import annotations
 
 import asyncio
 import os
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 from functools import lru_cache
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Form
+from fastapi import APIRouter, Depends, Form, Header, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ordo_iam.agent_auth import new_credentials, verify_secret
+from ordo_iam.approvals import ApprovalService
 from ordo_iam.audit import append_audit
 from ordo_iam.bridge import IdentityBridge
 from ordo_iam.captokens import merge_caps
@@ -23,7 +25,9 @@ from ordo_iam.db import get_session
 from ordo_iam.errors import (
     AgentAuthFailedError,
     AgentSuspendedError,
+    ApprovalNotFoundError,
     DelegationNotAllowedError,
+    IdempotencyKeyRequiredError,
     NoCapabilitiesError,
     NotAgentOwnerError,
     TokenInvalidError,
@@ -244,6 +248,145 @@ async def token_exchange(
 @router.get("/jwks")
 async def jwks() -> dict[str, Any]:
     return public_jwks()
+
+
+# ---------------------------------------------------------------- approvals
+
+
+@dataclass(frozen=True)
+class AgentContext:
+    agent_id: UUID
+    acting_user_id: UUID
+    tenant: str
+    token_jti: str | None
+
+
+async def current_agent(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer)],
+) -> AgentContext:
+    if credentials is None:
+        raise TokenInvalidError("Falta el header Authorization.")
+    verifier = get_iam_verifier()
+    claims = await asyncio.to_thread(verifier.verify, credentials.credentials)
+    sub = str(claims.get("sub", ""))
+    if not sub.startswith("agent:"):
+        raise TokenInvalidError("Se requiere un token de agente emitido por ordo-iam.")
+    return AgentContext(
+        agent_id=UUID(sub.removeprefix("agent:")),
+        acting_user_id=UUID(str(claims["act"]["sub"]).removeprefix("user:")),
+        tenant=str(claims["tenant"]),
+        token_jti=claims.get("jti"),
+    )
+
+
+class CreateApprovalRequest(BaseModel):
+    operation: dict[str, Any]
+
+
+class ApprovalResponse(BaseModel):
+    approval_id: UUID
+    status: str
+    expires_at: datetime
+    operation_hash: str
+
+
+def _approval_response(request_row: Any) -> ApprovalResponse:
+    return ApprovalResponse(
+        approval_id=request_row.id,
+        status=request_row.status.value,
+        expires_at=request_row.expires_at,
+        operation_hash=request_row.operation_hash,
+    )
+
+
+@router.post("/approvals", response_model=ApprovalResponse, status_code=201)
+async def create_approval(
+    body: CreateApprovalRequest,
+    agent: Annotated[AgentContext, Depends(current_agent)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    response: Response,
+    idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+) -> ApprovalResponse:
+    if not idempotency_key:
+        raise IdempotencyKeyRequiredError(
+            "Falta el header Idempotency-Key.",
+            hint="Toda solicitud de aprobación es idempotente por clave.",
+        )
+    request_row, created = await ApprovalService(session).create(
+        tenant=agent.tenant,
+        agent_id=agent.agent_id,
+        requested_by=agent.acting_user_id,
+        operation=body.operation,
+        idempotency_key=idempotency_key,
+    )
+    if not created:
+        response.status_code = 200
+    return _approval_response(request_row)
+
+
+@router.get("/approvals/{approval_id}", response_model=ApprovalResponse)
+async def get_approval(
+    approval_id: UUID,
+    agent: Annotated[AgentContext, Depends(current_agent)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ApprovalResponse:
+    request_row = await ApprovalService(session).get(approval_id)
+    if request_row.agent_id != agent.agent_id or request_row.tenant != agent.tenant:
+        raise ApprovalNotFoundError("Solicitud de aprobación no encontrada.")
+    return _approval_response(request_row)
+
+
+class ResolveBody(BaseModel):
+    reason: str | None = None
+
+
+@router.post("/approvals/{approval_id}/approve", response_model=ApprovalResponse)
+async def approve_approval(
+    approval_id: UUID,
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    body: ResolveBody | None = None,
+) -> ApprovalResponse:
+    request_row = await ApprovalService(session).resolve(
+        approval_id,
+        approver_id=user.principal_id,
+        approve=True,
+        reason=body.reason if body else None,
+    )
+    return _approval_response(request_row)
+
+
+@router.post("/approvals/{approval_id}/reject", response_model=ApprovalResponse)
+async def reject_approval(
+    approval_id: UUID,
+    user: Annotated[User, Depends(current_user)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+    body: ResolveBody | None = None,
+) -> ApprovalResponse:
+    request_row = await ApprovalService(session).resolve(
+        approval_id,
+        approver_id=user.principal_id,
+        approve=False,
+        reason=body.reason if body else None,
+    )
+    return _approval_response(request_row)
+
+
+class ConsumeBody(BaseModel):
+    operation: dict[str, Any]
+
+
+@router.post("/approvals/{approval_id}/consume", response_model=ApprovalResponse)
+async def consume_approval(
+    approval_id: UUID,
+    body: ConsumeBody,
+    agent: Annotated[AgentContext, Depends(current_agent)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ApprovalResponse:
+    request_row = await ApprovalService(session).consume(
+        approval_id, agent_id=agent.agent_id, operation=body.operation
+    )
+    return _approval_response(request_row)
 
 
 # ---------------------------------------------------------------- authorize
