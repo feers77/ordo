@@ -125,6 +125,8 @@ class Agent(TimestampMixin, Base):
         server_default=AutonomyLevel.observer.value,
     )
     budget: Mapped[dict[str, Any]] = mapped_column(default=dict, server_default=text("'{}'"))
+    secret_hash: Mapped[str | None] = mapped_column(String(128))
+    secret_salt: Mapped[str | None] = mapped_column(String(64))
 
     principal: Mapped[Principal] = relationship(lazy="joined")
 

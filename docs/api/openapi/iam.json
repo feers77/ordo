@@ -1,6 +1,114 @@
 {
   "components": {
     "schemas": {
+      "AutonomyLevel": {
+        "enum": [
+          "observer",
+          "propose",
+          "execute",
+          "execute_approve"
+        ],
+        "title": "AutonomyLevel",
+        "type": "string"
+      },
+      "Body_token_exchange_iam_v1_token_post": {
+        "properties": {
+          "client_id": {
+            "title": "Client Id",
+            "type": "string"
+          },
+          "client_secret": {
+            "title": "Client Secret",
+            "type": "string"
+          },
+          "grant_type": {
+            "title": "Grant Type",
+            "type": "string"
+          },
+          "subject_token": {
+            "title": "Subject Token",
+            "type": "string"
+          },
+          "subject_token_type": {
+            "default": "urn:ietf:params:oauth:token-type:access_token",
+            "title": "Subject Token Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "grant_type",
+          "subject_token",
+          "client_id",
+          "client_secret"
+        ],
+        "title": "Body_token_exchange_iam_v1_token_post",
+        "type": "object"
+      },
+      "GrantRequest": {
+        "properties": {
+          "cap": {
+            "additionalProperties": true,
+            "title": "Cap",
+            "type": "object"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "valid_until": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid Until"
+          }
+        },
+        "required": [
+          "cap"
+        ],
+        "title": "GrantRequest",
+        "type": "object"
+      },
+      "GrantResponse": {
+        "properties": {
+          "grant_id": {
+            "format": "uuid",
+            "title": "Grant Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "grant_id"
+        ],
+        "title": "GrantResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
       "MeResponse": {
         "properties": {
           "display_name": {
@@ -33,6 +141,142 @@
           "email"
         ],
         "title": "MeResponse",
+        "type": "object"
+      },
+      "RegisterAgentRequest": {
+        "properties": {
+          "autonomy_level": {
+            "$ref": "#/components/schemas/AutonomyLevel",
+            "default": "observer"
+          },
+          "budget": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          }
+        },
+        "required": [
+          "display_name",
+          "model"
+        ],
+        "title": "RegisterAgentRequest",
+        "type": "object"
+      },
+      "RegisterAgentResponse": {
+        "properties": {
+          "agent_id": {
+            "format": "uuid",
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "agent_secret": {
+            "title": "Agent Secret",
+            "type": "string"
+          },
+          "autonomy_level": {
+            "$ref": "#/components/schemas/AutonomyLevel"
+          }
+        },
+        "required": [
+          "agent_id",
+          "agent_secret",
+          "autonomy_level"
+        ],
+        "title": "RegisterAgentResponse",
+        "type": "object"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "title": "Access Token",
+            "type": "string"
+          },
+          "expires_in": {
+            "default": 900,
+            "title": "Expires In",
+            "type": "integer"
+          },
+          "issued_token_type": {
+            "default": "urn:ietf:params:oauth:token-type:access_token",
+            "title": "Issued Token Type",
+            "type": "string"
+          },
+          "token_type": {
+            "default": "Bearer",
+            "title": "Token Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token"
+        ],
+        "title": "TokenResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
         "type": "object"
       }
     },
@@ -71,6 +315,133 @@
         "summary": "Healthz"
       }
     },
+    "/iam/v1/agents": {
+      "post": {
+        "operationId": "register_agent_iam_v1_agents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterAgentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterAgentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Register Agent",
+        "tags": [
+          "iam"
+        ]
+      }
+    },
+    "/iam/v1/agents/{agent_id}/grants": {
+      "post": {
+        "operationId": "grant_capability_iam_v1_agents__agent_id__grants_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Grant Capability",
+        "tags": [
+          "iam"
+        ]
+      }
+    },
+    "/iam/v1/jwks": {
+      "get": {
+        "operationId": "jwks_iam_v1_jwks_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Jwks Iam V1 Jwks Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Jwks",
+        "tags": [
+          "iam"
+        ]
+      }
+    },
     "/iam/v1/me": {
       "get": {
         "operationId": "me_iam_v1_me_get",
@@ -92,6 +463,47 @@
           }
         ],
         "summary": "Me",
+        "tags": [
+          "iam"
+        ]
+      }
+    },
+    "/iam/v1/token": {
+      "post": {
+        "operationId": "token_exchange_iam_v1_token_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_token_exchange_iam_v1_token_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Token Exchange",
         "tags": [
           "iam"
         ]

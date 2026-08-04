@@ -100,6 +100,8 @@ class PrincipalRepository:
         model_version: str | None = None,
         autonomy_level: AutonomyLevel = AutonomyLevel.observer,
         budget: dict[str, Any] | None = None,
+        secret_hash: str | None = None,
+        secret_salt: str | None = None,
     ) -> Agent:
         owner = await self.session.get(User, owner_user_id)
         if owner is None:
@@ -129,10 +131,15 @@ class PrincipalRepository:
             model_version=model_version,
             autonomy_level=autonomy_level,
             budget=budget or {},
+            secret_hash=secret_hash,
+            secret_salt=secret_salt,
         )
         self.session.add(agent)
         await self.session.commit()
         return agent
+
+    async def get_agent(self, agent_id: uuid.UUID) -> Agent | None:
+        return await self.session.get(Agent, agent_id)
 
     # -- lifecycle ----------------------------------------------------------
 
