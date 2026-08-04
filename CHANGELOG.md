@@ -6,6 +6,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F1.7** Telegram como primer canal HITL: el aprobador resuelve la solicitud con dos
+  botones y queda en el mismo estado que por API. El vinculo chat-principal se establece
+  con un codigo de un solo uso, de 10 minutos, emitido por un endpoint autenticado y
+  guardado solo como sha256: un chat_id por si mismo no prueba identidad. El callback_data
+  va firmado con HMAC derivado del secreto del servidor y el webhook exige la cabecera
+  secreta antes de leer el cuerpo; una firma valida desde otro usuario no aprueba nada,
+  porque la resolucion sigue exigiendo que el aprobador sea el dueno del agente. El aviso
+  se encola como job en la misma transaccion que crea la aprobacion: el request nunca sale
+  a la red. 30 tests nuevos.
 - **F2.6** Chatter como canal agente-humano: mensajes con author_kind obligatorio (user,
   agent o system, para que quien lee un hilo distinga persona de agente sin inferirlo),
   seguidores, actividades con estado derivado de la fecha, y tracking automatico de

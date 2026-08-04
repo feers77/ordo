@@ -56,3 +56,15 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `IAM_APPROVAL_MISMATCH` | 409 | no | La operación no coincide byte a byte con lo aprobado |
 | `IAM_NOT_APPROVER` | 403 | no | Solo el dueño del agente puede resolver |
 | `IAM_IDEMPOTENCY_KEY_REQUIRED` | 400 | no | Falta header Idempotency-Key |
+
+## Canales de notificación (HITL por Telegram)
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `IAM_LINK_CODE_INVALID` | 400 | no | Código de vinculación inexistente, vencido o ya usado |
+| `IAM_CHANNEL_ALREADY_LINKED` | 409 | no | La dirección ya está vinculada a otro principal |
+| `IAM_CHANNEL_NOT_VERIFIED` | 403 | no | El chat no está verificado para resolver aprobaciones |
+| `IAM_CALLBACK_INVALID` | 403 | no | Callback sin firma HMAC válida del servidor |
+| `IAM_WEBHOOK_UNAUTHORIZED` | 403 | no | Falta o no coincide el secreto del webhook |
+| `IAM_TELEGRAM_NOT_CONFIGURED` | 503 | no | Falta TELEGRAM_BOT_TOKEN o TELEGRAM_WEBHOOK_SECRET |
+| `IAM_TELEGRAM_DELIVERY_FAILED` | 502 | sí | Telegram no aceptó el envío; el job reintenta con backoff |
