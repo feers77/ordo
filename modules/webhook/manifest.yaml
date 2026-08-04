@@ -1,0 +1,5 @@
+name: webhook
+version: 0.1.0
+summary: "Webhooks: el outbox llega firmado a quien se suscribió"
+depends: [base]
+category: Integraciones

@@ -223,3 +223,11 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `STOCK_NO_LOCATION` | 409 | no | Falta una ubicación del tipo requerido en la compañía |
 | `STOCK_ORDER_NOT_READY` | 409 | no | Solo se entrega/recibe una orden confirmada o facturada |
 | `STOCK_NOTHING_TO_MOVE` | 400 | no | La orden no tiene líneas con producto almacenable |
+
+## Webhooks
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `WEBHOOK_NOT_FOUND` | 404 | no | La suscripción no existe |
+| `WEBHOOK_URL_INVALID` | 400 | no | La URL debe ser http:// o https:// |
+| `WEBHOOK_INVALID_PATTERN` | 400 | no | El patrón de eventos no puede estar vacío |

@@ -1320,11 +1320,17 @@ name = "ordo-events"
 version = "0.1.0"
 source = { editable = "services/events" }
 dependencies = [
+    { name = "httpx" },
+    { name = "ordo-core" },
     { name = "ordo-runtime" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "ordo-runtime", editable = "packages/ordo-runtime" }]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.28" },
+    { name = "ordo-core", editable = "packages/ordo-core" },
+    { name = "ordo-runtime", editable = "packages/ordo-runtime" },
+]
 
 [[package]]
 name = "ordo-gateway"

@@ -1,0 +1,14 @@
+# Integraciones administra suscripciones; nadie borra entregas, porque la
+# bitácora es a la vez prueba de entrega y watermark: borrarla reenvía.
+# El secreto se lee con la suscripción, así que 'read' aquí ya es sensible.
+roles:
+  integraciones:
+    webhook.subscription: [read, write, create]
+    webhook.delivery: [read]
+    ir.model: [read]
+  contabilidad:
+    webhook.subscription: [read]
+    webhook.delivery: [read]
+  auditor:
+    webhook.subscription: [read]
+    webhook.delivery: [read]

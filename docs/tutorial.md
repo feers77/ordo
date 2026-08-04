@@ -340,7 +340,26 @@ producto ES su valor contable; `stock.on_hand` y `stock.reorder_alerts`
 están en `GET /api/v1/reports`. No se entrega más de lo que hay
 (`STOCK_INSUFFICIENT`) y un picking hecho solo se revierte con el inverso.
 
-## 16. Operarlo todo por MCP
+## 16. Webhooks: los eventos llegan solos
+
+```python
+from modules.webhook.service import WebhookService
+
+result = await WebhookService(env).create_subscription(
+    name="Avisos de venta",
+    url="https://mi-agente.example/hooks/ordo",
+    event_pattern="sale.order.*",
+)
+result["secret"]   # se muestra completo SOLO ahora; firma cada entrega
+```
+
+Cada acción de negocio deja su evento en el outbox (misma transacción), y el
+worker `ordo-events` lo entrega por HTTP con `X-Ordo-Signature`
+(HMAC-SHA256 del cuerpo con el secreto) y `X-Ordo-Delivery` estable entre
+reintentos: verifica la firma y deduplica por ese id. Diez fallos seguidos
+suspenden la suscripción (`action_resume` la revive).
+
+## 17. Operarlo todo por MCP
 
 El servicio `ordo-mcp` expone el contrato completo a cualquier cliente MCP
 (transporte streamable HTTP, `POST /mcp`, tenant en `X-Ordo-Tenant`):

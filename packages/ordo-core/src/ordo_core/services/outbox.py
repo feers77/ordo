@@ -59,6 +59,32 @@ class Outbox:
             for row in rows
         ]
 
+    async def since(self, last_id: int, limit: int = 100) -> list[dict[str, Any]]:
+        """Events newer than a watermark, oldest first. Same shape as `pending`.
+
+        `published_at` is deliberately ignored: the relay and every webhook
+        subscriber read the same log at their own pace, each one keeping its
+        own watermark, so a slow consumer never holds back the others.
+        """
+        rows = (
+            await self.session.execute(
+                text(
+                    "SELECT id, event_type, subject, payload FROM ir_outbox "
+                    "WHERE id > :last_id ORDER BY id LIMIT :limit"
+                ),
+                {"last_id": last_id, "limit": limit},
+            )
+        ).all()
+        return [
+            {
+                "id": row.id,
+                "event_type": row.event_type,
+                "subject": row.subject,
+                "payload": row.payload,
+            }
+            for row in rows
+        ]
+
     async def relay(self, publish: Publisher, limit: int = 100) -> int:
         """Publish pending events and mark them. Returns how many were sent."""
         events = await self.pending(limit)

@@ -3,7 +3,7 @@ name: ordo
 # Perfiles:
 #   core: postgres, pgbouncer, redis, nats, minio        (siempre)
 #   dev:  keycloak, mailpit                              (desarrollo)
-#   app:  api, mcp                                       (servicios ORDO)
+#   app:  api, iam, mcp, events                          (servicios ORDO)
 #   obs:  otel-collector, prometheus, grafana, loki, tempo
 # Prod: docker-compose.prod.yml (override con límites, sin mailpit).
 
@@ -77,6 +77,27 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "127.0.0.1:8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request as u; u.urlopen(\"http://127.0.0.1:8000/healthz\", timeout=3)'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  events:
+    build:
+      context: ../..
+      dockerfile: services/events/Dockerfile
+    image: ordo-events:latest
+    profiles: [app]
+    environment:
+      ORDO_DATABASE_URL: postgresql+asyncpg://ordo_app:${ORDO_APP_PASSWORD:?definir en .env}@postgres:5432/ordo
+      ORDO_EVENTS_INTERVAL: ${ORDO_EVENTS_INTERVAL:-5}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "127.0.0.1:8003:8000"
     depends_on:
       postgres:
         condition: service_healthy
