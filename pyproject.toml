@@ -5,6 +5,7 @@ description = "ORDO ERP — API-first ERP/CRM operado por agentes de IA"
 requires-python = ">=3.12"
 dependencies = [
     "ordo-runtime",
+    "ordo-testing",
     "ordo-gateway",
     "ordo-iam",
     "ordo-api",
@@ -16,6 +17,7 @@ dependencies = [
 
 [tool.uv.sources]
 ordo-runtime = { workspace = true }
+ordo-testing = { workspace = true }
 ordo-gateway = { workspace = true }
 ordo-iam = { workspace = true }
 ordo-api = { workspace = true }
@@ -33,6 +35,7 @@ dev = [
     "pytest-asyncio>=0.25",
     "pytest-cov>=6.0",
     "pre-commit>=4.0",
+    "types-pyyaml>=6.0",
     "commitizen>=4.1",
 ]
 
@@ -56,7 +59,7 @@ select = [
 ignore = ["S101"]  # asserts permitidos en tests; bandit corre aparte en CI
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S", "DTZ"]
+"tests/**" = ["S", "DTZ", "T20"]
 
 [tool.mypy]
 python_version = "3.12"

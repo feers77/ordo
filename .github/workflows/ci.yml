@@ -123,7 +123,7 @@ jobs:
       - name: Build imagen
         run: docker build -f services/${{ matrix.service }}/Dockerfile -t ordo-${{ matrix.service }}:${{ github.sha }} .
       - name: trivy
-        uses: aquasecurity/trivy-action@0.29.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ordo-${{ matrix.service }}:${{ github.sha }}
           severity: HIGH,CRITICAL

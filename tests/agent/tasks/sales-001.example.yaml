@@ -1,0 +1,11 @@
+# Tarea de ejemplo — NO se ejecuta (.example). El catálogo real se puebla
+# desde F3 cuando exista negocio que probar.
+id: sales-001
+goal: "Crea una cotización para el cliente Acme por 10 unidades del producto SKU-100 con 5% de descuento y confírmala."
+setup: [partner:acme, product:SKU-100@1000CLP]
+assert:
+  - model: sale.order
+    domain: [["partner_id.name", "=", "Acme"], ["state", "=", "sale"]]
+    count: 1
+  - expression: "order.amount_untaxed == 9500"
+  - invariant: no_invalid_states
