@@ -126,6 +126,12 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `EDI_SIGN_INVALID_XML` | 400 | no | El documento a firmar o verificar no es XML válido |
 | `EDI_SIGN_FAILED` | 500 | no | La firma falló; clave y certificado no se corresponden |
 | `EDI_SIGN_INVALID` | 400 | no | La firma del documento no es válida |
+| `ACTION_UNKNOWN` | 404 | no | El modelo no tiene esa acción; el hint lista las disponibles |
+| `EDI_SOURCE_NOT_FOUND` | 404 | no | El documento de origen no existe |
+| `EDI_SOURCE_NOT_READY` | 409 | no | Solo una orden confirmada o facturada emite documento |
+| `EDI_MISSING_TAX_ID` | 422 | no | Falta el identificador tributario del emisor o receptor |
+| `EDI_MISSING_COUNTRY` | 422 | no | La compañía no declara país; no hay adaptador que elegir |
+| `EDI_DOCUMENT_TYPE_REQUIRED` | 400 | no | Falta el tipo de documento a emitir |
 
 ## Ventas y compras
 

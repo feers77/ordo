@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, Header
@@ -36,10 +37,21 @@ def engine() -> AsyncEngine:
 
 
 def get_registry() -> Registry:
-    """Business modules land in F4+; F2 boots with an empty registry."""
+    """Loads the business modules once per process.
+
+    `ORDO_MODULES_PATH` points at the modules directory; without it (or if
+    the path does not exist) the service boots with an empty registry, which
+    keeps unit environments working but exposes no business models.
+    """
     global _registry
     if _registry is None:
-        _registry = Registry.build([Module("base")])
+        from ordo_core.modules import ModuleLoader
+
+        modules_path = Path(os.environ.get("ORDO_MODULES_PATH", "modules"))
+        if modules_path.exists():
+            _registry = Registry.build(ModuleLoader([modules_path]).load())
+        else:
+            _registry = Registry.build([Module("base")])
     return _registry
 
 

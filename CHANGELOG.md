@@ -4,6 +4,21 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ## [Unreleased]
 
+### Added
+
+- **F5.2** Acciones de negocio por la API: registro `ordo_core.actions` con decorador
+  (`actions.py` por módulo, importado por el loader), descubrimiento en
+  `GET /api/v1/{model}/actions` con metadato `requires_approval` para el PDP, y
+  ejecución en `POST /api/v1/{model}/{id}/actions/{action}` con el contrato de toda
+  escritura: Idempotency-Key obligatorio, `dry_run` que ejecuta dentro de un savepoint
+  y lo revierte todo (una confirmación simulada no quema número legal, verificado), y
+  evento al outbox en la misma transacción. Expuestas: post/reverse/cancel de asientos,
+  confirmar/facturar/cancelar ventas y compras, y `action_einvoice` que emite el DTE
+  desde la orden vía un puente que valida identificadores tributarios y resuelve
+  impuestos. `ordo-api` además deja de arrancar con registry vacío: carga los módulos
+  de `ORDO_MODULES_PATH`. Firmar/enviar quedan fuera hasta tener vault y ambiente de
+  certificación. 4 tests unitarios y 9 de integración HTTP nuevos.
+
 ### Changed
 
 - **Deuda saldada.** (1) La cola de jobs vuelve a ser una sola: `ordo-iam` ahora depende
