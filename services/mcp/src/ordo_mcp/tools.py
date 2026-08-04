@@ -253,6 +253,25 @@ TOOLS: list[dict[str, Any]] = [
     },
 ]
 
+
+def tool_authz_target(name: str, arguments: dict[str, Any]) -> tuple[str, str]:
+    """(modelo, operación) que el PDP evalúa para cada tool (ADR-016)."""
+    model = str(arguments.get("model", "")) or "ir.model"
+    if name in ("ordo_schema", "ordo_list_actions"):
+        return ("ir.model" if name == "ordo_schema" else model, "read")
+    if name in ("ordo_search", "ordo_read"):
+        return (model, "read")
+    if name == "ordo_create":
+        return (model, "create")
+    if name == "ordo_write":
+        return (model, "write")
+    if name == "ordo_run_action":
+        return (model, str(arguments.get("action", "write")))
+    if name in ("ordo_list_reports", "ordo_run_report"):
+        return ("reports", "read")
+    return ("ir.model", "read")
+
+
 HANDLERS: dict[str, ToolHandler] = {
     "ordo_schema": tool_schema,
     "ordo_search": tool_search,

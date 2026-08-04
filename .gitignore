@@ -27,3 +27,6 @@ uv.lock.bak
 *.swp
 .DS_Store
 infra/compose/minio/certs/
+
+# Material criptográfico local (llave de firma IAM, certificados)
+infra/compose/secrets/

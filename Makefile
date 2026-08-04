@@ -21,8 +21,10 @@ seed: ## Crea y puebla un tenant: make seed TENANT=demo
 	@test -n "$(TENANT)" || (echo "Uso: make seed TENANT=demo" && exit 1)
 	uv run python tools/seed_tenant.py $(TENANT)
 
-app: ## Construye y levanta los servicios ORDO (api, mcp)
-	$(COMPOSE) -f infra/compose/docker-compose.prod.yml --profile app up -d --build api mcp
+app: ## Construye y levanta los servicios ORDO (api, iam, mcp)
+	@test -f infra/compose/secrets/iam_signing_key.pem || (mkdir -p infra/compose/secrets && openssl genrsa -out infra/compose/secrets/iam_signing_key.pem 2048 && chmod 644 infra/compose/secrets/iam_signing_key.pem && echo "llave de firma IAM generada")
+	docker exec ordo-postgres-1 psql -U ordo -d ordo -tc "SELECT 1 FROM pg_database WHERE datname='ordo_iam'" | grep -q 1 || docker exec ordo-postgres-1 psql -U ordo -d ordo -c "CREATE DATABASE ordo_iam"
+	$(COMPOSE) -f infra/compose/docker-compose.prod.yml --profile app up -d --build api iam mcp
 
 lint:
 	uv run ruff check .

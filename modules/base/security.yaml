@@ -1,19 +1,25 @@
 # Roles por defecto sobre los modelos maestros. Denegación por defecto: lo
 # que no está aquí no lo alcanza nadie sin un rol propio del tenant.
+# "ir.model" (introspección del schema) y "reports" son pseudo-modelos del
+# sistema: no están en el registry pero el PDP los evalúa igual (ADR-016).
 roles:
   ventas:
+    ir.model: [read]
     res.partner: [read, write, create]
     res.currency: [read]
     res.company: [read]
     uom.uom: [read]
     uom.category: [read]
   compras:
+    ir.model: [read]
     res.partner: [read, write, create]
     res.currency: [read]
     res.company: [read]
     uom.uom: [read]
     uom.category: [read]
   contabilidad:
+    ir.model: [read]
+    reports: [read]
     res.partner: [read, write, create]
     res.currency: [read, write, create]
     res.currency.rate: [read, write, create]
@@ -21,10 +27,14 @@ roles:
     uom.uom: [read]
     uom.category: [read]
   tesoreria:
+    ir.model: [read]
+    reports: [read]
     res.partner: [read]
     res.currency: [read]
     res.company: [read]
   auditor:
+    ir.model: [read]
+    reports: [read]
     res.partner: [read]
     res.currency: [read]
     res.currency.rate: [read]
