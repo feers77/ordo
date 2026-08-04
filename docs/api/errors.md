@@ -122,3 +122,23 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `PY_DE_EMPTY` | 400 | no | Un DE sin ítems no es un documento |
 | `PY_DE_NO_TIMBRADO` | 409 | no | El rango de numeración no trae el timbrado |
 | `PY_DE_UNKNOWN_RATE` | 400 | no | El SIFEN solo conoce IVA 10 %, 5 % y exento |
+
+## Ventas y compras
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `SALE_ORDER_EMPTY` | 400 | no | La orden necesita al menos una línea |
+| `SALE_ORDER_NOT_FOUND` | 404 | no | La orden no existe |
+| `SALE_INVALID_TRANSITION` | 409 | no | La acción no es válida en el estado actual |
+| `SALE_TAX_UNKNOWN` | 400 | no | Código de impuesto inexistente o no aplicable a ventas |
+| `SALE_NO_ACCOUNT` | 409 | no | Línea sin cuenta y diario sin cuenta por defecto |
+| `SALE_ZERO_TOTAL` | 400 | no | El documento redondea a cero; nada que asentar |
+| `PURCHASE_ORDER_EMPTY` | 400 | no | La orden necesita al menos una línea |
+| `PURCHASE_ORDER_NOT_FOUND` | 404 | no | La orden no existe |
+| `PURCHASE_INVALID_TRANSITION` | 409 | no | La acción no es válida en el estado actual |
+| `PURCHASE_TAX_UNKNOWN` | 400 | no | Código de impuesto inexistente o no aplicable a compras |
+| `PURCHASE_NO_ACCOUNT` | 409 | no | Línea sin cuenta y diario sin cuenta por defecto |
+| `PURCHASE_ZERO_TOTAL` | 400 | no | El documento redondea a cero; nada que asentar |
+| `PURCHASE_VENDOR_REF_REQUIRED` | 400 | no | Falta el número de la factura del proveedor |
+| `ACCOUNT_SETTINGS_MISSING` | 409 | no | La compañía no tiene configuración contable |
+| `ACCOUNT_TAX_NO_ACCOUNT` | 409 | no | El impuesto no tiene cuenta contable asignada |

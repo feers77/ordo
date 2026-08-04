@@ -6,6 +6,17 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F5.1** Ventas y compras con asiento automático (diseño F5-01): `sale.order` y
+  `purchase.order` con transiciones explícitas (confirmar fija totales con el motor de
+  impuestos y toma número de secuencia; facturar crea y contabiliza el asiento en la
+  misma operación; una orden facturada no se cancela, se revierte su asiento). El
+  impuesto pasa a ser registro (`account.tax`) con su cuenta contable y su lado
+  (venta/compra/ambos), y `account.settings` define por cobrar y por pagar por
+  compañía. El constructor de partidas es común a ambos módulos y está probado con
+  hypothesis: cualquier combinación de líneas, descuentos y retenciones produce un
+  asiento que cuadra o un error estable (`*_ZERO_TOTAL` cuando el documento redondea a
+  cero). Retenciones reducen la contrapartida y quedan en su propia cuenta. 8 tests de
+  propiedad y 10 de integración nuevos.
 - **F4.3** Framework de facturación electrónica (ADR-014): documento electrónico como
   máquina de estados explícita (draft, generated, signed, sent, accepted, rejected,
   contingency, cancelled) donde cada transición es un método y las inválidas fallan con
