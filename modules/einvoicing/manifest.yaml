@@ -1,0 +1,5 @@
+name: einvoicing
+version: 0.1.0
+summary: "Facturación electrónica: documentos, folios, certificados y estados"
+depends: [base, account]
+category: Localización
