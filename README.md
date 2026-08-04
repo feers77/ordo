@@ -37,6 +37,9 @@ En desarrollo, todavía sin release. Lo que ya funciona y está probado:
   reportes financieros), `sale` y `purchase` (órdenes que al facturarse generan y
   contabilizan su asiento solas) y `einvoicing` (documentos electrónicos como máquina
   de estados, folios autorizados, certificados).
+- **Servidor MCP** — cualquier cliente MCP (Claude incluido) descubre y opera ORDO:
+  `ordo_schema`, búsqueda, CRUD con dry-run e idempotencia, acciones de negocio con
+  su metadato de aprobación y reportes. JSON-RPC sobre `POST /mcp`, sin SDK (ADR-015).
 - **API agéntica** — las transiciones de negocio son operaciones de primera clase:
   descubrimiento en `GET /api/v1/{model}/actions` (con `requires_approval` para el
   PDP), ejecución idempotente con `dry_run` que no quema numeración legal, eventos al

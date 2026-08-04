@@ -187,3 +187,4 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `STATEMENT_UNBALANCED` | 409 | no | El extracto no cuadra contra sus saldos |
 | `REPORT_UNKNOWN` | 404 | no | No existe el reporte; el hint lista los disponibles |
 | `REPORT_PARAM_REQUIRED` | 400 | no | Falta un parámetro obligatorio del reporte |
+| `TOOL_UNKNOWN` | — | no | (MCP) No existe la tool; el hint lista las disponibles |

@@ -1378,11 +1378,15 @@ name = "ordo-mcp"
 version = "0.1.0"
 source = { editable = "services/mcp" }
 dependencies = [
+    { name = "ordo-core" },
     { name = "ordo-runtime" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "ordo-runtime", editable = "packages/ordo-runtime" }]
+requires-dist = [
+    { name = "ordo-core", editable = "packages/ordo-core" },
+    { name = "ordo-runtime", editable = "packages/ordo-runtime" },
+]
 
 [[package]]
 name = "ordo-render"
