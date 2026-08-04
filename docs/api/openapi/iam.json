@@ -1,4 +1,48 @@
 {
+  "components": {
+    "schemas": {
+      "MeResponse": {
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "principal_id": {
+            "format": "uuid",
+            "title": "Principal Id",
+            "type": "string"
+          },
+          "tenant": {
+            "title": "Tenant",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "principal_id",
+          "tenant",
+          "type",
+          "display_name",
+          "email"
+        ],
+        "title": "MeResponse",
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
   "info": {
     "title": "ordo-iam",
     "version": "0.1.0"
@@ -25,6 +69,32 @@
           }
         },
         "summary": "Healthz"
+      }
+    },
+    "/iam/v1/me": {
+      "get": {
+        "operationId": "me_iam_v1_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Me",
+        "tags": [
+          "iam"
+        ]
       }
     },
     "/readyz": {

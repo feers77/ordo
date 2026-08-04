@@ -42,3 +42,24 @@ class GrantNotFoundError(IamError):
 class PrincipalNotFoundError(IamError):
     code = "IAM_PRINCIPAL_NOT_FOUND"
     status_code = 404
+
+
+class TokenInvalidError(IamError):
+    code = "IAM_TOKEN_INVALID"
+    status_code = 401
+
+
+class TokenExpiredError(IamError):
+    code = "IAM_TOKEN_EXPIRED"
+    status_code = 401
+    retryable = True
+
+
+class UnknownIdentityError(IamError):
+    code = "IAM_UNKNOWN_IDENTITY"
+    status_code = 401
+
+
+class PrincipalSuspendedError(IamError):
+    code = "IAM_PRINCIPAL_SUSPENDED"
+    status_code = 403
