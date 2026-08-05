@@ -16,6 +16,7 @@ from ordo_core import Environment
 from ordo_core.actions import actions_for, dispatch
 from ordo_core.explain import explain_record
 from ordo_core.idempotency import remember, replay
+from ordo_core.nl import translate_query
 from ordo_core.recordset import RecordSet
 from ordo_core.reports import reports_available, run_report
 from ordo_core.semantic import build_schema
@@ -40,6 +41,10 @@ async def _idempotent(
 async def tool_schema(env: Environment, args: dict[str, Any]) -> dict[str, Any]:
     models = args.get("models")
     return build_schema(env.registry, models=models, compact=True)
+
+
+async def tool_translate_query(env: Environment, args: dict[str, Any]) -> dict[str, Any]:
+    return await translate_query(env, str(args["question"]), models=args.get("models"))
 
 
 async def tool_search(env: Environment, args: dict[str, Any]) -> dict[str, Any]:
@@ -172,6 +177,20 @@ TOOLS: list[dict[str, Any]] = [
             "llano y ejemplos. Empieza aquí para saber qué existe."
         ),
         "inputSchema": _obj({"models": {"type": "array", "items": {"type": "string"}}}, []),
+    },
+    {
+        "name": "ordo_translate_query",
+        "description": (
+            "Traduce una pregunta en lenguaje natural a un dominio ORDO válido y lo "
+            "DEVUELVE SIN EJECUTAR: revísalo y ejecútalo tú con ordo_search si te convence."
+        ),
+        "inputSchema": _obj(
+            {
+                "question": {"type": "string"},
+                "models": {"type": "array", "items": {"type": "string"}},
+            },
+            ["question"],
+        ),
     },
     {
         "name": "ordo_search",
@@ -320,6 +339,9 @@ TOOLS: list[dict[str, Any]] = [
 def tool_authz_target(name: str, arguments: dict[str, Any]) -> tuple[str, str]:
     """(modelo, operación) que el PDP evalúa para cada tool (ADR-016)."""
     model = str(arguments.get("model", "")) or "ir.model"
+    if name == "ordo_translate_query":
+        # Traducir es leer metadatos: no toca datos ni ejecuta el dominio.
+        return ("ir.model", "read")
     if name in ("ordo_schema", "ordo_list_actions"):
         return ("ir.model" if name == "ordo_schema" else model, "read")
     if name in ("ordo_search", "ordo_read", "ordo_explain", "ordo_aggregate"):
@@ -337,6 +359,7 @@ def tool_authz_target(name: str, arguments: dict[str, Any]) -> tuple[str, str]:
 
 HANDLERS: dict[str, ToolHandler] = {
     "ordo_schema": tool_schema,
+    "ordo_translate_query": tool_translate_query,
     "ordo_search": tool_search,
     "ordo_aggregate": tool_aggregate,
     "ordo_read": tool_read,

@@ -399,7 +399,24 @@ lectura: no pide `Idempotency-Key`, y el dominio pasa por el mismo
 compilador que el resto, así que las reglas de registro del rol siguen
 aplicando. La tool MCP equivalente es `ordo_aggregate`.
 
-## 19. Operarlo todo por MCP
+## 19. Preguntar en castellano
+
+```bash
+curl -X POST "$ORDO/meta/v1/translate-query" -H "X-Ordo-Tenant: acme" \
+     -d '{"question": "ordenes confirmadas de agosto sobre un millon",
+          "models": ["sale.order"]}'
+# -> {"model": "sale.order",
+#     "domain": [["state","=","confirmed"], ["date_order",">=","2026-08-01"],
+#                ["amount_total",">","1000000"]], "attempts": 1}
+```
+
+Devuelve el dominio, **no lo ejecuta**: lo revisas y lo pasas a
+`GET /api/v1/sale.order?domain=...` si te convence. El dominio propuesto ya
+pasó por el compilador real, así que si vuelve es porque compila. Requiere
+`ORDO_NL_COMMAND` configurada en el despliegue; sin ella el endpoint
+responde `NL_UNAVAILABLE` en vez de fallar de forma rara.
+
+## 20. Operarlo todo por MCP
 
 El servicio `ordo-mcp` expone el contrato completo a cualquier cliente MCP
 (transporte streamable HTTP, `POST /mcp`, tenant en `X-Ordo-Tenant`):

@@ -5,16 +5,27 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
-from ordo_core import Registry
+from ordo_core import Environment, Registry
 from ordo_core.actions import actions_for
 from ordo_core.errors import KernelError
+from ordo_core.nl import CommandQueryModel, QueryModel, translate_query
 from ordo_core.reports import reports_available
 from ordo_core.semantic import build_schema
+from pydantic import BaseModel
 
-from ordo_api.deps import get_registry
+from ordo_api.deps import get_env, get_registry
 from ordo_api.records import _wrap
 
 router = APIRouter(prefix="/meta/v1", tags=["meta"])
+
+
+def get_query_model() -> QueryModel:
+    """The configured language model, as a dependency.
+
+    Building it here (and not inside the endpoint) is what lets a test or a
+    different deployment swap the translator without touching the route.
+    """
+    return CommandQueryModel()
 
 
 @router.get("/schema")
@@ -54,6 +65,29 @@ async def action_catalog(
     ]
     catalog.sort(key=lambda entry: (entry["model"], entry["name"]))
     return {"actions": catalog, "reports": [spec.describe() for spec in reports_available()]}
+
+
+class TranslateQueryRequest(BaseModel):
+    question: str
+    models: list[str] | None = None
+
+
+@router.post("/translate-query")
+async def translate_query_endpoint(
+    body: TranslateQueryRequest,
+    env: Annotated[Environment, Depends(get_env)],
+    client: Annotated[QueryModel, Depends(get_query_model)],
+) -> dict[str, Any]:
+    """Translate a question into a domain and return it WITHOUT running it.
+
+    Whoever executes the domain does it through the regular endpoints, with
+    its own permissions: a hallucination cannot touch data by itself
+    (ADR-017).
+    """
+    try:
+        return await translate_query(env, body.question, models=body.models, client=client)
+    except KernelError as exc:
+        raise _wrap(exc) from exc
 
 
 @router.get("/models")
