@@ -23,6 +23,22 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F12.2** Punto de venta: caja y turno (ADR-019, diseño F12-02). Módulo `pos` con
+  `pos.config`, `pos.payment.method` y `pos.session`. El turno se abre con un fondo
+  declarado, se cierra a ventas nuevas —contar el cajón toma minutos y durante esos
+  minutos la caja no puede seguir vendiendo— y se arquea: la diferencia entre lo contado
+  y lo esperado **se asienta y se contabiliza en el acto**, porque un faltante en
+  borrador es un faltante que nadie mira. Sin diferencia no hay asiento. Una caja tiene
+  un turno abierto o ninguno (`POS_SESSION_ALREADY_OPEN`): con dos turnos vivos sobre el
+  mismo cajón no se sabe contra qué fondo contar. `action_close` exige aprobación y
+  `action_open` no — la diferencia de caja es la señal de robo hormiga y que la persona
+  responsable la vea es el control, no un trámite. **El límite de monto por venta lo pone
+  el capability token, no `requires_approval`**: pedirle permiso a la dueña por cada
+  polera mataría el negocio. La aritmética del arqueo vive sin base de datos y se prueba
+  con hypothesis, incluida la regla de que el vuelto solo sale del efectivo: darlo de una
+  tarjeta saca del cajón plata que nunca entró. Roles nuevos `cajero` y
+  `supervisor_tienda`.
+
 - **F12.1b** Generación de la matriz de variantes (diseño F12-01b):
   `POST /api/v1/product.template/{id}/actions/action_generate_variants` crea el producto
   cartesiano de los ejes declarados. **Regenerar es la operación normal** —la tienda

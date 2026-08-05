@@ -215,6 +215,19 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `PRODUCT_VARIANT_LIMIT` | 400 | no | La matriz supera el tope de variantes por operación |
 | `PRODUCT_VARIANT_HAS_STOCK` | 409 | no | La variante todavía tiene existencias: agótala o ajústala antes de archivar |
 
+## Punto de venta (F12-02)
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `POS_CONFIG_MISSING` | 409 | no | La caja no existe o le faltan ubicación, diarios o cuentas |
+| `POS_SESSION_NOT_FOUND` | 404 | no | El turno no existe |
+| `POS_SESSION_ALREADY_OPEN` | 409 | no | Esa caja ya tiene un turno abierto; ciérralo antes de abrir otro |
+| `POS_SESSION_INVALID_TRANSITION` | 409 | no | La acción no es válida desde el estado actual del turno |
+| `POS_OPENING_CASH_INVALID` | 400 | no | El fondo de caja no puede ser negativo |
+| `POS_COUNTED_CASH_REQUIRED` | 400 | no | Un cierre sin efectivo contado no es un arqueo |
+| `POS_PAYMENT_INSUFFICIENT` | 400 | no | Los cobros no cubren el total del ticket, o hay un importe no positivo |
+| `POS_CHANGE_ON_NON_CASH` | 400 | no | El vuelto solo sale del efectivo recibido |
+
 ## Inventario
 
 | Código | HTTP | Retryable | Significado |
