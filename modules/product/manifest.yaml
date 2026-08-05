@@ -1,5 +1,5 @@
 name: product
-version: 0.1.0
-summary: "Productos y servicios: lo que se vende, se compra y se almacena"
+version: 0.2.0
+summary: "Productos y servicios: lo que se vende, se compra y se almacena, con variantes"
 depends: [base, account]
 category: Inventario

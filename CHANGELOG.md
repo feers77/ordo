@@ -23,6 +23,20 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F12.1** Catálogo con variantes (ADR-018, diseño F12-01): `product.template` agrupa
+  las variantes, `product.attribute` y `product.attribute.value` definen los ejes
+  (talla, color) y `product.template.attribute.line` la matriz de cada modelo. **La
+  variante sigue siendo `product.product`**: cada talla-color mantiene su propio stock y
+  su propio costo promedio —se compraron en lotes distintos y no valen lo mismo—, y el
+  diff en `stock/`, `sale/` y `purchase/` es cero. `template_id` es nullable, así que los
+  productos planos y los servicios siguen exactamente igual. La pertenencia de la
+  variante vive en `product.variant.value`, un modelo con índices, para que "qué queda en
+  talla M" se resuelva en SQL y no en el cliente. Se descarta `_inherits` de forma
+  explícita: la delegación está implementada solo a nivel de metadatos y el instalador
+  crearía columnas duplicadas (queda escrito en el ADR para que nadie lo intente).
+  `modules/product` sube a `0.2.0`; los tenants existentes reciben las columnas con
+  `make upgrade-tenant`.
+
 - **F3.4** Lenguaje natural a dominio (ADR-017, diseño F3-04):
   `POST /meta/v1/translate-query` convierte una pregunta en un dominio ORDO válido y
   **lo devuelve sin ejecutar** — quién lo ejecuta es el agente, con sus permisos, por

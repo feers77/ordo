@@ -1,11 +1,38 @@
+# El catálogo lo mantiene inventario; ventas y compras lo leen. La matriz de
+# variantes es configuración, no operación: quien la toca decide qué existe en
+# la bodega, así que no se reparte a la ligera.
 roles:
   inventario:
     product.product: [read, write, create]
+    product.template: [read, write, create]
+    product.category: [read, write, create]
+    product.attribute: [read, write, create]
+    product.attribute.value: [read, write, create]
+    product.template.attribute.line: [read, write, create]
+    product.variant.value: [read]
   ventas:
     product.product: [read]
+    product.template: [read]
+    product.category: [read]
+    product.attribute: [read]
+    product.attribute.value: [read]
+    product.variant.value: [read]
   compras:
     product.product: [read, write, create]
+    product.template: [read]
+    product.category: [read]
+    product.attribute: [read]
+    product.attribute.value: [read]
+    product.variant.value: [read]
   contabilidad:
     product.product: [read]
+    product.template: [read]
+    product.category: [read]
   auditor:
     product.product: [read]
+    product.template: [read]
+    product.category: [read]
+    product.attribute: [read]
+    product.attribute.value: [read]
+    product.template.attribute.line: [read]
+    product.variant.value: [read]
