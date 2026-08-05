@@ -37,6 +37,21 @@ Bearer todo es 401. Para operar se necesita un token de agente
 de emergencia: `ORDO_IAM_URL=` vacío en el override y reiniciar — solo red
 interna, el log lo advierte.
 
+## Alta de un tenant con enforcement
+
+```bash
+make seed TENANT=ropa                                   # schema, módulos y datos
+IAM_DATABASE_URL=postgresql+asyncpg://ordo:$PW@127.0.0.1:5432/ordo_iam \
+  uv run python tools/seed_iam_roles.py ropa            # roles y ACL desde los security.yaml
+IAM_DATABASE_URL=... uv run python tools/seed_iam_user.py ropa duena@ropa.cl \
+  --name "Dueña" --roles contabilidad,inventario,ventas
+```
+
+El usuario queda listo pero **sin vincular**: el bridge OIDC ata el identificador del
+proveedor en el primer login verificado, emparejando por correo. En Keycloak el usuario
+necesita el atributo `tenant` y el correo verificado, o el token no traerá el claim que
+IAM exige.
+
 ## Rollback
 
 1. Identificar commit estable: `git log --oneline`.
