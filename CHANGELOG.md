@@ -4,6 +4,23 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ## [Unreleased]
 
+### Changed
+
+- **Ubicación explícita en el cumplimiento** (BREAKING para compañías con más de una
+  ubicación interna): `deliver_sale` y `receive_purchase` elegían en silencio la primera
+  ubicación del tipo pedido. Con una sola bodega eso funcionaba por accidente; en cuanto
+  la compañía abre la segunda —bodega central y tienda, el caso normal en retail— la
+  entrega descontaba de la ubicación equivocada y nadie se enteraba hasta el inventario
+  físico. Ahora `default_location` (público en `modules/stock/fulfillment.py`) devuelve
+  la única candidata o lanza `STOCK_LOCATION_AMBIGUOUS` nombrando las alternativas en el
+  `hint`. Las acciones `sale.order.action_deliver` y `purchase.order.action_receive`
+  aceptan además `warehouse_id`, que basta cuando el almacén tiene una sola ubicación
+  interna. Las compañías con una única bodega no notan el cambio.
+
+- `make test` ahora corre `tests/unit` **y** `modules`. Los tests property-based de los
+  módulos existían pero ningún target los recogía, y un test que nadie corre es
+  decoración.
+
 ### Added
 
 - **F3.4** Lenguaje natural a dominio (ADR-017, diseño F3-04):

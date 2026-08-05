@@ -16,11 +16,30 @@ from ordo_core.recordset import RecordSet
 from modules.stock.services import StockError, StockService
 
 
-async def _default_location(env: Environment, company_id: int, location_type: str) -> int:
+async def default_location(
+    env: Environment,
+    company_id: int,
+    location_type: str,
+    *,
+    warehouse_id: int | None = None,
+) -> int:
+    """La única ubicación de ese tipo, o un error que exige elegir.
+
+    Con una sola bodega hay una sola respuesta posible. En cuanto la compañía
+    abre la segunda —bodega central y tienda, que es el caso normal en retail—
+    cualquier criterio implícito descuenta de la ubicación equivocada sin que
+    nadie se entere hasta el inventario físico. Preferimos negarnos.
+    """
+    domain: list[Any] = [
+        ("company_id", "=", company_id),
+        ("location_type", "=", location_type),
+    ]
+    if warehouse_id is not None:
+        domain.append(("warehouse_id", "=", warehouse_id))
     result = await RecordSet(env, "stock.location").search(
-        [("company_id", "=", company_id), ("location_type", "=", location_type)],
-        fields=["id"],
-        limit=2,
+        domain,
+        fields=["id", "name"],
+        limit=5,
     )
     rows = result["rows"]
     if not rows:
@@ -28,6 +47,17 @@ async def _default_location(env: Environment, company_id: int, location_type: st
             "STOCK_NO_LOCATION",
             f"No existe una ubicación de tipo {location_type} en la compañía",
             hint="Crea las ubicaciones del almacén antes de operar.",
+        )
+    if len(rows) > 1:
+        candidates = ", ".join(f"{row['id']}:{row['name']}" for row in rows)
+        raise StockError(
+            "STOCK_LOCATION_AMBIGUOUS",
+            f"Hay más de una ubicación de tipo {location_type} en la compañía",
+            hint=(
+                f"Indica cuál explícitamente. Candidatas: {candidates}. "
+                "Las entregas aceptan location_from_id y las recepciones "
+                "location_to_id; también puedes acotar por warehouse_id."
+            ),
         )
     return int(rows[0]["id"])
 
@@ -60,6 +90,7 @@ async def deliver_sale(
     order_id: int,
     *,
     location_from_id: int | None = None,
+    warehouse_id: int | None = None,
 ) -> dict[str, Any]:
     """Entrega la orden de venta: picking out validado al costo promedio."""
     [order] = await RecordSet(env, "sale.order").read(
@@ -72,8 +103,10 @@ async def deliver_sale(
             hint="Confirma la orden primero con action_confirm.",
         )
     lines = await _stockable_lines(env, "sale.order.line", order_id)
-    origin = location_from_id or await _default_location(env, order["company_id"], "internal")
-    destination = await _default_location(env, order["company_id"], "customer")
+    origin = location_from_id or await default_location(
+        env, order["company_id"], "internal", warehouse_id=warehouse_id
+    )
+    destination = await default_location(env, order["company_id"], "customer")
 
     service = StockService(env)
     picking_id = await service.create_picking(
@@ -101,6 +134,7 @@ async def receive_purchase(
     order_id: int,
     *,
     location_to_id: int | None = None,
+    warehouse_id: int | None = None,
 ) -> dict[str, Any]:
     """Recibe la orden de compra: picking in al costo de la línea."""
     [order] = await RecordSet(env, "purchase.order").read(
@@ -113,8 +147,10 @@ async def receive_purchase(
             hint="Confirma la orden primero con action_confirm.",
         )
     lines = await _stockable_lines(env, "purchase.order.line", order_id)
-    destination = location_to_id or await _default_location(env, order["company_id"], "internal")
-    origin = await _default_location(env, order["company_id"], "supplier")
+    destination = location_to_id or await default_location(
+        env, order["company_id"], "internal", warehouse_id=warehouse_id
+    )
+    origin = await default_location(env, order["company_id"], "supplier")
 
     service = StockService(env)
     picking_id = await service.create_picking(

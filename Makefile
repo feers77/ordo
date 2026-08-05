@@ -37,8 +37,8 @@ lint:
 types:
 	uv run mypy
 
-test:
-	uv run pytest tests/unit
+test: ## Unitarios del kernel y de los módulos
+	uv run pytest tests/unit modules
 
 check: lint types test ## lint + types + tests
 
