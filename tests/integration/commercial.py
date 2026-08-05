@@ -365,3 +365,168 @@ async def build_shop(
         "product_id": product_id,
         "service_id": service_id,
     }
+
+
+RETAIL_MODULES = (*DEFAULT_MODULES, "pos")
+
+
+async def build_retail_shop(
+    session: AsyncSession,
+    tenant: str,
+    *,
+    modules_root: Any,
+) -> dict[str, Any]:
+    """La tienda de ropa: sobre el entorno comercial, caja y sala de ventas.
+
+    Envuelve `build_shop` en vez de modificarlo. Tocar el constructor compartido
+    haría churn en las suites de ventas, compras, inventario y facturación
+    electrónica por cambios que solo le importan al retail.
+
+    Ojo: aquí nace la segunda ubicación interna de la compañía, así que a partir
+    de este entorno las entregas y recepciones tienen que decir de dónde salen
+    (STOCK_LOCATION_AMBIGUOUS).
+    """
+    shop = await build_shop(session, tenant, modules_root=modules_root, modules=RETAIL_MODULES)
+    env = shop["env"]
+    company_id = shop["company_id"]
+
+    accounts = RecordSet(env, "account.account")
+    [caja, tarjetas, diferencias] = await accounts.create(
+        [
+            {
+                "code": "1102",
+                "name": "Caja",
+                "account_type": "asset",
+                "company_id": company_id,
+            },
+            {
+                "code": "1203",
+                "name": "Deudores por tarjetas",
+                "account_type": "asset",
+                "company_id": company_id,
+            },
+            {
+                "code": "5301",
+                "name": "Diferencias de caja",
+                "account_type": "expense",
+                "company_id": company_id,
+            },
+        ]
+    )
+
+    # IVA incluido en el precio: obligatorio en el retail chileno.
+    await RecordSet(env, "account.tax").create(
+        [
+            {
+                "code": "IVA19I",
+                "name": "IVA 19% incluido",
+                "rate": "19",
+                "applies_to": "sale",
+                "price_include": True,
+                "account_id": shop["iva_debito"],
+                "company_id": company_id,
+            }
+        ]
+    )
+
+    sequences = SequenceService(session)
+    await sequences.create(
+        code="account.move.cash",
+        name="Asientos de caja",
+        prefix="CAJ/2026/",
+        implementation="no_gap",
+    )
+    [cash_journal] = await RecordSet(env, "account.journal").create(
+        [
+            {
+                "code": "CAJA",
+                "name": "Caja",
+                "journal_type": "cash",
+                "sequence_code": "account.move.cash",
+                "default_account_id": caja,
+                "company_id": company_id,
+            }
+        ]
+    )
+
+    [store_warehouse] = await RecordSet(env, "stock.warehouse").create(
+        [{"name": "Tienda Providencia", "code": "TP", "company_id": company_id}]
+    )
+    [loc_store] = await RecordSet(env, "stock.location").create(
+        [
+            {
+                "name": "TP/Sala de ventas",
+                "location_type": "internal",
+                "warehouse_id": store_warehouse,
+                "company_id": company_id,
+            }
+        ]
+    )
+
+    [anonymous_id] = await RecordSet(env, "res.partner").create(
+        [
+            {
+                "name": "Consumidor final",
+                "vat": "66666666-6",
+                "country_code": "CL",
+                "is_company": False,
+                "company_id": company_id,
+            }
+        ]
+    )
+
+    [pos_config] = await RecordSet(env, "pos.config").create(
+        [
+            {
+                "name": "Caja 1",
+                "warehouse_id": store_warehouse,
+                "location_id": loc_store,
+                "journal_id": shop["sale_journal"],
+                "cash_journal_id": cash_journal,
+                "cash_account_id": caja,
+                "difference_account_id": diferencias,
+                "document_type_code": "39",
+                "anonymous_partner_id": anonymous_id,
+                "price_includes_tax": True,
+                "currency_id": shop["currency_id"],
+                "company_id": company_id,
+            }
+        ]
+    )
+    [method_cash, method_card] = await RecordSet(env, "pos.payment.method").create(
+        [
+            {
+                "name": "Efectivo",
+                "code": "EFECTIVO",
+                "method_type": "cash",
+                "config_id": pos_config,
+                "settlement_account_id": caja,
+                "opens_drawer": True,
+                "company_id": company_id,
+            },
+            {
+                "name": "Tarjeta",
+                "code": "TARJETA",
+                "method_type": "card",
+                "config_id": pos_config,
+                "settlement_account_id": tarjetas,
+                "opens_drawer": False,
+                "company_id": company_id,
+            },
+        ]
+    )
+
+    await session.commit()
+    return {
+        **shop,
+        "caja": caja,
+        "tarjetas": tarjetas,
+        "diferencias": diferencias,
+        "cash_journal": cash_journal,
+        "store_warehouse": store_warehouse,
+        "loc_store": loc_store,
+        "anonymous_id": anonymous_id,
+        "pos_config": pos_config,
+        "method_cash": method_cash,
+        "method_card": method_card,
+    }
