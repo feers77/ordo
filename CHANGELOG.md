@@ -23,6 +23,27 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F12.2c** El ticket mueve stock y la devolución lo devuelve (diseño F12-02c). Un picking
+  por ticket, validado en la misma operación que asienta: agregarlos al cierre dejaría la
+  bodega mintiendo durante ocho horas y la alerta de reposición llegaría cuando ya no queda
+  nada que reponer. La mercadería sale de la **sala de ventas de esa caja**, no de la bodega
+  central. `action_refund` crea un documento nuevo con `refund_of_id` —el original no cambia
+  de estado y su asiento no se toca: se revierte—, y **la devolución entra al costo con que
+  salió**, leído de la capa de valorización original: valorizarla al promedio de hoy infla el
+  inventario y regala margen si entretanto llegó un lote más caro. La devolución se registra
+  en el turno abierto ahora, no en el de la venta, porque si no un arqueo ya firmado
+  cambiaría de resultado después. Lleva aprobación: devolver es sacar plata del cajón.
+  Reportes `pos.session_summary` (el Z) y `pos.cash_differences`. Pendiente anotado: la
+  devolución parcial, que necesita asiento propio en vez de una reversión.
+
+### Fixed
+
+- `StockService` elegía "recepciones por facturar" como contrapartida de **toda** entrada
+  salvo desde ajuste de inventario. En una devolución de cliente eso diría que le debemos la
+  mercadería a un proveedor, y es falso: vuelve de un cliente y lo que revierte es el costo
+  de esa venta. Ahora la contrapartida depende del origen. Hoy nada más produce movimientos
+  `customer → internal`, así que ningún flujo existente cambia.
+
 - **F12.2b** Punto de venta: el ticket (diseño F12-02b). `pos.order`, `pos.order.line` y
   `pos.payment`; `action_validate` fija totales, asigna número y **contabiliza** el asiento
   en la misma operación — no existe el ticket cobrado cuyo asiento sigue pendiente, que en

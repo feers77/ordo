@@ -1,5 +1,5 @@
 name: pos
-version: 0.1.0
+version: 0.2.0
 summary: "Punto de venta: turno de caja, tickets, cobros y arqueo"
 depends: [base, account, product, stock, einvoicing]
 category: Punto de venta

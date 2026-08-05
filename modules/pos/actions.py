@@ -106,3 +106,23 @@ async def cancel_order(env: Environment, record_id: int, params: dict[str, Any])
     from modules.pos.order import PosOrderService
 
     return await PosOrderService(env).action_cancel(record_id)
+
+
+@action(
+    "pos.order",
+    "action_refund",
+    summary=(
+        "Devuelve el ticket completo: crea el documento inverso, revierte el "
+        "asiento y devuelve la mercadería al costo con que salió"
+    ),
+    # Devolver es sacar plata del cajón contra mercadería que vuelve. Es la
+    # operación que un cajero no debería poder hacer solo (ADR-019).
+    requires_approval=True,
+    params={"reason": "Causa de la devolución (obligatoria)"},
+)
+async def refund_order(env: Environment, record_id: int, params: dict[str, Any]) -> dict[str, Any]:
+    from modules.pos.order import PosOrderService
+
+    return await PosOrderService(env).action_refund(
+        record_id, reason=str(params.get("reason") or "")
+    )

@@ -237,6 +237,8 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `POS_TAX_UNKNOWN` | 400 | no | El impuesto de la línea no existe o no aplica a ventas |
 | `POS_NO_ACCOUNT` | 400 | no | La línea no tiene cuenta de ingreso y el diario no define una por defecto |
 | `POS_ZERO_TOTAL` | 400 | no | El ticket redondea a cero: no hay nada que asentar |
+| `POS_REFUND_REASON_REQUIRED` | 400 | no | Una devolución lleva su motivo |
+| `POS_REFUND_NO_LAYER` | 409 | no | No se encuentra el costo original: una devolución entra al costo con que salió |
 
 ## Inventario
 

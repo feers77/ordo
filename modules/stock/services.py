@@ -236,11 +236,14 @@ class StockService:
             await self.products.write([move["product_id"]], {"cost": updated_avg})
             value = money(quantity * unit_cost)
             await self._layer(move, quantity, unit_cost, value)
-            counterpart = (
-                config["loss_account_id"]
-                if from_type == "inventory_loss"
-                else config["input_account_id"]
-            )
+            # De dónde viene la mercadería decide contra qué se acredita el
+            # inventario. Una devolución de cliente revierte el costo de esa
+            # venta; acreditarla contra recepciones por facturar diría que le
+            # debemos la mercadería a un proveedor, que es falso.
+            counterpart = {
+                "inventory_loss": config["loss_account_id"],
+                "customer": config["cogs_account_id"],
+            }.get(from_type, config["input_account_id"])
             self._require_accounts(config, counterpart)
             journal_lines.append(
                 {

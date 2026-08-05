@@ -45,3 +45,33 @@ async def shop(pos_db_url: str) -> AsyncIterator[dict[str, Any]]:
     yield data
     await session.close()
     await engine.dispose()
+
+
+async def stock_in(shop: dict[str, Any], quantity: str, cost: str) -> None:
+    """Carga la sala de ventas desde el proveedor, a un costo dado.
+
+    Desde F12-02c validar un ticket mueve stock, así que vender exige haber
+    recibido antes: es la vida real de una tienda.
+    """
+    from decimal import Decimal
+
+    from modules.stock.services import StockService
+
+    service = StockService(shop["env"])
+    picking_id = await service.create_picking(
+        picking_type="in",
+        date="2026-08-04",
+        company_id=shop["company_id"],
+        partner_id=shop["vendor_id"],
+        origin="Carga tienda",
+        moves=[
+            {
+                "product_id": shop["product_id"],
+                "quantity": quantity,
+                "location_from_id": shop["loc_supplier"],
+                "location_to_id": shop["loc_store"],
+                "price_unit": Decimal(cost),
+            }
+        ],
+    )
+    await service.action_validate(picking_id)

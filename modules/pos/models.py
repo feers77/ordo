@@ -334,6 +334,23 @@ class PosOrder(Model):
         agent_hint="Asiento del ticket; cada boleta lleva el suyo, no se agregan por turno",
         examples=["51"],
     )
+    picking_id = Many2one(
+        "stock.picking",
+        agent_hint=(
+            "Movimiento de stock del ticket: uno por ticket y no agregado al "
+            "cierre, para que la bodega no mienta durante todo el turno"
+        ),
+        examples=["23"],
+    )
+    refund_of_id = Many2one(
+        "pos.order",
+        index=True,
+        agent_hint=(
+            "Ticket original que esta devolución revierte. El original no cambia "
+            "de estado: la devolución es un documento nuevo"
+        ),
+        examples=["12"],
+    )
     company_id = Many2one(
         "res.company", required=True, agent_hint="Compañía del ticket", examples=["1"]
     )
