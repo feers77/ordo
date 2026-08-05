@@ -6,7 +6,16 @@ asienta. Ese asiento es todo lo que el cierre contabiliza; cada ticket lleva su
 propio asiento, porque cada boleta es un documento legal con folio (ADR-019).
 """
 
-from ordo_core.fields import Boolean, Char, Datetime, Many2one, Monetary, Selection, Text
+from ordo_core.fields import (
+    Boolean,
+    Char,
+    Date,
+    Datetime,
+    Many2one,
+    Monetary,
+    Selection,
+    Text,
+)
 from ordo_core.model import Model
 
 SESSION_STATES = [
@@ -237,4 +246,178 @@ class PosSession(Model):
     )
     company_id = Many2one(
         "res.company", required=True, agent_hint="Compañía del turno", examples=["1"]
+    )
+
+
+ORDER_STATES = [
+    ("draft", "En curso"),
+    ("paid", "Cobrado"),
+    ("cancelled", "Cancelado"),
+]
+
+
+class PosOrder(Model):
+    _name = "pos.order"
+    _description = "Ticket de punto de venta"
+    _order = "id desc"
+
+    name = Char(
+        index=True,
+        agent_hint="Número del ticket; se asigna al validarlo, no al crearlo",
+        examples=["T/00001"],
+    )
+    session_id = Many2one(
+        "pos.session",
+        required=True,
+        index=True,
+        agent_hint="Turno en el que se vendió; un ticket no existe fuera de un turno abierto",
+        examples=["1"],
+    )
+    terminal_ref = Char(
+        index=True,
+        agent_hint=(
+            "Referencia local del terminal. Evita registrar dos veces el mismo "
+            "ticket cuando el terminal reintenta tras un corte"
+        ),
+        examples=["CAJA1-20260805-0042"],
+    )
+    partner_id = Many2one(
+        "res.partner",
+        index=True,
+        agent_hint=(
+            "Cliente identificado, si lo hay. Vacío es consumidor final, que en "
+            "retail son casi todos los tickets"
+        ),
+        examples=["4"],
+    )
+    state = Selection(
+        ORDER_STATES,
+        default="draft",
+        agent_hint=(
+            "Estado del ticket. Usa action_validate y action_cancel; nunca "
+            "escribas este campo directamente"
+        ),
+        examples=["draft", "paid"],
+    )
+    date_order = Date(
+        required=True,
+        agent_hint="Fecha del ticket; también es la fecha contable de su asiento",
+        examples=["2026-08-05"],
+    )
+    currency_id = Many2one(
+        "res.currency",
+        required=True,
+        agent_hint="Moneda del ticket",
+        examples=["1"],
+    )
+    amount_untaxed = Monetary(
+        agent_hint="Neto sin impuestos; lo fija el sistema al validar",
+        examples=["20000.00"],
+    )
+    amount_tax = Monetary(
+        agent_hint="Impuestos del ticket; los fija el sistema al validar",
+        examples=["3800.00"],
+    )
+    amount_total = Monetary(
+        agent_hint="Total cobrado al cliente; lo fija el sistema al validar",
+        examples=["23800.00"],
+    )
+    change = Monetary(
+        agent_hint=(
+            "Vuelto entregado en efectivo. Solo puede salir del efectivo "
+            "recibido, nunca de un cobro con tarjeta"
+        ),
+        examples=["1200.00"],
+    )
+    move_id = Many2one(
+        "account.move",
+        agent_hint="Asiento del ticket; cada boleta lleva el suyo, no se agregan por turno",
+        examples=["51"],
+    )
+    company_id = Many2one(
+        "res.company", required=True, agent_hint="Compañía del ticket", examples=["1"]
+    )
+
+
+class PosOrderLine(Model):
+    _name = "pos.order.line"
+    _description = "Línea de ticket"
+
+    order_id = Many2one(
+        "pos.order",
+        required=True,
+        index=True,
+        agent_hint="Ticket al que pertenece la línea",
+        examples=["12"],
+    )
+    name = Char(
+        required=True,
+        agent_hint="Descripción tal como se imprime en el ticket",
+        examples=["Polera Oversize M / Rojo"],
+    )
+    product_id = Many2one(
+        "product.product",
+        required=True,
+        index=True,
+        agent_hint=("Producto vendido; si es almacenable, el ticket descuenta stock al validar"),
+        examples=["31"],
+    )
+    quantity = Char(
+        required=True,
+        agent_hint="Cantidad como string decimal, nunca float",
+        examples=["2"],
+    )
+    price_unit = Monetary(
+        required=True,
+        agent_hint=(
+            "Precio unitario cobrado, con o sin impuesto según price_includes_tax de la caja"
+        ),
+        examples=["11900.00"],
+    )
+    discount_percent = Char(
+        agent_hint="Descuento porcentual de la línea, como string decimal",
+        examples=["10"],
+    )
+    tax_codes = Char(
+        agent_hint="Códigos de impuesto separados por coma, resueltos contra account.tax",
+        examples=["IVA19I"],
+    )
+    income_account_id = Many2one(
+        "account.account",
+        agent_hint="Cuenta de ingreso propia de la línea; si falta, la del producto o el diario",
+        examples=["4"],
+    )
+    company_id = Many2one(
+        "res.company", required=True, agent_hint="Compañía de la línea", examples=["1"]
+    )
+
+
+class PosPayment(Model):
+    _name = "pos.payment"
+    _description = "Cobro de un ticket"
+
+    order_id = Many2one(
+        "pos.order",
+        required=True,
+        index=True,
+        agent_hint="Ticket que se está cobrando",
+        examples=["12"],
+    )
+    method_id = Many2one(
+        "pos.payment.method",
+        required=True,
+        index=True,
+        agent_hint="Medio con el que se cobró; su cuenta define dónde queda el dinero",
+        examples=["1"],
+    )
+    amount = Monetary(
+        required=True,
+        agent_hint=(
+            "Importe entregado con este medio. La suma de los cobros debe cubrir "
+            "el total del ticket; lo que sobre es vuelto y solo sale del efectivo"
+        ),
+        examples=["10000.00"],
+    )
+    company_id = Many2one(
+        "res.company", required=True, agent_hint="Compañía del cobro", examples=["1"]
     )

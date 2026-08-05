@@ -263,16 +263,60 @@ class PosSessionService:
         await self.accounting.action_post(move_id)
         return move_id
 
-    # ------------------------------------------------------------- costuras
-    #
-    # Los tickets llegan en F12-02b. Hasta entonces un turno solo mueve su
-    # fondo y sus retiros, y estas dos costuras devuelven vacío en vez de
-    # fingir datos: el arqueo de un turno sin ventas es exactamente el fondo.
+    # ------------------------------------------------------------- tickets
 
     async def _cash_movements(self, session: dict[str, Any]) -> tuple[list[Decimal], list[Decimal]]:
-        """Cobros en efectivo y vueltos entregados durante el turno."""
-        return [], []
+        """Cobros en efectivo y vueltos entregados durante el turno.
+
+        Solo el efectivo: la tarjeta no pasa por el cajón, y contarla haría
+        aparecer un faltante que no existe.
+        """
+        orders = await RecordSet(self.env, "pos.order").search(
+            [("session_id", "=", session["id"]), ("state", "=", "paid")],
+            fields=["id", "change"],
+            limit=1000,
+        )
+        if not orders["rows"]:
+            return [], []
+        order_ids = [row["id"] for row in orders["rows"]]
+        changes = [Decimal(str(row["change"] or ZERO)) for row in orders["rows"]]
+
+        payments = await RecordSet(self.env, "pos.payment").search(
+            [("order_id", "in", order_ids)],
+            fields=["id", "method_id", "amount"],
+            limit=len(order_ids) * 10,
+        )
+        method_ids = sorted({row["method_id"] for row in payments["rows"]})
+        if not method_ids:
+            return [], changes
+        methods = await RecordSet(self.env, "pos.payment.method").search(
+            [("id", "in", method_ids)],
+            fields=["id", "method_type"],
+            limit=len(method_ids),
+        )
+        cash_methods = {row["id"] for row in methods["rows"] if row["method_type"] == "cash"}
+        received = [
+            Decimal(str(row["amount"]))
+            for row in payments["rows"]
+            if row["method_id"] in cash_methods
+        ]
+        return received, changes
 
     async def _refuse_pending_tickets(self, session: dict[str, Any]) -> None:
-        """Un turno con tickets sin cobrar no se puede cerrar."""
-        return None
+        """Un turno con tickets sin cobrar no se cierra.
+
+        Cerrar dejándolos vivos los deja huérfanos: ya no se pueden cobrar
+        —el turno no está abierto— ni entraron nunca en el arqueo.
+        """
+        pending = await RecordSet(self.env, "pos.order").search(
+            [("session_id", "=", session["id"]), ("state", "=", "draft")],
+            fields=["id"],
+            limit=20,
+        )
+        if pending["rows"]:
+            ids = ", ".join(str(row["id"]) for row in pending["rows"])
+            raise PosError(
+                "POS_SESSION_HAS_DRAFT_ORDERS",
+                f"El turno tiene {len(pending['rows'])} ticket(s) sin cobrar: {ids}",
+                hint="Valida o cancela cada ticket antes de cerrar el turno.",
+            )

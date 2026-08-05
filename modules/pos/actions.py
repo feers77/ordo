@@ -76,3 +76,33 @@ async def close_session(env: Environment, record_id: int, params: dict[str, Any]
         withdrawals=_decimal(params, "withdrawals"),
         note=str(params.get("note") or ""),
     )
+
+
+@action(
+    "pos.order",
+    "action_validate",
+    summary=(
+        "Cobra el ticket: fija totales, asigna número y contabiliza el asiento "
+        "en la misma operación"
+    ),
+    # Sin requires_approval a propósito (ADR-019): pedirle permiso a la dueña
+    # por cada polera mataría el negocio. El límite por venta lo pone
+    # max_amount_per_op del capability token del cajero.
+)
+async def validate_order(
+    env: Environment, record_id: int, params: dict[str, Any]
+) -> dict[str, Any]:
+    from modules.pos.order import PosOrderService
+
+    return await PosOrderService(env).action_validate(record_id)
+
+
+@action(
+    "pos.order",
+    "action_cancel",
+    summary="Cancela un ticket en curso; uno ya cobrado se corrige con una devolución",
+)
+async def cancel_order(env: Environment, record_id: int, params: dict[str, Any]) -> dict[str, Any]:
+    from modules.pos.order import PosOrderService
+
+    return await PosOrderService(env).action_cancel(record_id)

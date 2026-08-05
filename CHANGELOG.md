@@ -23,6 +23,27 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F12.2b** Punto de venta: el ticket (diseño F12-02b). `pos.order`, `pos.order.line` y
+  `pos.payment`; `action_validate` fija totales, asigna número y **contabiliza** el asiento
+  en la misma operación — no existe el ticket cobrado cuyo asiento sigue pendiente, que en
+  una caja de doscientos tickets al día es donde se pierde la plata. Soporta **cobro
+  mixto**: efectivo y tarjeta en el mismo ticket, cada uno a su cuenta de liquidación. El
+  vuelto no es un cobro: pagar $30.000 un ticket de $23.800 debita caja por $23.800,
+  porque los $6.200 salen del cajón en el acto, y solo puede descontarse de cuentas de
+  efectivo. Dos redes contra el ticket duplicado: `Idempotency-Key` y `terminal_ref`
+  indexada, porque **la clave de idempotencia se pierde con el corte de red y la
+  referencia del terminal no**. El turno cierra sus dos costuras: el arqueo ya suma los
+  cobros en efectivo y resta los vueltos —la tarjeta no pasa por el cajón—, y un turno con
+  tickets sin cobrar no se cierra.
+
+### Changed (contabilidad)
+
+- `build_invoice_lines` se parte en `build_revenue_lines` + contrapartida. El motor sabía
+  poner **una** contrapartida y un ticket tiene tantas como medios de cobro. La factura de
+  cliente y la de proveedor siguen con una sola, verificado con un test explícito: un
+  refactor del motor de asientos que cambie el comportamiento de las facturas sería la
+  peor clase de regresión.
+
 - **F12.2** Punto de venta: caja y turno (ADR-019, diseño F12-02). Módulo `pos` con
   `pos.config`, `pos.payment.method` y `pos.session`. El turno se abre con un fondo
   declarado, se cierra a ventas nuevas —contar el cajón toma minutos y durante esos
