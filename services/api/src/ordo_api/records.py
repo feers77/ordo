@@ -53,6 +53,8 @@ class KernelHTTPError(OrdoError):
         "POS_TAX_UNKNOWN": 400,
         "POS_NO_ACCOUNT": 400,
         "POS_ZERO_TOTAL": 400,
+        "POS_REFUND_REASON_REQUIRED": 400,
+        "POS_REFUND_NO_LAYER": 409,
         "ACTION_UNKNOWN": 404,
         "REPORT_UNKNOWN": 404,
         "REPORT_PARAM_REQUIRED": 400,

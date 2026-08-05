@@ -11,6 +11,7 @@ from ordo_core.actions import dispatch
 from ordo_core.recordset import RecordSet
 from ordo_core.reports import run_report
 
+from tests.integration.pos.conftest import stock_in
 from tests.integration.pos.test_session import opened_session
 
 pytestmark = pytest.mark.integration
@@ -49,6 +50,7 @@ async def pay(shop: dict[str, Any], order_id: int, *, method: str, amount: str) 
 
 class TestSellingATicket:
     async def test_cash_ticket_books_and_balances(self, shop: dict[str, Any]) -> None:
+        await stock_in(shop, "50", "8000")
         session_id = await opened_session(shop, "50000")
         order_id = await ticket(shop, session_id, price="23800")
         await pay(shop, order_id, method="method_cash", amount="23800")
@@ -85,6 +87,7 @@ class TestSellingATicket:
         Es el caso que obligó a partir `build_invoice_lines`: el motor de
         asientos solo sabía poner una contrapartida.
         """
+        await stock_in(shop, "50", "8000")
         session_id = await opened_session(shop)
         order_id = await ticket(shop, session_id, price="23800")
         await pay(shop, order_id, method="method_cash", amount="10000")
@@ -106,6 +109,7 @@ class TestSellingATicket:
     async def test_change_leaves_only_what_the_shop_keeps(self, shop: dict[str, Any]) -> None:
         """Se paga con $30.000 un ticket de $23.800: a caja entran $23.800,
         no $30.000. El vuelto sale del cajón."""
+        await stock_in(shop, "50", "8000")
         session_id = await opened_session(shop)
         order_id = await ticket(shop, session_id, price="23800")
         await pay(shop, order_id, method="method_cash", amount="30000")
@@ -125,6 +129,7 @@ class TestSellingATicket:
         assert balance["balanced"] is True
 
     async def test_change_never_comes_out_of_the_card(self, shop: dict[str, Any]) -> None:
+        await stock_in(shop, "50", "8000")
         session_id = await opened_session(shop)
         order_id = await ticket(shop, session_id, price="10000")
         await pay(shop, order_id, method="method_card", amount="15000")
@@ -133,6 +138,7 @@ class TestSellingATicket:
         assert excinfo.value.code == "POS_CHANGE_ON_NON_CASH"
 
     async def test_underpaying_is_refused(self, shop: dict[str, Any]) -> None:
+        await stock_in(shop, "50", "8000")
         session_id = await opened_session(shop)
         order_id = await ticket(shop, session_id, price="23800")
         await pay(shop, order_id, method="method_cash", amount="10000")
@@ -168,6 +174,7 @@ class TestTicketRefusals:
         assert excinfo.value.code == "POS_DUPLICATE_TERMINAL_REF"
 
     async def test_a_paid_ticket_is_not_cancelled(self, shop: dict[str, Any]) -> None:
+        await stock_in(shop, "50", "8000")
         session_id = await opened_session(shop)
         order_id = await ticket(shop, session_id, price="23800")
         await pay(shop, order_id, method="method_cash", amount="23800")
@@ -177,6 +184,7 @@ class TestTicketRefusals:
         assert excinfo.value.code == "POS_ORDER_INVALID_TRANSITION"
 
     async def test_validating_twice_does_not_book_twice(self, shop: dict[str, Any]) -> None:
+        await stock_in(shop, "50", "8000")
         session_id = await opened_session(shop)
         order_id = await ticket(shop, session_id, price="23800")
         await pay(shop, order_id, method="method_cash", amount="23800")
@@ -186,6 +194,7 @@ class TestTicketRefusals:
         assert excinfo.value.code == "POS_ORDER_INVALID_TRANSITION"
 
     async def test_dry_run_does_not_burn_the_ticket_number(self, shop: dict[str, Any]) -> None:
+        await stock_in(shop, "50", "8000")
         session_id = await opened_session(shop)
         order_id = await ticket(shop, session_id, price="23800")
         await pay(shop, order_id, method="method_cash", amount="23800")
@@ -208,6 +217,7 @@ class TestShiftWithTickets:
     async def test_the_audit_counts_cash_but_not_cards(self, shop: dict[str, Any]) -> None:
         """La tarjeta no pasa por el cajón: contarla haría aparecer un faltante
         que no existe."""
+        await stock_in(shop, "50", "8000")
         session_id = await opened_session(shop, "50000")
 
         cash_order = await ticket(shop, session_id, price="23800")
@@ -248,6 +258,7 @@ class TestShiftWithTickets:
     async def test_cancelling_the_pending_ticket_unblocks_the_close(
         self, shop: dict[str, Any]
     ) -> None:
+        await stock_in(shop, "50", "8000")
         session_id = await opened_session(shop, "50000")
         order_id = await ticket(shop, session_id)
         await dispatch(shop["env"], "pos.order", "action_cancel", order_id, {})

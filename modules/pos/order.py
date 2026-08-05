@@ -23,6 +23,7 @@ from modules.account.invoicing import (
 )
 from modules.account.services import AccountingService
 from modules.pos.cash import ZERO, money, validate_payments
+from modules.pos.fulfillment import deliver_ticket, return_ticket
 from modules.pos.services import PosError, PosSessionService
 
 SEQUENCE_CODE = "pos.order"
@@ -222,6 +223,9 @@ class PosOrderService:
                 "move_id": move_id,
             },
         )
+        picking_id = await deliver_ticket(self.env, order_id)
+        if picking_id is not None:
+            await self.orders.write([order_id], {"picking_id": picking_id})
         return {
             "order_id": order_id,
             "name": number,
@@ -229,7 +233,161 @@ class PosOrderService:
             "amount_total": str(counterpart),
             "change": str(change),
             "move_id": move_id,
+            "picking_id": picking_id,
         }
+
+    async def action_refund(self, order_id: int, *, reason: str) -> dict[str, Any]:
+        """Devuelve el ticket completo: documento nuevo, asiento revertido.
+
+        El ticket original **no cambia de estado**. Una devolución es un
+        documento por derecho propio, igual que la nota de crédito, y el asiento
+        contabilizado no se toca: se revierte (AGENTS.md §2.6).
+        """
+        original = await self._order(order_id)
+        self._expect(original, "paid", "devolver")
+        if not reason.strip():
+            raise PosError(
+                "POS_REFUND_REASON_REQUIRED",
+                "Una devolución lleva su motivo",
+                hint="Pasa reason con la causa: talla equivocada, falla, arrepentimiento.",
+            )
+        session = await self._current_session(original["session_id"])
+        [full] = await self.orders.read(
+            [order_id],
+            fields=["move_id", "amount_untaxed", "amount_tax", "amount_total", "refund_of_id"],
+        )
+        if full["refund_of_id"]:
+            raise PosError(
+                "POS_ORDER_INVALID_TRANSITION",
+                "Una devolución no se devuelve",
+                hint="Si la devolución fue un error, emite una venta nueva.",
+            )
+
+        lines = await self._mirror_lines(order_id, session)
+        [refund_id] = await self.orders.create(
+            [
+                {
+                    "name": None,
+                    "session_id": session["id"],
+                    "terminal_ref": None,
+                    "partner_id": original["partner_id"],
+                    "state": "draft",
+                    "date_order": original["date_order"],
+                    "currency_id": original["currency_id"],
+                    "amount_untaxed": -(full["amount_untaxed"] or ZERO),
+                    "amount_tax": -(full["amount_tax"] or ZERO),
+                    "amount_total": -(full["amount_total"] or ZERO),
+                    "change": ZERO,
+                    "move_id": None,
+                    "picking_id": None,
+                    "refund_of_id": order_id,
+                    "company_id": original["company_id"],
+                }
+            ]
+        )
+        await self.lines.create([{**line, "order_id": refund_id} for line in lines])
+        await self._mirror_payments(order_id, refund_id, original["company_id"])
+
+        sequences = SequenceService(self.env.session)
+        await sequences.create(code=SEQUENCE_CODE, name="Tickets de punto de venta", prefix="T/")
+        number = await sequences.next_by_code(SEQUENCE_CODE)
+        reversal_id = await self.accounting.action_reverse(full["move_id"])
+        # `action_reverse` deja la reversión en borrador, que es lo correcto
+        # para una nota de crédito que alguien puede querer revisar. Aquí no:
+        # la plata ya salió del cajón, y un asiento en borrador dejaría los
+        # libros atrás de la realidad hasta que alguien se acuerde.
+        await self.accounting.action_post(reversal_id)
+
+        await self.orders.write(
+            [refund_id], {"state": "paid", "name": number, "move_id": reversal_id}
+        )
+        picking_id = await return_ticket(self.env, refund_id, order_id)
+        if picking_id is not None:
+            await self.orders.write([refund_id], {"picking_id": picking_id})
+        return {
+            "refund_id": refund_id,
+            "name": number,
+            "state": "paid",
+            "refund_of_id": order_id,
+            "move_id": reversal_id,
+            "picking_id": picking_id,
+            "reason": reason,
+        }
+
+    async def _current_session(self, original_session_id: int) -> dict[str, Any]:
+        """La devolución entra en el turno abierto ahora, no en el de la venta.
+
+        Si entrara en el turno original, un arqueo ya cerrado cambiaría de
+        resultado después de haberse firmado.
+        """
+        [previous] = await RecordSet(self.env, "pos.session").read(
+            [original_session_id], fields=["config_id"]
+        )
+        result = await RecordSet(self.env, "pos.session").search(
+            [("config_id", "=", previous["config_id"]), ("state", "=", "opened")],
+            fields=["id", "name", "config_id", "company_id"],
+            limit=1,
+        )
+        if not result["rows"]:
+            raise PosError(
+                "POS_SESSION_NOT_OPEN",
+                "No hay un turno abierto en esa caja para registrar la devolución",
+                hint="Abre un turno con action_open antes de devolver.",
+            )
+        return result["rows"][0]
+
+    async def _mirror_lines(self, order_id: int, session: dict[str, Any]) -> list[dict[str, Any]]:
+        result = await self.lines.search(
+            [("order_id", "=", order_id)],
+            fields=[
+                "id",
+                "name",
+                "product_id",
+                "quantity",
+                "price_unit",
+                "discount_percent",
+                "tax_codes",
+                "income_account_id",
+            ],
+            limit=200,
+        )
+        return [
+            {
+                "name": row["name"],
+                "product_id": row["product_id"],
+                "quantity": str(-Decimal(row["quantity"] or "1")),
+                "price_unit": row["price_unit"],
+                "discount_percent": row["discount_percent"],
+                "tax_codes": row["tax_codes"],
+                "income_account_id": row["income_account_id"],
+                "company_id": session["company_id"],
+            }
+            for row in sorted(result["rows"], key=lambda item: item["id"])
+        ]
+
+    async def _mirror_payments(self, order_id: int, refund_id: int, company_id: int) -> None:
+        """Los cobros del original, en negativo.
+
+        No los usa la contabilidad —eso lo resuelve la reversión del asiento—
+        sino el arqueo: la plata que se devuelve en efectivo sale del cajón y
+        el turno tiene que esperar menos al cerrar.
+        """
+        result = await self.payments.search(
+            [("order_id", "=", order_id)], fields=["id", "method_id", "amount"], limit=50
+        )
+        if not result["rows"]:
+            return
+        await self.payments.create(
+            [
+                {
+                    "order_id": refund_id,
+                    "method_id": row["method_id"],
+                    "amount": -Decimal(str(row["amount"])),
+                    "company_id": company_id,
+                }
+                for row in sorted(result["rows"], key=lambda item: item["id"])
+            ]
+        )
 
     def _settlement_lines(
         self, payments: list[dict[str, Any]], change: Decimal, decimals: int
