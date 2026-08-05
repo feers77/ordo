@@ -20,6 +20,11 @@ services:
       # clonar y borrar schemas. El tráfico normal jamás usa esta conexión.
       ORDO_ADMIN_DATABASE_URL: postgresql+asyncpg://ordo:${POSTGRES_PASSWORD:?definir en .env}@postgres:5432/ordo
       ORDO_IAM_URL: ${ORDO_IAM_URL:-http://iam:8000}
+      # Traductor de lenguaje natural (ADR-017): vacío = endpoint 503. El
+      # comando y su credencial son decisión del despliegue.
+      ORDO_NL_COMMAND: ${ORDO_NL_COMMAND:-}
+      ORDO_NL_RESULT_PATH: ${ORDO_NL_RESULT_PATH:-}
+      ORDO_NL_TIMEOUT: ${ORDO_NL_TIMEOUT:-30}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     ports:
       - "127.0.0.1:8000:8000"
