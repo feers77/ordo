@@ -56,6 +56,13 @@ class KernelHTTPError(OrdoError):
         "POS_REFUND_REASON_REQUIRED": 400,
         "POS_REFUND_NO_LAYER": 409,
         "POS_ALREADY_INVOICED": 409,
+        "STOCK_RULE_NOT_FOUND": 404,
+        "STOCK_RULE_INVALID_RANGE": 400,
+        "STOCK_RULE_NO_VARIANTS": 409,
+        "STOCK_REPLENISH_NO_SOURCE": 409,
+        "STOCK_REPLENISH_NOT_NEEDED": 409,
+        "STOCK_REPLENISH_SOURCE_EMPTY": 409,
+        "PURCHASE_NO_JOURNAL": 409,
         "EDI_REFERENCE_MISSING": 409,
         "ACTION_UNKNOWN": 404,
         "REPORT_UNKNOWN": 404,
@@ -85,7 +92,11 @@ class KernelHTTPError(OrdoError):
     # Fallos de transporte: el mismo intento puede salir bien más tarde. El
     # resto de los códigos del kernel describen datos, y reintentarlos igual
     # vuelve a fallar (docs/api/errors.md).
-    RETRYABLE: ClassVar[frozenset[str]] = frozenset({"NL_TIMEOUT", "NL_MODEL_FAILED"})
+    RETRYABLE: ClassVar[frozenset[str]] = frozenset(
+        # STOCK_REPLENISH_NOT_NEEDED depende del stock del momento: el mismo
+        # intento puede tener sentido media hora después.
+        {"NL_TIMEOUT", "NL_MODEL_FAILED", "STOCK_REPLENISH_NOT_NEEDED"}
+    )
 
     def __init__(self, error: KernelError) -> None:
         super().__init__(

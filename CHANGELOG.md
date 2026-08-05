@@ -23,6 +23,41 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F12.4** `make seed TENANT=ropa` deja una **tienda que puede vender el mismo día**.
+  `tools/seed_tenant.py` instala los nueve módulos —antes ni siquiera `product` ni `stock`,
+  así que un tenant recién sembrado no podía recibir mercadería— y siembra plan de cuentas
+  completo con caja, tarjetas, inventario, COGS y diferencias de caja; IVA incluido; cinco
+  diarios con sus secuencias; **dos ubicaciones internas desde el día uno**, porque una
+  tienda real tiene bodega y sala; caja con efectivo y tarjeta; catálogo de 14 variantes
+  generadas desde su matriz de tallas y colores; y una regla de reposición por variante. El
+  stock inicial entra por **una recepción validada y no por un INSERT**: así nacen las capas
+  de valorización y el balance cuadra desde el minuto cero. Los rangos de folio se crean
+  **sin CAF**: es un artefacto criptográfico que emite el SII contra el certificado de la
+  empresa, y sembrar uno fabricado dejaría documentos con timbre inválido pareciendo
+  válidos. El tutorial gana la sección del punto de venta.
+
+### Fixed (documentación)
+
+- `docs/tutorial.md` anunciaba "nueve tools" de MCP cuando hay doce, y su sección "qué no
+  existe todavía" seguía listando `explain`, NL→dominio, el servidor MCP y el módulo de
+  inventario, que existen desde hace varias entregas. Un tutorial desactualizado es peor que
+  no tenerlo: quien lo lee construye sobre una foto vieja.
+
+- **F12.3** Reposición de bodega a tienda (diseño F12-03). `stock.reorder.rule` avisaba pero
+  no podía actuar. Ahora declara **desde dónde** repone —`route`, `source_location_id`,
+  `supplier_id`, `multiple_quantity`—, porque en retail el 90 % de la reposición es un
+  traslado bodega→tienda y no una compra. `action_replenish` crea y valida el traslado;
+  `action_replenish_buy`, que vive en `purchase` porque `stock` no puede depender de él sin
+  invertir la flecha, deja la orden de compra **en borrador**: proponer no es comprometer.
+  El múltiplo redondea hacia arriba —si faltan 13 y la caja es de 12 se piden 24, porque
+  quedarse corto es el error caro— y la regla se dispara bajo el mínimo, no bajo el máximo,
+  para no llenar la bodega de traslados de una unidad. Las alertas se agrupan por modelo y
+  se desglosan por variante: "quedan 2 poleras" no sirve, "quedan 0 en talla M" sí. Cada
+  alerta trae `can_replenish` —falso significa que la acción fallaría— y el nuevo
+  `stock.replenishment_plan` parte el plan en `ready` y `blocked`, listando los bloqueados
+  aparte en vez de esconderlos. `action_apply_reorder_rules` propaga los niveles a las
+  sesenta reglas de un modelo con variantes, de forma idempotente.
+
 - **F12.2d** La boleta electrónica del ticket (diseño F12-02d). `pos.order.action_einvoice`
   emite el documento con su folio. El receptor se resuelve en tres pasos —cliente
   identificado, contacto genérico de la caja, o el identificador de consumidor final del

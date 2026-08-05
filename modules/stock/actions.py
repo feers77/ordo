@@ -69,3 +69,61 @@ async def validate(env: Environment, record_id: int, params: dict[str, Any]) -> 
 async def cancel(env: Environment, record_id: int, params: dict[str, Any]) -> dict[str, Any]:
     await StockService(env).action_cancel(record_id)
     return {"state": "cancelled"}
+
+
+@action(
+    "stock.reorder.rule",
+    "action_replenish",
+    summary=(
+        "Repone por traslado interno hasta el objetivo: crea el picking y lo "
+        "valida en la misma operación"
+    ),
+    # Sin aprobación: un traslado entre ubicaciones internas no cambia el valor
+    # del inventario ni saca nada de la compañía.
+)
+async def replenish(env: Environment, record_id: int, params: dict[str, Any]) -> dict[str, Any]:
+    from modules.stock.reorder import ReorderService
+
+    return await ReorderService(env).action_replenish(record_id)
+
+
+@action(
+    "product.template",
+    "action_apply_reorder_rules",
+    summary="Propaga los niveles de reposición a todas las variantes del modelo",
+    params={
+        "location_id": "Ubicación vigilada, normalmente la sala de ventas (obligatorio)",
+        "min_quantity": "Nivel que dispara la reposición, string decimal (obligatorio)",
+        "max_quantity": "Nivel objetivo al reponer, string decimal (obligatorio)",
+        "route": "internal para trasladar desde bodega, buy para comprar",
+        "source_location_id": "Bodega que surte, si la ruta es traslado",
+        "supplier_id": "Proveedor, si la ruta es compra",
+        "multiple_quantity": "Redondea a múltiplos de esta cantidad, como una caja de 12",
+    },
+)
+async def apply_reorder_rules(
+    env: Environment, record_id: int, params: dict[str, Any]
+) -> dict[str, Any]:
+    from modules.stock.reorder import ReorderService
+
+    for name in ("location_id", "min_quantity", "max_quantity"):
+        if params.get(name) in (None, ""):
+            raise StockError(
+                "STOCK_RULE_INVALID_RANGE",
+                f"Falta el parámetro {name}",
+                hint="location_id, min_quantity y max_quantity son obligatorios.",
+            )
+    return await ReorderService(env).apply_to_variants(
+        record_id,
+        location_id=int(params["location_id"]),
+        min_quantity=str(params["min_quantity"]),
+        max_quantity=str(params["max_quantity"]),
+        route=str(params.get("route") or "internal"),
+        source_location_id=(
+            int(params["source_location_id"]) if params.get("source_location_id") else None
+        ),
+        supplier_id=int(params["supplier_id"]) if params.get("supplier_id") else None,
+        multiple_quantity=(
+            str(params["multiple_quantity"]) if params.get("multiple_quantity") else None
+        ),
+    )

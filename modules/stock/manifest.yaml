@@ -1,5 +1,5 @@
 name: stock
-version: 0.1.0
+version: 0.2.0
 summary: "Inventario: almacenes, movimientos y valorización con asiento automático"
 depends: [base, product, account]
 category: Inventario
