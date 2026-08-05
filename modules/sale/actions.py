@@ -62,10 +62,22 @@ async def cancel(env: Environment, record_id: int, params: dict[str, Any]) -> di
     "sale.order",
     "action_deliver",
     summary="Entrega la orden: picking de salida validado al costo promedio",
-    params={"location_from_id": "Ubicación interna de origen (opcional)"},
+    params={
+        "location_from_id": "Ubicación interna de origen (opcional)",
+        "warehouse_id": (
+            "Almacén desde el que se despacha; basta con esto si el almacén "
+            "tiene una sola ubicación interna (opcional)"
+        ),
+    },
 )
 async def deliver(env: Environment, record_id: int, params: dict[str, Any]) -> dict[str, Any]:
     from modules.stock.fulfillment import deliver_sale
 
     location = params.get("location_from_id")
-    return await deliver_sale(env, record_id, location_from_id=int(location) if location else None)
+    warehouse = params.get("warehouse_id")
+    return await deliver_sale(
+        env,
+        record_id,
+        location_from_id=int(location) if location else None,
+        warehouse_id=int(warehouse) if warehouse else None,
+    )

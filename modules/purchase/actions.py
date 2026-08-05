@@ -72,12 +72,22 @@ async def cancel(env: Environment, record_id: int, params: dict[str, Any]) -> di
     "purchase.order",
     "action_receive",
     summary="Recibe la orden: picking de entrada al costo de cada línea",
-    params={"location_to_id": "Ubicación interna de destino (opcional)"},
+    params={
+        "location_to_id": "Ubicación interna de destino (opcional)",
+        "warehouse_id": (
+            "Almacén que recibe; basta con esto si el almacén tiene una sola "
+            "ubicación interna (opcional)"
+        ),
+    },
 )
 async def receive(env: Environment, record_id: int, params: dict[str, Any]) -> dict[str, Any]:
     from modules.stock.fulfillment import receive_purchase
 
     location = params.get("location_to_id")
+    warehouse = params.get("warehouse_id")
     return await receive_purchase(
-        env, record_id, location_to_id=int(location) if location else None
+        env,
+        record_id,
+        location_to_id=int(location) if location else None,
+        warehouse_id=int(warehouse) if warehouse else None,
     )

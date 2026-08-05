@@ -147,6 +147,96 @@ class TestFulfillment:
         assert excinfo.value.code == "STOCK_NOTHING_TO_MOVE"
 
 
+class TestLocationAmbiguity:
+    """Con dos bodegas, el sistema exige elegir en vez de adivinar."""
+
+    @staticmethod
+    async def second_warehouse(shop: dict[str, Any]) -> tuple[int, int]:
+        [warehouse_id] = await RecordSet(shop["env"], "stock.warehouse").create(
+            [{"name": "Tienda Providencia", "code": "TP", "company_id": shop["company_id"]}]
+        )
+        [location_id] = await RecordSet(shop["env"], "stock.location").create(
+            [
+                {
+                    "name": "TP/Sala de ventas",
+                    "location_type": "internal",
+                    "warehouse_id": warehouse_id,
+                    "company_id": shop["company_id"],
+                }
+            ]
+        )
+        return warehouse_id, location_id
+
+    async def test_delivering_without_origin_refuses_to_guess(self, shop: dict[str, Any]) -> None:
+        purchase_id = await confirmed_purchase(shop, "10", "100")
+        await dispatch(
+            shop["env"],
+            "purchase.order",
+            "action_receive",
+            purchase_id,
+            {"location_to_id": shop["loc_stock"]},
+        )
+        await self.second_warehouse(shop)
+
+        sale_id = await confirmed_sale(shop, "4")
+        with pytest.raises(StockError) as excinfo:
+            await dispatch(shop["env"], "sale.order", "action_deliver", sale_id, {})
+        assert excinfo.value.code == "STOCK_LOCATION_AMBIGUOUS"
+        # el hint nombra las candidatas: el agente puede resolver sin adivinar
+        assert excinfo.value.hint is not None
+        assert str(shop["loc_stock"]) in excinfo.value.hint
+
+    async def test_explicit_origin_still_delivers(self, shop: dict[str, Any]) -> None:
+        purchase_id = await confirmed_purchase(shop, "10", "100")
+        await dispatch(
+            shop["env"],
+            "purchase.order",
+            "action_receive",
+            purchase_id,
+            {"location_to_id": shop["loc_stock"]},
+        )
+        await self.second_warehouse(shop)
+
+        sale_id = await confirmed_sale(shop, "4")
+        delivered = await dispatch(
+            shop["env"],
+            "sale.order",
+            "action_deliver",
+            sale_id,
+            {"location_from_id": shop["loc_stock"]},
+        )
+        assert delivered["name"] == "OUT/00001"
+        stock = StockService(shop["env"])
+        assert await stock.on_hand(shop["product_id"], shop["loc_stock"]) == Decimal("6")
+
+    async def test_warehouse_is_enough_to_disambiguate(self, shop: dict[str, Any]) -> None:
+        """Indicar el almacén basta: dentro de él la ubicación interna es única."""
+        _, store_location = await self.second_warehouse(shop)
+
+        purchase_id = await confirmed_purchase(shop, "10", "100")
+        received = await dispatch(
+            shop["env"],
+            "purchase.order",
+            "action_receive",
+            purchase_id,
+            {"warehouse_id": shop["warehouse_id"]},
+        )
+        assert received["name"] == "IN/00001"
+
+        stock = StockService(shop["env"])
+        assert await stock.on_hand(shop["product_id"], shop["loc_stock"]) == Decimal("10")
+        assert await stock.on_hand(shop["product_id"], store_location) == Decimal("0")
+
+    async def test_receiving_without_destination_refuses_to_guess(
+        self, shop: dict[str, Any]
+    ) -> None:
+        await self.second_warehouse(shop)
+        purchase_id = await confirmed_purchase(shop, "10", "100")
+        with pytest.raises(StockError) as excinfo:
+            await dispatch(shop["env"], "purchase.order", "action_receive", purchase_id, {})
+        assert excinfo.value.code == "STOCK_LOCATION_AMBIGUOUS"
+
+
 class TestReorder:
     async def test_low_stock_raises_an_alert_with_suggestion(self, shop: dict[str, Any]) -> None:
         await RecordSet(shop["env"], "stock.reorder.rule").create(
