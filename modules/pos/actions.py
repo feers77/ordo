@@ -126,3 +126,26 @@ async def refund_order(env: Environment, record_id: int, params: dict[str, Any])
     return await PosOrderService(env).action_refund(
         record_id, reason=str(params.get("reason") or "")
     )
+
+
+@action(
+    "pos.order",
+    "action_einvoice",
+    summary="Emite el documento electrónico del ticket: la boleta, con su folio",
+    # Sin requires_approval, por el mismo motivo que action_validate (ADR-019):
+    # una boleta por ticket es el curso normal del negocio, no una excepción.
+    # Emitir de más está acotado por el rango de folios autorizado.
+    params={
+        "document_type_code": (
+            "Tipo de documento del país; si falta se usa el de la caja (39 es la boleta en Chile)"
+        )
+    },
+)
+async def einvoice_order(
+    env: Environment, record_id: int, params: dict[str, Any]
+) -> dict[str, Any]:
+    from modules.pos.order import PosOrderService
+
+    return await PosOrderService(env).action_einvoice(
+        record_id, document_type_code=str(params.get("document_type_code") or "").strip()
+    )

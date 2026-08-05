@@ -239,6 +239,8 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `POS_ZERO_TOTAL` | 400 | no | El ticket redondea a cero: no hay nada que asentar |
 | `POS_REFUND_REASON_REQUIRED` | 400 | no | Una devolución lleva su motivo |
 | `POS_REFUND_NO_LAYER` | 409 | no | No se encuentra el costo original: una devolución entra al costo con que salió |
+| `POS_ALREADY_INVOICED` | 409 | no | El ticket ya tiene documento electrónico; para corregirlo emite una devolución |
+| `EDI_REFERENCE_MISSING` | 409 | no | La nota de crédito no encuentra el documento que corrige |
 
 ## Inventario
 

@@ -10,7 +10,8 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from localizations.cl.einvoicing.adapter import SiiAdapter
 from localizations.cl.einvoicing.caf import CafError, parse_caf
-from localizations.cl.einvoicing.dte import DteError
+from localizations.cl.einvoicing.dte import DteError, build_document
+from localizations.cl.einvoicing.envelope import EnvelopeData, build_envelope
 from localizations.cl.einvoicing.responses import (
     parse_status_response,
     parse_upload_response,
@@ -205,8 +206,6 @@ class TestDte:
 
 class TestEnvelope:
     def test_groups_documents_by_type(self) -> None:
-        from localizations.cl.einvoicing.envelope import EnvelopeData, build_envelope
-
         envelope = build_envelope(
             [("33", b"<DTE>a</DTE>"), ("33", b"<DTE>b</DTE>"), ("61", b"<DTE>c</DTE>")],
             EnvelopeData(
@@ -253,3 +252,51 @@ class TestResponses:
 
     def test_garbage_stays_pending(self) -> None:
         assert parse_status_response(b"\x00\x01").status == "pending"
+
+
+class TestBoleta:
+    """DTE 39: la boleta tiene exigencias propias que la factura no tiene."""
+
+    def test_boleta_declares_ind_servicio(self) -> None:
+        """El esquema del SII lo exige en IdDoc para boletas; sin él, rechazo."""
+        invoice = make_invoice(doc_type="39")
+        xml = build_document(invoice, 77, "<TED/>").decode("iso-8859-1")
+        root = ET.fromstring(xml)
+        documento = root.find("Documento")
+        assert documento is not None
+        id_doc = documento.find("Encabezado/IdDoc")
+        assert id_doc is not None
+        assert id_doc.findtext("TipoDTE") == "39"
+        assert id_doc.findtext("IndServicio") == "3"
+
+    def test_an_invoice_does_not_carry_ind_servicio(self) -> None:
+        invoice = make_invoice(doc_type="33")
+        xml = build_document(invoice, 12, "<TED/>").decode("iso-8859-1")
+        id_doc = ET.fromstring(xml).find("Documento/Encabezado/IdDoc")
+        assert id_doc is not None
+        assert id_doc.find("IndServicio") is None
+
+    def test_boletas_travel_in_their_own_envelope(self) -> None:
+        """Meter boletas en un EnvioDTE es un rechazo garantizado: no es el
+        mismo sobre ni el mismo destino."""
+        data = EnvelopeData(
+            issuer_rut="76543210-K",
+            sender_rut="76543210-K",
+            resolution_date="2026-01-02",
+            resolution_number="80",
+        )
+        payload = build_envelope([("39", b"<DTE/>")], data, kind="boleta")
+        text = payload.decode("iso-8859-1")
+        assert text.count("<EnvioBOLETA") == 1
+        assert "EnvioDTE" not in text
+        assert "<TpoDTE>39</TpoDTE>" in text
+
+    def test_an_unknown_envelope_kind_is_refused(self) -> None:
+        data = EnvelopeData(
+            issuer_rut="76543210-K",
+            sender_rut="76543210-K",
+            resolution_date="2026-01-02",
+            resolution_number="80",
+        )
+        with pytest.raises(ValueError):
+            build_envelope([("39", b"<DTE/>")], data, kind="factura")

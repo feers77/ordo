@@ -16,6 +16,12 @@ from ordo_core.errors import KernelError
 
 HUNDRED = Decimal("100")
 CREDIT_DEBIT_NOTES = {"56", "61"}
+# Boleta electrónica afecta y exenta. El esquema del SII les exige IndServicio
+# en IdDoc, cosa que la factura no lleva.
+BOLETAS = {"39", "41"}
+# 3 = boleta de venta y servicios. Es el caso de una tienda; un local que solo
+# presta servicios usa otro indicador y por eso el valor es configurable.
+DEFAULT_IND_SERVICIO = "3"
 
 
 class DteError(KernelError):
@@ -39,7 +45,13 @@ def _line_amount(line: Any) -> Decimal:
     return gross
 
 
-def build_document(invoice: InvoiceData, folio: int, ted_xml: str) -> bytes:
+def build_document(
+    invoice: InvoiceData,
+    folio: int,
+    ted_xml: str,
+    *,
+    ind_servicio: str = DEFAULT_IND_SERVICIO,
+) -> bytes:
     """Devuelve el `<DTE>` sin la firma de documento (esa la pone el Signer)."""
     if not invoice.lines:
         raise DteError("CL_DTE_EMPTY", "Un DTE sin líneas no es un documento")
@@ -51,6 +63,8 @@ def build_document(invoice: InvoiceData, folio: int, ted_xml: str) -> bytes:
     _sub(id_doc, "TipoDTE", invoice.document_type_code)
     _sub(id_doc, "Folio", str(folio))
     _sub(id_doc, "FchEmis", invoice.issue_date.isoformat())
+    if invoice.document_type_code in BOLETAS:
+        _sub(id_doc, "IndServicio", ind_servicio)
 
     issuer = ET.SubElement(header, "Emisor")
     _sub(issuer, "RUTEmisor", invoice.issuer.tax_id)
