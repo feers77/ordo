@@ -23,6 +23,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **`tools/seed_iam_user.py`**: crea el primer usuario IAM de un tenant y le asigna roles.
+  IAM **nunca auto-crea usuarios** —el bridge OIDC vincula el primer login a un usuario
+  pre-aprovisionado y, si no lo encuentra, se niega—, así que hasta ahora sembrar ese primer
+  usuario exigía escribir INSERTs a mano: ningún despliegue con enforcement era utilizable
+  sin tocar la base, y pedirle eso a quien despliega es pedirle que se equivoque. No fija
+  `idp_sub` (lo hace el bridge en el primer login verificado) y **no inventa roles que no
+  existan**: crear uno vacío daría una membresía que no autoriza nada y quien despliega
+  creería que quedó configurado.
+
 - **F12.4** `make seed TENANT=ropa` deja una **tienda que puede vender el mismo día**.
   `tools/seed_tenant.py` instala los nueve módulos —antes ni siquiera `product` ni `stock`,
   así que un tenant recién sembrado no podía recibir mercadería— y siembra plan de cuentas
