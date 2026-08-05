@@ -204,6 +204,17 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `IAM_APPROVAL_INVALID` | 4xx | no | La aprobación no se pudo consumir (detalle en message) |
 | `TENANT_REQUIRED` | 400 | no | Sin token ni cabecera de tenant en modo abierto |
 
+## Catálogo y variantes (F12-01)
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `PRODUCT_NOT_FOUND` | 404 | no | El producto no existe |
+| `PRODUCT_TEMPLATE_NOT_FOUND` | 404 | no | El modelo de producto no existe |
+| `PRODUCT_TEMPLATE_NO_ATTRIBUTES` | 400 | no | El modelo no tiene matriz declarada, o uno de sus ejes no tiene valores |
+| `PRODUCT_ATTRIBUTE_VALUE_UNKNOWN` | 400 | no | El eje referencia un valor inexistente o de otro atributo |
+| `PRODUCT_VARIANT_LIMIT` | 400 | no | La matriz supera el tope de variantes por operación |
+| `PRODUCT_VARIANT_HAS_STOCK` | 409 | no | La variante todavía tiene existencias: agótala o ajústala antes de archivar |
+
 ## Inventario
 
 | Código | HTTP | Retryable | Significado |

@@ -23,6 +23,19 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F12.1b** Generación de la matriz de variantes (diseño F12-01b):
+  `POST /api/v1/product.template/{id}/actions/action_generate_variants` crea el producto
+  cartesiano de los ejes declarados. **Regenerar es la operación normal** —la tienda
+  agrega la talla XL en octubre y vuelve a pedir la matriz—, así que crea las que faltan
+  y no toca las existentes, contando también las archivadas para no resucitar en silencio
+  una decisión de alguien. `price_by_value` aplica sobreprecios por valor de atributo como
+  string decimal. El tope de 500 variantes por operación se comprueba **contando**, antes
+  de materializar una sola tupla. `product.product.action_archive` se niega si la variante
+  todavía tiene existencias, y vive en `modules/stock` porque la restricción es de
+  inventario y la dependencia va de `stock` hacia `product`, nunca al revés; por lo mismo
+  el reporte de la matriz con existencias es `stock.variant_matrix`, que lista también las
+  variantes en cero: en moda, la talla agotada es la fila que hay que ver.
+
 - **F12.1** Catálogo con variantes (ADR-018, diseño F12-01): `product.template` agrupa
   las variantes, `product.attribute` y `product.attribute.value` definen los ejes
   (talla, color) y `product.template.attribute.line` la matriz de cada modelo. **La

@@ -62,6 +62,118 @@ async def on_hand(env: Environment, params: dict[str, Any]) -> dict[str, Any]:
 
 
 @report(
+    "stock.variant_matrix",
+    summary="Existencias y valor por variante de un modelo: qué talla se agotó",
+    params={
+        "template_id": "Modelo de producto (obligatorio)",
+        "company_id": "Compañía (obligatorio)",
+    },
+)
+async def variant_matrix(env: Environment, params: dict[str, Any]) -> dict[str, Any]:
+    """El reporte de una tienda de ropa.
+
+    Vive en `stock` y no en `product` porque necesita existencias, y la flecha
+    de dependencia va de inventario hacia catálogo, nunca al revés.
+    """
+    for name in ("template_id", "company_id"):
+        if params.get(name) is None:
+            raise AccountingError(
+                "REPORT_PARAM_REQUIRED",
+                f"El reporte necesita {name}",
+                hint=f"Pasa {name} como parámetro.",
+            )
+    template_id = int(params["template_id"])
+    company_id = int(params["company_id"])
+
+    variants = await RecordSet(env, "product.product").search(
+        [("template_id", "=", template_id), ("company_id", "=", company_id)],
+        fields=["id", "name", "default_code", "variant_label", "cost"],
+        limit=1000,
+    )
+    variant_ids = [row["id"] for row in variants["rows"]]
+    if not variant_ids:
+        return {
+            "report": "stock.variant_matrix",
+            "template_id": template_id,
+            "axes": [],
+            "rows": [],
+            "total_quantity": "0",
+            "total_value": str(ZERO),
+        }
+
+    memberships = await RecordSet(env, "product.variant.value").search(
+        [("product_id", "in", variant_ids)],
+        fields=["product_id", "attribute_id", "value_id"],
+        limit=len(variant_ids) * 10,
+    )
+    attribute_ids = sorted({row["attribute_id"] for row in memberships["rows"]})
+    value_ids = sorted({row["value_id"] for row in memberships["rows"]})
+    attributes = await RecordSet(env, "product.attribute").search(
+        [("id", "in", attribute_ids)], fields=["id", "name", "sequence"], limit=50
+    )
+    values = await RecordSet(env, "product.attribute.value").search(
+        [("id", "in", value_ids)], fields=["id", "name", "attribute_id", "sequence"], limit=500
+    )
+    value_by_id = {row["id"]: row for row in values["rows"]}
+    axes = [
+        {
+            "attribute_id": attribute["id"],
+            "name": attribute["name"],
+            "values": [
+                {"value_id": value["id"], "name": value["name"]}
+                for value in sorted(
+                    (v for v in values["rows"] if v["attribute_id"] == attribute["id"]),
+                    key=lambda item: (item["sequence"] or 0, item["id"]),
+                )
+            ],
+        }
+        for attribute in sorted(
+            attributes["rows"], key=lambda item: (item["sequence"] or 0, item["id"])
+        )
+    ]
+
+    combos: dict[int, dict[str, str]] = {}
+    for row in memberships["rows"]:
+        value = value_by_id.get(row["value_id"])
+        if value is None:
+            continue
+        combos.setdefault(row["product_id"], {})[str(row["attribute_id"])] = value["name"]
+
+    service = StockService(env)
+    rows = []
+    total_quantity = ZERO
+    total_value = ZERO
+    for variant in variants["rows"]:
+        quantity = await service.on_hand_company(variant["id"], company_id)
+        cost = variant["cost"] or ZERO
+        value = quantity * cost
+        total_quantity += quantity
+        total_value += value
+        rows.append(
+            {
+                "product_id": variant["id"],
+                "name": variant["name"],
+                "default_code": variant["default_code"],
+                "variant_label": variant["variant_label"],
+                "values": combos.get(variant["id"], {}),
+                "quantity": str(quantity),
+                "average_cost": str(cost),
+                "value": str(value),
+            }
+        )
+    return {
+        "report": "stock.variant_matrix",
+        "template_id": template_id,
+        "axes": axes,
+        # Se listan también las variantes en cero: en moda, la talla agotada es
+        # justo la fila que hay que ver.
+        "rows": sorted(rows, key=lambda row: row["variant_label"] or ""),
+        "total_quantity": str(total_quantity),
+        "total_value": str(total_value),
+    }
+
+
+@report(
     "stock.reorder_alerts",
     summary="Productos bajo su mínimo con la cantidad sugerida a reponer",
     params={"company_id": "Compañía (obligatorio)"},
