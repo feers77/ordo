@@ -428,20 +428,79 @@ El servicio `ordo-mcp` expone el contrato completo a cualquier cliente MCP
                           "action": "action_confirm", "dry_run": true}}}
 ```
 
-Nueve tools: `ordo_schema`, `ordo_search`, `ordo_read`, `ordo_create`,
-`ordo_write`, `ordo_list_actions`, `ordo_run_action`, `ordo_list_reports`
+Doce tools: `ordo_schema`, `ordo_translate_query`, `ordo_search`,
+`ordo_aggregate`, `ordo_read`, `ordo_create`, `ordo_write`,
+`ordo_list_actions`, `ordo_run_action`, `ordo_explain`, `ordo_list_reports`
 y `ordo_run_report`. El agente descubre los modelos, simula con `dry_run`
 (que no quema numeración legal) y sabe qué acciones exigen aprobación
 humana antes de intentarlas. Sin autenticación propia: va detrás del
 gateway, con el PDP delante.
 
+## 21. Una tienda de ropa: caja, tallas y arqueo
+
+`make seed TENANT=ropa` deja una tienda que puede vender el mismo día:
+catálogo con tallas y colores, bodega y sala de ventas con existencias reales,
+caja con efectivo y tarjeta, y reglas de reposición por variante.
+
+El punto de venta **no pasa por la orden de venta** (ADR-019): son cinco
+llamadas por ticket donde el contrato permite tres, el 90 % de los tickets es
+anónimo y facturar exigiría aprobación humana por cada polera. `pos.order`
+asienta y mueve stock por sí misma.
+
+```bash
+# abrir el turno con su fondo de caja
+curl -X POST $ORDO/api/v1/pos.session/1/actions/action_open \
+     -H "Authorization: Bearer $TOKEN" -H 'Idempotency-Key: t1' \
+     -d '{"params": {"opening_cash": "50000"}}'
+
+# cobrar: una sola llamada fija totales, numera y contabiliza
+curl -X POST $ORDO/api/v1/pos.order/7/actions/action_validate \
+     -H "Authorization: Bearer $TOKEN" -H 'Idempotency-Key: t2' -d '{}'
+```
+
+Un ticket de $23.800 con IVA incluido, cobrado $10.000 en efectivo y $13.800
+con tarjeta, produce este asiento y descuenta la sala de ventas:
+
+```
+Caja                       10.000
+Deudores por tarjetas      13.800
+    Ventas                          20.000
+    IVA débito fiscal                3.800
+```
+
+El vuelto no es un cobro: pagar con $30.000 debita caja por $23.800, porque los
+$6.200 salen del cajón en el acto.
+
+**Cerrar el turno sí exige aprobación humana.** La diferencia entre lo contado y
+lo esperado es la señal de robo hormiga, y se asienta en el acto:
+
+```bash
+curl -X POST $ORDO/api/v1/pos.session/1/actions/action_close_register ...
+curl -X POST $ORDO/api/v1/pos.session/1/actions/action_close \
+     -d '{"params": {"counted_cash": "73800", "note": "faltan 500"}}'
+# 403 IAM_APPROVAL_REQUIRED → la dueña aprueba → se reintenta con X-Ordo-Approval
+```
+
+Y la pregunta que hace una tienda de ropa, respondida por variante:
+
+```bash
+curl "$ORDO/api/v1/reports/stock.reorder_alerts?company_id=1" -H "Authorization: Bearer $TOKEN"
+# by_template agrupa por modelo; cada variante trae su talla y su can_replenish
+```
+
+"Quedan 2 poleras" no sirve; "quedan 0 en talla M" sí.
+
 ## Qué no existe todavía
 
-El resto de F3 (`explain`, búsqueda semántica, NL→dominio, suscripciones),
-el transporte HTTP real hacia SII/SIFEN (falta el ambiente de certificación y
-certificados en el vault), conciliación bancaria, reportes financieros, el
-servidor MCP y el módulo de inventario. El detalle está en `PLAN-MAESTRO.md` y
-en `docs/design/F2-00-resumen.md`.
+El envío HTTP real hacia SII/SIFEN (falta el ambiente de certificación y los
+certificados en el vault), el RCOF de boletas, la representación impresa, la
+búsqueda semántica, la devolución parcial de un ticket y el vertical de
+restaurante. El detalle está en `PLAN-MAESTRO.md` y en los diseños de
+`docs/design/`.
+
+Los packs fiscales de Chile y Paraguay **siguen en borrador**: el plan de
+cuentas, los impuestos y la estructura de los documentos no están certificados
+ni revisados por un contador. No los uses para declarar impuestos.
 
 ## Siguiente paso
 

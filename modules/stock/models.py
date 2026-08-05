@@ -24,6 +24,11 @@ LOCATION_TYPES = [
     ("inventory_loss", "Ajuste de inventario (virtual)"),
 ]
 
+REPLENISH_ROUTES = [
+    ("internal", "Traslado desde otra ubicación"),
+    ("buy", "Compra al proveedor"),
+]
+
 PICKING_TYPES = [
     ("in", "Recepción"),
     ("out", "Entrega"),
@@ -315,6 +320,37 @@ class ReorderRule(Model):
         required=True,
         agent_hint="Nivel objetivo al reponer (string decimal)",
         examples=["50"],
+    )
+    route = Selection(
+        REPLENISH_ROUTES,
+        default="buy",
+        agent_hint=(
+            "De dónde sale la reposición. En una tienda casi siempre es un "
+            "traslado desde la bodega, no una compra al proveedor"
+        ),
+        examples=["internal", "buy"],
+    )
+    source_location_id = Many2one(
+        "stock.location",
+        index=True,
+        agent_hint=(
+            "Ubicación interna desde la que se repone cuando la ruta es un "
+            "traslado; vacía solo tiene sentido si se compra"
+        ),
+        examples=["2"],
+    )
+    supplier_id = Many2one(
+        "res.partner",
+        index=True,
+        agent_hint="Proveedor al que se compra cuando la ruta es comprar",
+        examples=["3"],
+    )
+    multiple_quantity = Char(
+        agent_hint=(
+            "Redondea la reposición hacia arriba a múltiplos de esta cantidad, "
+            "como una caja de 12; vacío repone la cantidad exacta"
+        ),
+        examples=["12"],
     )
     active = Boolean(default=True, agent_hint="Regla vigente", examples=["true"])
     company_id = Many2one(

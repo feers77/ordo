@@ -259,6 +259,13 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `STOCK_NEGATIVE_COST` | 400 | no | El costo unitario no puede ser negativo |
 | `STOCK_CONFIG_MISSING` | 409 | no | Faltan cuentas o diario en stock.config |
 | `STOCK_NO_LOCATION` | 409 | no | Falta una ubicación del tipo requerido en la compañía |
+| `STOCK_RULE_NOT_FOUND` | 404 | no | La regla de reposición no existe |
+| `STOCK_RULE_INVALID_RANGE` | 400 | no | Niveles negativos, o el mínimo supera al máximo |
+| `STOCK_RULE_NO_VARIANTS` | 409 | no | El modelo no tiene variantes a las que aplicar la regla |
+| `STOCK_REPLENISH_NO_SOURCE` | 409 | no | La regla no declara origen ni proveedor, o se usó la acción de la otra ruta |
+| `STOCK_REPLENISH_NOT_NEEDED` | 409 | sí | El stock ya está sobre el mínimo: nada que reponer |
+| `STOCK_REPLENISH_SOURCE_EMPTY` | 409 | no | El origen no tiene existencias suficientes |
+| `PURCHASE_NO_JOURNAL` | 409 | no | La compañía no tiene diario de compras |
 | `STOCK_LOCATION_AMBIGUOUS` | 400 | no | Hay más de una ubicación de ese tipo: indica cuál con `location_from_id`/`location_to_id` o acota con `warehouse_id` |
 | `STOCK_ORDER_NOT_READY` | 409 | no | Solo se entrega/recibe una orden confirmada o facturada |
 | `STOCK_NOTHING_TO_MOVE` | 400 | no | La orden no tiene líneas con producto almacenable |
