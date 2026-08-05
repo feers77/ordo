@@ -23,6 +23,19 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F12.2d** La boleta electrónica del ticket (diseño F12-02d). `pos.order.action_einvoice`
+  emite el documento con su folio. El receptor se resuelve en tres pasos —cliente
+  identificado, contacto genérico de la caja, o el identificador de consumidor final del
+  país— porque en retail casi todos los tickets son anónimos y la boleta se emite igual.
+  **La devolución no emite otra boleta**: emitir un 39 sumaría venta en vez de restarla, así
+  que sale la nota de crédito del país (61 en Chile) referenciando al documento original;
+  si el ticket nunca se boleteó, se avisa en vez de inventar la referencia. En el pack
+  chileno: `IndServicio` en `IdDoc`, que el esquema del SII exige para boletas y la factura
+  no lleva, y **`EnvioBOLETA` en vez de `EnvioDTE`** —no es el mismo sobre ni el mismo
+  destino, y mezclarlos es rechazo garantizado—. Sin cambios en el detalle: el precio bruto
+  de la boleta ya sale del `price_include` del impuesto. **No incluye** envío al SII, RCOF
+  ni representación impresa, y el pack chileno sigue en borrador sin certificar.
+
 - **F12.2c** El ticket mueve stock y la devolución lo devuelve (diseño F12-02c). Un picking
   por ticket, validado en la misma operación que asienta: agregarlos al cierre dejaría la
   bodega mintiendo durante ocho horas y la alerta de reposición llegaría cuando ya no queda

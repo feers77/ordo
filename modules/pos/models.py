@@ -342,6 +342,14 @@ class PosOrder(Model):
         ),
         examples=["23"],
     )
+    edi_document_id = Many2one(
+        "edi.document",
+        agent_hint=(
+            "Documento electrónico del ticket: la boleta con su folio. Uno por "
+            "ticket, porque cada boleta es un documento legal"
+        ),
+        examples=["77"],
+    )
     refund_of_id = Many2one(
         "pos.order",
         index=True,

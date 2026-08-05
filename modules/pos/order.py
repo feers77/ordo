@@ -314,6 +314,81 @@ class PosOrderService:
             "reason": reason,
         }
 
+    async def action_einvoice(
+        self, order_id: int, *, document_type_code: str = ""
+    ) -> dict[str, Any]:
+        """Emite la boleta del ticket: folio asignado y XML generado."""
+        from modules.einvoicing.runtime import default_registry
+        from modules.einvoicing.services import EinvoicingService
+        from modules.pos.einvoicing import invoice_data_from_pos
+
+        order = await self._order(order_id)
+        [full] = await self.orders.read([order_id], fields=["edi_document_id"])
+        if full["edi_document_id"]:
+            raise PosError(
+                "POS_ALREADY_INVOICED",
+                f"El ticket {order['name']} ya tiene documento electrónico",
+                hint="Un ticket lleva una boleta; para corregirla emite una devolución.",
+            )
+        session = await RecordSet(self.env, "pos.session").read(
+            [order["session_id"]], fields=["config_id"]
+        )
+        config = await self.sessions.config(session[0]["config_id"])
+        document_type = document_type_code or await self._document_type_for(order, config)
+        if not document_type:
+            raise PosError(
+                "EDI_DOCUMENT_TYPE_REQUIRED",
+                "Falta el tipo de documento a emitir",
+                hint="Fija document_type_code en la pos.config o pásalo como parámetro.",
+            )
+
+        invoice, country, company_id = await invoice_data_from_pos(
+            self.env, order_id, document_type_code=document_type
+        )
+        service = EinvoicingService(self.env, default_registry())
+        document_id = await service.create_document(
+            country_code=country,
+            document_type_code=document_type,
+            company_id=company_id,
+            move_id=None,
+            partner_id=order["partner_id"],
+        )
+        number = await service.action_generate(document_id, invoice)
+        await self.orders.write([order_id], {"edi_document_id": document_id})
+        return {
+            "order_id": order_id,
+            "document_id": document_id,
+            "document_type_code": document_type,
+            "number": number,
+            "state": "generated",
+        }
+
+    async def _document_type_for(self, order: dict[str, Any], config: dict[str, Any]) -> str:
+        """La devolución de una boleta no es otra boleta: es una nota de crédito.
+
+        Emitir un 39 por una devolución sumaría venta en vez de restarla. El
+        tipo correcto depende del país, así que se toma del mismo mapa que usa
+        la nota de crédito de una orden de venta.
+        """
+        from modules.einvoicing.actions import CREDIT_NOTE_TYPES
+
+        [full] = await self.orders.read([order["id"]], fields=["refund_of_id"])
+        if not full["refund_of_id"]:
+            return str(config["document_type_code"] or "")
+
+        [company] = await RecordSet(self.env, "res.company").read(
+            [order["company_id"]], fields=["country_code"]
+        )
+        country = (company["country_code"] or "").lower()
+        credit_type = CREDIT_NOTE_TYPES.get(country)
+        if not credit_type:
+            raise PosError(
+                "EDI_DOCUMENT_TYPE_REQUIRED",
+                f"No hay tipo de nota de crédito declarado para el país '{country}'",
+                hint="Pasa document_type_code explícitamente.",
+            )
+        return credit_type
+
     async def _current_session(self, original_session_id: int) -> dict[str, Any]:
         """La devolución entra en el turno abierto ahora, no en el de la venta.
 

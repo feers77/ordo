@@ -55,6 +55,8 @@ class KernelHTTPError(OrdoError):
         "POS_ZERO_TOTAL": 400,
         "POS_REFUND_REASON_REQUIRED": 400,
         "POS_REFUND_NO_LAYER": 409,
+        "POS_ALREADY_INVOICED": 409,
+        "EDI_REFERENCE_MISSING": 409,
         "ACTION_UNKNOWN": 404,
         "REPORT_UNKNOWN": 404,
         "REPORT_PARAM_REQUIRED": 400,
