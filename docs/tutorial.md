@@ -384,7 +384,22 @@ apunta `X-Ordo-Tenant` ahí, rompe lo que quieras y bórralo. Clonar es DDL,
 así que el endpoint usa una conexión administrativa declarada aparte; el
 rol de la aplicación sigue sin DDL.
 
-## 18. Operarlo todo por MCP
+## 18. Preguntar totales sin traerse los datos
+
+```bash
+curl -X POST "$ORDO/api/v1/sale.order/aggregate" -H "X-Ordo-Tenant: acme" \
+     -d '{"domain": [["date_order", ">=", "2026-08-01"]],
+          "group_by": ["partner_id"],
+          "aggregates": ["count", "sum:amount_total"],
+          "order": "sum:amount_total desc", "limit": 10}'
+```
+
+Agrupa en la base y devuelve los importes como string decimal. Es de solo
+lectura: no pide `Idempotency-Key`, y el dominio pasa por el mismo
+compilador que el resto, así que las reglas de registro del rol siguen
+aplicando. La tool MCP equivalente es `ordo_aggregate`.
+
+## 19. Operarlo todo por MCP
 
 El servicio `ordo-mcp` expone el contrato completo a cualquier cliente MCP
 (transporte streamable HTTP, `POST /mcp`, tenant en `X-Ordo-Tenant`):

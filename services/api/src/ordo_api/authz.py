@@ -52,6 +52,9 @@ def route_to_authz(method: str, path: str) -> tuple[str, str, int | None] | None
         return (model, parts[3], record_id)
     if len(parts) >= 2 and parts[1] == "actions":
         return (model, "read", None)  # descubrimiento de acciones
+    if len(parts) >= 2 and parts[1] == "aggregate":
+        # Agregar es leer: el POST lleva el dominio en el cuerpo, no escribe nada.
+        return (model, "read", None)
     if len(parts) >= 2 and parts[1] == "batch":
         return (model, "write", None)
     return (model, METHOD_OPS.get(method, "write"), record_id)

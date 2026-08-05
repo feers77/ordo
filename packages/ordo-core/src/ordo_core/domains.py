@@ -29,6 +29,7 @@ from sqlalchemy import (
     Table,
     and_,
     false,
+    func,
     not_,
     or_,
     select,
@@ -64,6 +65,10 @@ COMPARISON_OPERATORS = frozenset(
         "=ilike",
     }
 )
+
+AGGREGATE_SPECS = ("count", "sum:<campo>", "avg:<campo>", "min:<campo>", "max:<campo>")
+NUMERIC_FIELD_TYPES = frozenset({"integer", "float", "monetary"})
+TEMPORAL_FIELD_TYPES = frozenset({"date", "datetime"})
 
 _SQL_TYPES: dict[str, Any] = {
     "integer": Integer,
@@ -102,19 +107,7 @@ class DomainCompiler:
         definition = self.registry[model]
         table = self._table_for(definition)
         joins = _JoinPlan(self, table)
-
-        conditions: list[ColumnElement[bool]] = []
-        conditions.append(self._compile(definition, domain, joins))
-        for rule_domain in (rules or {}).get("global_and", []):
-            conditions.append(self._compile(definition, rule_domain, joins))
-        role_rules = [
-            self._compile(definition, rule_domain, joins)
-            for rule_domain in (rules or {}).get("role_or", [])
-        ]
-        if role_rules:
-            conditions.append(or_(*role_rules))
-        if active_test and "active" in definition.fields:
-            conditions.append(joins.column(definition, "active").is_(True))
+        conditions = self._conditions(definition, domain, rules, joins, active_test)
 
         columns = self._select_columns(definition, table, fields)
         stmt = select(*columns).select_from(joins.build_from())
@@ -126,6 +119,146 @@ class DomainCompiler:
         if offset is not None:
             stmt = stmt.offset(offset)
         return stmt
+
+    def aggregate(
+        self,
+        *,
+        model: str,
+        domain: list[Any],
+        group_by: list[str] | None = None,
+        aggregates: list[str] | None = None,
+        rules: dict[str, list[Any]] | None = None,
+        order: str | None = None,
+        limit: int | None = None,
+        active_test: bool = True,
+    ) -> Select[Any]:
+        """Grouped SELECT built on the same conditions as `select`.
+
+        Aggregating must never become a way around tenant scoping or record
+        rules, so the WHERE clause comes from the very same code path. Only
+        stored fields of the model itself can be grouped: an implicit join
+        would silently change every total (design F2-08).
+
+        `limit` is applied as given; the public ceiling belongs to the API
+        and RecordSet layers, not to the compiler.
+        """
+        definition = self.registry[model]
+        table = self._table_for(definition)
+        joins = _JoinPlan(self, table)
+        conditions = self._conditions(definition, domain, rules, joins, active_test)
+
+        keys = list(group_by or [])
+        key_columns = [self._group_column(definition, table, name) for name in keys]
+        labels = {
+            spec: self._aggregate_column(definition, table, spec)
+            for spec in (aggregates or ["count"])
+        }
+        stmt = select(*key_columns, *labels.values()).select_from(joins.build_from())
+        stmt = stmt.where(and_(*conditions))
+        if key_columns:
+            stmt = stmt.group_by(*key_columns)
+        if order is not None:
+            stmt = stmt.order_by(self._aggregate_order(table, order, labels, keys))
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        return stmt
+
+    # -- condiciones compartidas -------------------------------------------
+
+    def _conditions(
+        self,
+        definition: ModelDefinition,
+        domain: list[Any],
+        rules: dict[str, list[Any]] | None,
+        joins: _JoinPlan,
+        active_test: bool,
+    ) -> list[ColumnElement[bool]]:
+        """Domain plus record rules (global AND, role OR) plus active_test."""
+        conditions: list[ColumnElement[bool]] = [self._compile(definition, domain, joins)]
+        for rule_domain in (rules or {}).get("global_and", []):
+            conditions.append(self._compile(definition, rule_domain, joins))
+        role_rules = [
+            self._compile(definition, rule_domain, joins)
+            for rule_domain in (rules or {}).get("role_or", [])
+        ]
+        if role_rules:
+            conditions.append(or_(*role_rules))
+        if active_test and "active" in definition.fields:
+            conditions.append(joins.column(definition, "active").is_(True))
+        return conditions
+
+    # -- agregación ---------------------------------------------------------
+
+    def _group_column(self, definition: ModelDefinition, table: Table, name: str) -> Any:
+        field = definition.fields.get(name) if "." not in name else None
+        if field is None:
+            raise KernelError(
+                "FIELD_UNKNOWN",
+                f"El campo '{name}' no existe en {definition.name} o no se puede agrupar",
+                hint="Agrupa por campos del propio modelo; las rutas con punto no se admiten.",
+            )
+        if not field.store or field.field_type in {"one2many", "many2many"}:
+            raise KernelError(
+                "FIELD_NOT_STORED",
+                f"'{definition.name}.{name}' no se almacena; no se puede agrupar por él",
+                hint="Agrupa por un campo almacenado o por sus dependencias.",
+            )
+        return table.c[name]
+
+    def _aggregate_column(self, definition: ModelDefinition, table: Table, spec: str) -> Any:
+        """One aggregate expression labelled with its own spec string."""
+        if spec == "count":
+            return func.count().label(spec)
+        name, _, field_name = str(spec).partition(":")
+        builders: dict[str, Any] = {
+            "sum": func.sum,
+            "avg": func.avg,
+            "min": func.min,
+            "max": func.max,
+        }
+        if name not in builders or not field_name:
+            raise KernelError(
+                "AGGREGATE_UNKNOWN",
+                f"Agregado no soportado: {spec!r}",
+                hint=f"Agregados válidos: {', '.join(AGGREGATE_SPECS)}.",
+            )
+        # min/max también tienen sentido sobre fechas; sum/avg no.
+        allowed = NUMERIC_FIELD_TYPES
+        if name in {"min", "max"}:
+            allowed = allowed | TEMPORAL_FIELD_TYPES
+        field = definition.fields.get(field_name)
+        if field is None or not field.store or field.field_type not in allowed:
+            raise KernelError(
+                "AGGREGATE_INVALID_FIELD",
+                f"No se puede calcular '{name}' sobre '{definition.name}.{field_name}'",
+                hint="Agrega solo campos numéricos, monetarios o de fecha.",
+            )
+        return builders[name](table.c[field_name]).label(spec)
+
+    def _aggregate_order(
+        self, table: Table, order: str, labels: dict[str, Any], keys: list[str]
+    ) -> Any:
+        """Order by one requested aggregate or by one grouped field."""
+        tokens = order.strip().split()
+        name = tokens[0] if tokens else ""
+        direction = tokens[1].lower() if len(tokens) == 2 else "asc"
+        if not tokens or len(tokens) > 2 or direction not in {"asc", "desc"}:
+            raise KernelError(
+                "AGGREGATE_INVALID_ORDER",
+                f"Cláusula de orden inválida: {order!r}",
+                hint="Usa '<agregado> desc' o '<campo agrupado> asc'.",
+            )
+        if name in labels:
+            column = labels[name]
+        elif name in keys:
+            column = table.c[name]
+        else:
+            raise KernelError(
+                "AGGREGATE_INVALID_ORDER",
+                f"No se puede ordenar por {name!r}",
+                hint="Ordena por un agregado pedido o por un campo del group_by.",
+            )
+        return column.desc() if direction == "desc" else column.asc()
 
     # -- tablas y columnas -------------------------------------------------
 

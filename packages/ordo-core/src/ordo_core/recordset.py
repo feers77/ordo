@@ -8,7 +8,8 @@ are never bypassed.
 from __future__ import annotations
 
 import base64
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import Table, delete, insert, select, update
@@ -21,6 +22,10 @@ from ordo_core.fields import TECHNICAL_FIELDS, Field, Monetary, Selection
 from ordo_core.registry import ModelDefinition
 
 WRITABLE_TECHNICAL = frozenset({"company_id"})
+MAX_GROUPS = 500
+# Cero por tipo de campo: el vacío se devuelve con la misma forma que un
+# total real (string decimal para dinero, número para el resto).
+_ZERO_BY_TYPE: dict[str, Any] = {"monetary": "0", "float": 0.0, "integer": 0}
 
 
 class RecordSet:
@@ -210,6 +215,56 @@ class RecordSet:
             next_cursor = _encode_cursor(int(rows[-1]["id"]))
         return {"rows": rows, "next_cursor": next_cursor}
 
+    async def read_group(
+        self,
+        domain: list[Any],
+        *,
+        group_by: list[str] | None = None,
+        aggregates: list[str] | None = None,
+        order: str | None = None,
+        limit: int = 80,
+        rules: dict[str, list[Any]] | None = None,
+        active_test: bool = True,
+    ) -> dict[str, Any]:
+        """Group and aggregate in the database instead of paging records out.
+
+        Money comes back as a decimal string and dates in ISO format, like
+        everywhere else in the API (AGENTS.md §2.3).
+        """
+        keys = list(group_by or [])
+        specs = list(aggregates or ["count"])
+        stmt = self.compiler.aggregate(
+            model=self.model_name,
+            domain=domain,
+            group_by=keys,
+            aggregates=specs,
+            rules=rules,
+            order=order,
+            limit=min(limit, MAX_GROUPS),
+            active_test=active_test,
+        )
+        result = await self.env.session.execute(stmt)
+        groups: list[dict[str, Any]] = []
+        for row in result.all():
+            values = list(row)
+            group = {name: _serialize(values[index]) for index, name in enumerate(keys)}
+            for offset, spec in enumerate(specs):
+                group[spec] = self._serialize_aggregate(spec, values[len(keys) + offset])
+            groups.append(group)
+        return {"groups": groups, "total_groups": len(groups)}
+
+    def _serialize_aggregate(self, spec: str, value: Any) -> Any:
+        if spec == "count":
+            return int(value or 0)
+        name, _, field_name = spec.partition(":")
+        if value is None and name == "sum":
+            # SUM sobre un grupo sin valores devuelve NULL; un total ausente
+            # se lee como cero, no como None, para que quien consuma la
+            # respuesta pueda sumar sin ramificar.
+            field = self.definition.fields.get(field_name)
+            return _ZERO_BY_TYPE.get(field.field_type if field else "", 0)
+        return _serialize(value)
+
     def _default_fields(self) -> list[str]:
         return [
             name
@@ -248,6 +303,15 @@ def _coerce(field: Field, value: Any, model: str, name: str) -> Any:
         raise KernelError("FIELD_INVALID_VALUE", f"'{model}.{name}' espera un booleano")
     if field.field_type in {"char", "text", "html"} and not isinstance(value, str):
         raise KernelError("FIELD_INVALID_VALUE", f"'{model}.{name}' espera texto")
+    return value
+
+
+def _serialize(value: Any) -> Any:
+    """JSON-safe value: money as decimal string, temporals as ISO."""
+    if isinstance(value, Decimal):
+        return str(value)
+    if isinstance(value, datetime | date):
+        return value.isoformat()
     return value
 
 
