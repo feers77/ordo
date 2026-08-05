@@ -251,3 +251,13 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `AGGREGATE_UNKNOWN` | 422 | no | Agregado desconocido; usa count, sum, avg, min o max |
 | `AGGREGATE_INVALID_FIELD` | 422 | no | Ese campo no admite el agregado pedido |
 | `AGGREGATE_INVALID_ORDER` | 422 | no | El orden no es un agregado ni un campo agrupado |
+
+## Traducción de lenguaje natural (F3-04)
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `NL_UNAVAILABLE` | 503 | no | No hay modelo de lenguaje configurado |
+| `NL_TIMEOUT` | 504 | sí | El modelo no respondió dentro del tiempo permitido |
+| `NL_MODEL_FAILED` | 502 | sí | El proceso del modelo falló o no devolvió nada |
+| `NL_INVALID_RESPONSE` | 422 | no | La respuesta no contenía el JSON pedido |
+| `NL_INVALID_DOMAIN` | 422 | no | El dominio propuesto no compila tras el reintento |

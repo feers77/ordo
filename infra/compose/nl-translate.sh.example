@@ -1,0 +1,22 @@
+#!/bin/sh
+# Ejemplo de comando traductor para ORDO_NL_COMMAND (ADR-017).
+#
+# ORDO le pasa el prompt por stdin y espera la respuesta por stdout. Este
+# envoltorio existe porque la mayoría de los CLI de modelos envuelven el
+# texto en un sobre con metadatos: ahí es donde entra ORDO_NL_RESULT_PATH,
+# o puedes extraer el campo aquí y devolver texto plano.
+#
+# Uso:
+#   cp nl-translate.sh.example nl-translate.sh && chmod +x nl-translate.sh
+#   # edita MODEL_CLI con el binario de tu proveedor y sus flags
+#   export ORDO_NL_COMMAND=/ruta/a/nl-translate.sh
+#
+# El modelo que elijas es decisión del despliegue: el código de ORDO no
+# conoce proveedores. Recomendaciones: un modelo rápido y barato basta
+# (traducir una pregunta a un dominio es una tarea corta y acotada), pide
+# salida no interactiva y limita el número de turnos a uno.
+set -eu
+
+MODEL_CLI="${MODEL_CLI:-modelo-cli}"
+
+exec "$MODEL_CLI" --print --max-turns 1

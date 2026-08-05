@@ -48,7 +48,16 @@ class KernelHTTPError(OrdoError):
         "SANDBOX_SOURCE_NOT_FOUND": 404,
         "SANDBOX_REFUSED": 403,
         "SANDBOX_NAME_INVALID": 400,
+        "NL_UNAVAILABLE": 503,
+        "NL_TIMEOUT": 504,
+        "NL_MODEL_FAILED": 502,
+        "NL_INVALID_RESPONSE": 422,
+        "NL_INVALID_DOMAIN": 422,
     }
+    # Fallos de transporte: el mismo intento puede salir bien más tarde. El
+    # resto de los códigos del kernel describen datos, y reintentarlos igual
+    # vuelve a fallar (docs/api/errors.md).
+    RETRYABLE: ClassVar[frozenset[str]] = frozenset({"NL_TIMEOUT", "NL_MODEL_FAILED"})
 
     def __init__(self, error: KernelError) -> None:
         super().__init__(
@@ -56,6 +65,7 @@ class KernelHTTPError(OrdoError):
             code=error.code,
             status_code=self.STATUS.get(error.code, 422),
             hint=error.hint,
+            retryable=error.code in self.RETRYABLE,
         )
         self.current_state = error.current_state
 

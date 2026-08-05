@@ -6,6 +6,18 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F3.4** Lenguaje natural a dominio (ADR-017, diseño F3-04):
+  `POST /meta/v1/translate-query` convierte una pregunta en un dominio ORDO válido y
+  **lo devuelve sin ejecutar** — quién lo ejecuta es el agente, con sus permisos, por
+  los endpoints de siempre: una alucinación no puede tocar datos por sí sola. El
+  dominio propuesto se valida **compilándolo** con el compilador real (sin ejecutar el
+  SELECT) y, si no compila, se reintenta una sola vez pasándole el error como contexto.
+  El modelo se invoca como un comando externo configurable (`ORDO_NL_COMMAND`, sin
+  shell), así que el proveedor es una decisión de despliegue y no entra ninguna
+  dependencia Python nueva; sin esa variable el endpoint responde 503. El prompt lleva
+  solo estructura —modelos, campos, hints— y ningún dato del tenant, verificado con un
+  test. Tool MCP `ordo_translate_query`.
+
 - **F2.8** Agregaciones (diseño F2-08): `POST /api/v1/{model}/aggregate` y
   `RecordSet.read_group` agrupan y suman en la base en vez de obligar al agente a
   traerse los registros y contarlos en su lado —donde el total depende de cuántas
