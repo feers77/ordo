@@ -1,0 +1,48 @@
+# El cajero vende y cobra; no configura su propia caja ni toca cuentas. Cerrar
+# el turno con diferencia pasa por aprobación (requires_approval de
+# action_close), que es donde la dueña ve el faltante.
+#
+# No hay un rol amplio tipo "pos_admin" a propósito: los roles se funden por
+# unión entre módulos, así que un rol generoso aquí ampliaría permisos en todo
+# el sistema.
+roles:
+  cajero:
+    pos.config: [read]
+    pos.payment.method: [read]
+    pos.session: [read, write, create]
+    pos.order: [read, write, create]
+    pos.order.line: [read, write, create]
+    pos.payment: [read, write, create]
+    product.product: [read]
+    product.template: [read]
+    product.category: [read]
+    product.variant.value: [read]
+    res.partner: [read, create]
+    res.currency: [read]
+    reports: [read]
+  supervisor_tienda:
+    pos.config: [read, write, create]
+    pos.payment.method: [read, write, create]
+    pos.session: [read, write, create]
+    pos.order: [read, write]
+    pos.order.line: [read]
+    pos.payment: [read]
+    stock.picking: [read]
+    stock.location: [read]
+    product.product: [read]
+    product.template: [read]
+    reports: [read]
+  contabilidad:
+    pos.config: [read, write, create]
+    pos.payment.method: [read, write, create]
+    pos.session: [read]
+    pos.order: [read]
+    pos.order.line: [read]
+    pos.payment: [read]
+  auditor:
+    pos.config: [read]
+    pos.payment.method: [read]
+    pos.session: [read]
+    pos.order: [read]
+    pos.order.line: [read]
+    pos.payment: [read]

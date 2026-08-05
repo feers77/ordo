@@ -204,6 +204,40 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `IAM_APPROVAL_INVALID` | 4xx | no | La aprobación no se pudo consumir (detalle en message) |
 | `TENANT_REQUIRED` | 400 | no | Sin token ni cabecera de tenant en modo abierto |
 
+## Catálogo y variantes (F12-01)
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `PRODUCT_NOT_FOUND` | 404 | no | El producto no existe |
+| `PRODUCT_TEMPLATE_NOT_FOUND` | 404 | no | El modelo de producto no existe |
+| `PRODUCT_TEMPLATE_NO_ATTRIBUTES` | 400 | no | El modelo no tiene matriz declarada, o uno de sus ejes no tiene valores |
+| `PRODUCT_ATTRIBUTE_VALUE_UNKNOWN` | 400 | no | El eje referencia un valor inexistente o de otro atributo |
+| `PRODUCT_VARIANT_LIMIT` | 400 | no | La matriz supera el tope de variantes por operación |
+| `PRODUCT_VARIANT_HAS_STOCK` | 409 | no | La variante todavía tiene existencias: agótala o ajústala antes de archivar |
+
+## Punto de venta (F12-02)
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `POS_CONFIG_MISSING` | 409 | no | La caja no existe o le faltan ubicación, diarios o cuentas |
+| `POS_SESSION_NOT_FOUND` | 404 | no | El turno no existe |
+| `POS_SESSION_ALREADY_OPEN` | 409 | no | Esa caja ya tiene un turno abierto; ciérralo antes de abrir otro |
+| `POS_SESSION_INVALID_TRANSITION` | 409 | no | La acción no es válida desde el estado actual del turno |
+| `POS_OPENING_CASH_INVALID` | 400 | no | El fondo de caja no puede ser negativo |
+| `POS_COUNTED_CASH_REQUIRED` | 400 | no | Un cierre sin efectivo contado no es un arqueo |
+| `POS_SESSION_NOT_OPEN` | 409 | no | Solo se vende contra un turno abierto |
+| `POS_SESSION_HAS_DRAFT_ORDERS` | 409 | no | Hay tickets sin cobrar; valídalos o cancélalos antes de cerrar |
+| `POS_PAYMENT_INSUFFICIENT` | 400 | no | Los cobros no cubren el total del ticket, o hay un importe no positivo |
+| `POS_CHANGE_ON_NON_CASH` | 400 | no | El vuelto solo sale del efectivo recibido |
+| `POS_ORDER_NOT_FOUND` | 404 | no | El ticket no existe |
+| `POS_ORDER_EMPTY` | 400 | no | Un ticket sin líneas no cobra nada |
+| `POS_ORDER_INVALID_TRANSITION` | 409 | no | Un ticket cobrado no se edita ni se cancela: emite una devolución |
+| `POS_DUPLICATE_TERMINAL_REF` | 409 | no | El terminal ya registró ese ticket; recupera el existente |
+| `POS_PAYMENT_METHOD_UNKNOWN` | 400 | no | El medio de cobro no pertenece a esta caja |
+| `POS_TAX_UNKNOWN` | 400 | no | El impuesto de la línea no existe o no aplica a ventas |
+| `POS_NO_ACCOUNT` | 400 | no | La línea no tiene cuenta de ingreso y el diario no define una por defecto |
+| `POS_ZERO_TOTAL` | 400 | no | El ticket redondea a cero: no hay nada que asentar |
+
 ## Inventario
 
 | Código | HTTP | Retryable | Significado |

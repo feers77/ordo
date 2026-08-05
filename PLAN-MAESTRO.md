@@ -450,6 +450,7 @@ Cada pack debe traer **tests dorados**: facturas reales anonimizadas con los imp
 | **F9 — Enterprise-equivalentes** | 10–12 sem | Studio API, Documents, Sign, Planning, Subscriptions, Helpdesk, FSM, Quality |
 | **F10 — Olas de localización** | continuo | 2–3 países por ola, en paralelo con lo demás |
 | **F11 — Endurecimiento** | continuo | Carga, caos, pentest, DR, SOC 2 readiness |
+| **F12 — Verticales de negocio** | continuo | Módulos por tipo de empresa sobre el núcleo genérico: catálogo con variantes, punto de venta, reposición de tienda; después recetas, mesas y cocina. Cada vertical entrega su tenant sembrado funcionando de punta a punta |
 
 Estimaciones para un equipo trabajando en paralelo con revisión humana. **No comprimas F1 ni F2**: todo lo demás se apoya en ellas.
 

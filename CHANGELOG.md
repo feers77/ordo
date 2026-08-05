@@ -23,6 +23,70 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F12.2b** Punto de venta: el ticket (diseño F12-02b). `pos.order`, `pos.order.line` y
+  `pos.payment`; `action_validate` fija totales, asigna número y **contabiliza** el asiento
+  en la misma operación — no existe el ticket cobrado cuyo asiento sigue pendiente, que en
+  una caja de doscientos tickets al día es donde se pierde la plata. Soporta **cobro
+  mixto**: efectivo y tarjeta en el mismo ticket, cada uno a su cuenta de liquidación. El
+  vuelto no es un cobro: pagar $30.000 un ticket de $23.800 debita caja por $23.800,
+  porque los $6.200 salen del cajón en el acto, y solo puede descontarse de cuentas de
+  efectivo. Dos redes contra el ticket duplicado: `Idempotency-Key` y `terminal_ref`
+  indexada, porque **la clave de idempotencia se pierde con el corte de red y la
+  referencia del terminal no**. El turno cierra sus dos costuras: el arqueo ya suma los
+  cobros en efectivo y resta los vueltos —la tarjeta no pasa por el cajón—, y un turno con
+  tickets sin cobrar no se cierra.
+
+### Changed (contabilidad)
+
+- `build_invoice_lines` se parte en `build_revenue_lines` + contrapartida. El motor sabía
+  poner **una** contrapartida y un ticket tiene tantas como medios de cobro. La factura de
+  cliente y la de proveedor siguen con una sola, verificado con un test explícito: un
+  refactor del motor de asientos que cambie el comportamiento de las facturas sería la
+  peor clase de regresión.
+
+- **F12.2** Punto de venta: caja y turno (ADR-019, diseño F12-02). Módulo `pos` con
+  `pos.config`, `pos.payment.method` y `pos.session`. El turno se abre con un fondo
+  declarado, se cierra a ventas nuevas —contar el cajón toma minutos y durante esos
+  minutos la caja no puede seguir vendiendo— y se arquea: la diferencia entre lo contado
+  y lo esperado **se asienta y se contabiliza en el acto**, porque un faltante en
+  borrador es un faltante que nadie mira. Sin diferencia no hay asiento. Una caja tiene
+  un turno abierto o ninguno (`POS_SESSION_ALREADY_OPEN`): con dos turnos vivos sobre el
+  mismo cajón no se sabe contra qué fondo contar. `action_close` exige aprobación y
+  `action_open` no — la diferencia de caja es la señal de robo hormiga y que la persona
+  responsable la vea es el control, no un trámite. **El límite de monto por venta lo pone
+  el capability token, no `requires_approval`**: pedirle permiso a la dueña por cada
+  polera mataría el negocio. La aritmética del arqueo vive sin base de datos y se prueba
+  con hypothesis, incluida la regla de que el vuelto solo sale del efectivo: darlo de una
+  tarjeta saca del cajón plata que nunca entró. Roles nuevos `cajero` y
+  `supervisor_tienda`.
+
+- **F12.1b** Generación de la matriz de variantes (diseño F12-01b):
+  `POST /api/v1/product.template/{id}/actions/action_generate_variants` crea el producto
+  cartesiano de los ejes declarados. **Regenerar es la operación normal** —la tienda
+  agrega la talla XL en octubre y vuelve a pedir la matriz—, así que crea las que faltan
+  y no toca las existentes, contando también las archivadas para no resucitar en silencio
+  una decisión de alguien. `price_by_value` aplica sobreprecios por valor de atributo como
+  string decimal. El tope de 500 variantes por operación se comprueba **contando**, antes
+  de materializar una sola tupla. `product.product.action_archive` se niega si la variante
+  todavía tiene existencias, y vive en `modules/stock` porque la restricción es de
+  inventario y la dependencia va de `stock` hacia `product`, nunca al revés; por lo mismo
+  el reporte de la matriz con existencias es `stock.variant_matrix`, que lista también las
+  variantes en cero: en moda, la talla agotada es la fila que hay que ver.
+
+- **F12.1** Catálogo con variantes (ADR-018, diseño F12-01): `product.template` agrupa
+  las variantes, `product.attribute` y `product.attribute.value` definen los ejes
+  (talla, color) y `product.template.attribute.line` la matriz de cada modelo. **La
+  variante sigue siendo `product.product`**: cada talla-color mantiene su propio stock y
+  su propio costo promedio —se compraron en lotes distintos y no valen lo mismo—, y el
+  diff en `stock/`, `sale/` y `purchase/` es cero. `template_id` es nullable, así que los
+  productos planos y los servicios siguen exactamente igual. La pertenencia de la
+  variante vive en `product.variant.value`, un modelo con índices, para que "qué queda en
+  talla M" se resuelva en SQL y no en el cliente. Se descarta `_inherits` de forma
+  explícita: la delegación está implementada solo a nivel de metadatos y el instalador
+  crearía columnas duplicadas (queda escrito en el ADR para que nadie lo intente).
+  `modules/product` sube a `0.2.0`; los tenants existentes reciben las columnas con
+  `make upgrade-tenant`.
+
 - **F3.4** Lenguaje natural a dominio (ADR-017, diseño F3-04):
   `POST /meta/v1/translate-query` convierte una pregunta en un dominio ORDO válido y
   **lo devuelve sin ejecutar** — quién lo ejecuta es el agente, con sus permisos, por

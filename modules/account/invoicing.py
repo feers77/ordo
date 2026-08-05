@@ -121,23 +121,25 @@ async def settings_for(env: Environment, company_id: int) -> dict[str, Any]:
     return result["rows"][0]
 
 
-def build_invoice_lines(
+def build_revenue_lines(
     *,
     kind: str,  # customer | vendor
     resolved_lines: list[ResolvedLine],
     totals: TaxResult,
     taxes_by_code: dict[str, tuple[dict[str, Any], Tax]],
-    counterpart_account_id: int,
-    partner_id: int,
     fallback_account_id: int | None,
     error_prefix: str,
     decimals: int,
-) -> list[dict[str, Any]]:
-    """Arma las partidas del asiento de una factura de cliente o proveedor.
+) -> tuple[list[dict[str, Any]], Decimal]:
+    """Las partidas de ingreso o gasto y sus impuestos, **sin la contrapartida**.
 
-    Cliente: por cobrar al debe; ingreso e impuestos al haber. Proveedor:
-    espejo exacto. Las retenciones van del lado contrario a su impuesto y
-    reducen la contrapartida.
+    Devuelve también cuánto debe sumar esa contrapartida, para que quien llame
+    decida en cuántas partidas la parte. Una factura la pone en una sola —la
+    cuenta por cobrar—, pero un ticket de punto de venta se cobra con efectivo
+    *y* tarjeta a la vez, y cada medio aterriza en su propia cuenta.
+
+    Cliente: ingreso e impuestos al haber. Proveedor: espejo exacto. Las
+    retenciones van del lado contrario a su impuesto y reducen la contrapartida.
     """
     base_side, counter_side = ("credit", "debit") if kind == "customer" else ("debit", "credit")
 
@@ -202,6 +204,35 @@ def build_invoice_lines(
             "El documento redondea a cero: no hay nada que asentar",
             hint="Revisa importes y descuentos de las líneas.",
         )
+    return entries, counterpart
+
+
+def build_invoice_lines(
+    *,
+    kind: str,  # customer | vendor
+    resolved_lines: list[ResolvedLine],
+    totals: TaxResult,
+    taxes_by_code: dict[str, tuple[dict[str, Any], Tax]],
+    counterpart_account_id: int,
+    partner_id: int,
+    fallback_account_id: int | None,
+    error_prefix: str,
+    decimals: int,
+) -> list[dict[str, Any]]:
+    """Las partidas de una factura: lo anterior más una única contrapartida.
+
+    Cliente: por cobrar al debe. Proveedor: por pagar al haber.
+    """
+    counter_side = "debit" if kind == "customer" else "credit"
+    entries, counterpart = build_revenue_lines(
+        kind=kind,
+        resolved_lines=resolved_lines,
+        totals=totals,
+        taxes_by_code=taxes_by_code,
+        fallback_account_id=fallback_account_id,
+        error_prefix=error_prefix,
+        decimals=decimals,
+    )
     entries.insert(
         0,
         {
