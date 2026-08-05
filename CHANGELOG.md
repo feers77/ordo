@@ -6,6 +6,15 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ### Added
 
+- **F2.8** Agregaciones (diseño F2-08): `POST /api/v1/{model}/aggregate` y
+  `RecordSet.read_group` agrupan y suman en la base en vez de obligar al agente a
+  traerse los registros y contarlos en su lado —donde el total depende de cuántas
+  páginas alcanzó a leer—. Soporta `count`, `sum`, `avg`, `min` y `max`, agrupación por
+  campos almacenados, orden por agregado y filtro por dominio; el dominio se compila
+  con la maquinaria de siempre, así que las record rules y el filtro de tenant siguen
+  aplicando. Los importes vuelven como string decimal y un `sum` sin filas es `"0"`, no
+  un `null` silencioso. Expuesto también como tool MCP `ordo_aggregate`.
+
 - **F3.3** Introspección profunda y sandbox (diseño F3-03): `GET /{model}/{id}/explain`
   responde de dónde sale cada valor (escrito, calculado con sus `@depends`, related o
   por defecto), qué acciones puede ejecutar ese registro **ahora** y cuáles están

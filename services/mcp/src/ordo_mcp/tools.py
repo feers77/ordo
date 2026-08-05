@@ -52,6 +52,17 @@ async def tool_search(env: Environment, args: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+async def tool_aggregate(env: Environment, args: dict[str, Any]) -> dict[str, Any]:
+    result: dict[str, Any] = await RecordSet(env, str(args["model"])).read_group(
+        args.get("domain") or [],
+        group_by=args.get("group_by"),
+        aggregates=args.get("aggregates"),
+        order=args.get("order"),
+        limit=int(args.get("limit", 80)),
+    )
+    return result
+
+
 async def tool_read(env: Environment, args: dict[str, Any]) -> dict[str, Any]:
     rows = await RecordSet(env, str(args["model"])).read(
         [int(record_id) for record_id in args["ids"]],
@@ -179,6 +190,38 @@ TOOLS: list[dict[str, Any]] = [
         ),
     },
     {
+        "name": "ordo_aggregate",
+        "description": (
+            "Agrupa y suma sin traerse los registros: ventas por cliente, saldo por "
+            "cuenta, cantidad por estado. Devuelve importes como string decimal."
+        ),
+        "inputSchema": _obj(
+            {
+                "model": MODEL_PROP,
+                "domain": {"type": "array", "description": 'Ej. [["state","=","draft"]]'},
+                "group_by": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Campos almacenados del modelo, sin rutas con punto",
+                },
+                "aggregates": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": (
+                        'Formato: "count" | "sum:campo" | "avg:campo" | "min:campo" | '
+                        '"max:campo". Por defecto ["count"]'
+                    ),
+                },
+                "order": {
+                    "type": "string",
+                    "description": 'Ej. "sum:amount_total desc" o un campo del group_by',
+                },
+                "limit": {"type": "integer", "description": "Máximo de grupos; tope 500"},
+            },
+            ["model"],
+        ),
+    },
+    {
         "name": "ordo_read",
         "description": "Lee registros por id.",
         "inputSchema": _obj(
@@ -279,7 +322,7 @@ def tool_authz_target(name: str, arguments: dict[str, Any]) -> tuple[str, str]:
     model = str(arguments.get("model", "")) or "ir.model"
     if name in ("ordo_schema", "ordo_list_actions"):
         return ("ir.model" if name == "ordo_schema" else model, "read")
-    if name in ("ordo_search", "ordo_read", "ordo_explain"):
+    if name in ("ordo_search", "ordo_read", "ordo_explain", "ordo_aggregate"):
         return (model, "read")
     if name == "ordo_create":
         return (model, "create")
@@ -295,6 +338,7 @@ def tool_authz_target(name: str, arguments: dict[str, Any]) -> tuple[str, str]:
 HANDLERS: dict[str, ToolHandler] = {
     "ordo_schema": tool_schema,
     "ordo_search": tool_search,
+    "ordo_aggregate": tool_aggregate,
     "ordo_read": tool_read,
     "ordo_create": tool_create,
     "ordo_write": tool_write,

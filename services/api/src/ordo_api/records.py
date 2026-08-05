@@ -37,6 +37,9 @@ class KernelHTTPError(OrdoError):
         "FIELD_READONLY": 422,
         "FIELD_INVALID_VALUE": 422,
         "FIELD_NOT_STORED": 422,
+        "AGGREGATE_INVALID_FIELD": 422,
+        "AGGREGATE_UNKNOWN": 422,
+        "AGGREGATE_INVALID_ORDER": 422,
         "CONCURRENT_MODIFICATION": 409,
         "IDEMPOTENCY_KEY_REUSED": 409,
         "INVALID_CURSOR": 400,
@@ -111,6 +114,14 @@ class TxRequest(BaseModel):
     operations: list[dict[str, Any]]
 
 
+class AggregateRequest(BaseModel):
+    domain: list[Any] = []
+    group_by: list[str] = []
+    aggregates: list[str] = ["count"]
+    order: str | None = None
+    limit: int = 80
+
+
 # /tx se declara antes que /{model}: FastAPI resuelve por orden y
 # "tx" seria capturado como nombre de modelo.
 @router.post("/tx")
@@ -134,6 +145,27 @@ async def transaction(
     return await _idempotent(
         env, idempotency_key, {"atomic": body.atomic, "operations": body.operations}, run
     )
+
+
+# /{model}/aggregate se declara antes que /{model}/{record_id} por el mismo
+# motivo que /tx: FastAPI resuelve por orden de declaración.
+@router.post("/{model}/aggregate")
+async def aggregate(
+    model: str,
+    body: AggregateRequest,
+    env: Annotated[Environment, Depends(get_env)],
+) -> dict[str, Any]:
+    """Agrupa y agrega en la base. Solo lectura: sin Idempotency-Key."""
+    try:
+        return await RecordSet(env, model).read_group(
+            body.domain,
+            group_by=body.group_by,
+            aggregates=body.aggregates,
+            order=body.order,
+            limit=body.limit,
+        )
+    except KernelError as exc:
+        raise _wrap(exc) from exc
 
 
 @router.get("/{model}")

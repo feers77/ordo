@@ -243,3 +243,11 @@ Formato de payload: ver `packages/ordo-runtime/src/ordo_runtime/errors.py`.
 | `SANDBOX_REFUSED` | 403 | no | Solo se borran schemas con el marcador de sandbox |
 | `SANDBOX_FOREIGN` | 403 | no | El sandbox pertenece a otro tenant |
 | `SANDBOX_NAME_INVALID` | 400 | no | El nombre del sandbox no cumple el formato |
+
+## Agregaciones
+
+| Código | HTTP | Retryable | Significado |
+|---|---|---|---|
+| `AGGREGATE_UNKNOWN` | 422 | no | Agregado desconocido; usa count, sum, avg, min o max |
+| `AGGREGATE_INVALID_FIELD` | 422 | no | Ese campo no admite el agregado pedido |
+| `AGGREGATE_INVALID_ORDER` | 422 | no | El orden no es un agregado ni un campo agrupado |
