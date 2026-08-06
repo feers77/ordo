@@ -258,6 +258,17 @@ async def reorder_alerts(env: Environment, params: dict[str, Any]) -> dict[str, 
             }
         )
 
+    # El nombre del grupo es el del modelo, no el de la primera variante que
+    # entró: "Jeans Recto 38 / Negro" como título de un grupo que incluye todas
+    # las tallas es sencillamente falso.
+    template_ids = sorted({alert["template_id"] for alert in alerts if alert["template_id"]})
+    template_names: dict[int, str] = {}
+    if template_ids:
+        templates = await RecordSet(env, "product.template").search(
+            [("id", "in", template_ids)], fields=["id", "name"], limit=len(template_ids)
+        )
+        template_names = {row["id"]: row["name"] for row in templates["rows"]}
+
     by_template: dict[Any, dict[str, Any]] = {}
     for alert in alerts:
         key = alert["template_id"] or f"p{alert['product_id']}"
@@ -265,7 +276,9 @@ async def reorder_alerts(env: Environment, params: dict[str, Any]) -> dict[str, 
             key,
             {
                 "template_id": alert["template_id"],
-                "name": alert["name"],
+                # Un producto sin modelo se agrupa solo, y ahí su propio nombre
+                # sí es el título correcto.
+                "name": template_names.get(alert["template_id"], alert["name"]),
                 "variants": [],
                 "total_suggested": ZERO,
             },
