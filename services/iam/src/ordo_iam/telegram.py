@@ -326,6 +326,20 @@ class TelegramSender:
             )
 
 
+def api_base() -> str:
+    """Dónde vive la API de Telegram.
+
+    Configurable a propósito. Sin esto **no hay forma de probar el canal de
+    punta a punta sin salir a Internet**: `TelegramSender` ya aceptaba la URL
+    por constructor, pero el worker la fijaba dura y solo los tests unitarios
+    podían inyectarla. Un emisor apuntado a un receptor local recibe exactamente
+    el mismo mensaje que recibiría Telegram —el mismo texto, los mismos botones
+    y la misma firma— y eso es justo lo que hace falta para verificar el flujo
+    completo antes de que exista un bot de verdad.
+    """
+    return os.environ.get("TELEGRAM_API_BASE", TELEGRAM_API_BASE).rstrip("/")
+
+
 def sender_from_env() -> NotificationSender:
     """Sender real para el worker; los tests inyectan el de memoria."""
-    return TelegramSender(bot_token())
+    return TelegramSender(bot_token(), base_url=api_base())

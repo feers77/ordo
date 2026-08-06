@@ -4,6 +4,16 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ## [Unreleased]
 
+### Added
+
+- `TELEGRAM_API_BASE`: la URL de la API de Telegram pasa a ser configurable. `TelegramSender`
+  ya la aceptaba por constructor, pero `sender_from_env` la fijaba dura, así que **no había
+  forma de probar el canal de punta a punta sin salir a Internet**: solo los tests unitarios
+  podían inyectarla. Con un receptor local, el worker envía exactamente el mismo mensaje que
+  recibiría Telegram —el mismo texto, los mismos botones y la misma firma HMAC del
+  `callback_data`—, que es lo que hace falta para verificar el flujo completo antes de que
+  exista un bot de verdad. Sin la variable, el destino sigue siendo `api.telegram.org`.
+
 ### Fixed
 
 - `stock.reorder_alerts` titulaba cada grupo con el nombre de la **primera variante** que
