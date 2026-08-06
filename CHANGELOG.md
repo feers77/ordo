@@ -4,6 +4,13 @@ Formato: [Keep a Changelog](https://keepachangelog.com/es/) + Conventional Commi
 
 ## [Unreleased]
 
+### Fixed
+
+- `stock.reorder_alerts` titulaba cada grupo con el nombre de la **primera variante** que
+  entró: "Jeans Recto 38 / Negro" como título de un grupo que incluye todas las tallas es
+  sencillamente falso. Ahora lee el nombre del modelo. Salió a la luz al pintarlo en una
+  pantalla, que es donde los datos mal formados dejan de ser abstractos.
+
 ### Changed
 
 - **Ubicación explícita en el cumplimiento** (BREAKING para compañías con más de una

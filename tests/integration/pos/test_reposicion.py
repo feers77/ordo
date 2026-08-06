@@ -228,6 +228,8 @@ class TestVariantAlerts:
         assert alerts["count"] == 3
         [group] = alerts["by_template"]
         assert group["template_id"] == catalog["template_id"]
+        # el título es el del modelo, no el de la primera variante que entró
+        assert group["name"] == "Polera Oversize"
         assert len(group["variants"]) == 3
         assert group["total_suggested"] == "60"
         assert all(row["variant_label"] for row in group["variants"])
